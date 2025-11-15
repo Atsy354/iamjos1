@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdown";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownSection,
+} from "@/components/ui/dropdown";
 import { useSupabase } from "@/providers/supabase-provider";
 import type { User } from "@supabase/supabase-js";
 
@@ -14,7 +18,9 @@ export function TopBar() {
   const supabase = useSupabase();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [journals, setJournals] = useState<{ id: string; title: string; path: string }[]>([]);
+  const [journals, setJournals] = useState<
+    { id: string; title: string; path: string }[]
+  >([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -31,16 +37,22 @@ export function TopBar() {
   }, [supabase]);
 
   useEffect(() => {
-    supabase
-      .from("journals")
-      .select("id, title, path")
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
+    const fetchJournals = async () => {
+      try {
+        const { data } = await supabase
+          .from("journals")
+          .select("id, title, path")
+          .order("created_at", { ascending: true });
         type JournalRow = { id: string; title: string; path: string };
-        const rows = ((data ?? []) as JournalRow[]).map((r) => ({ id: r.id, title: r.title, path: r.path }));
+        const rows = ((data ?? []) as JournalRow[]).map((r) => ({
+          id: r.id,
+          title: r.title,
+          path: r.path,
+        }));
         setJournals(rows);
-      })
-      .catch(() => {});
+      } catch {}
+    };
+    fetchJournals();
   }, [supabase]);
 
   const handleLogout = async () => {
@@ -55,8 +67,7 @@ export function TopBar() {
           <Link
             href="/admin/dashboard"
             className="text-lg font-semibold text-white hover:text-white/80"
-            style={{ color: "#ffffff" }}
-          >
+            style={{ color: "#ffffff" }}>
             Open Journal Systems
           </Link>
         </div>
@@ -69,11 +80,12 @@ export function TopBar() {
                 <span className="sr-only">Contexts</span>
               </>
             }
-            align="left"
-          >
+            align="left">
             <DropdownSection>
               {journals.map((j) => (
-                <DropdownItem key={j.id} href="/admin/site-management/hosted-journals">
+                <DropdownItem
+                  key={j.id}
+                  href="/admin/site-management/hosted-journals">
                   {j.title}
                 </DropdownItem>
               ))}
@@ -85,7 +97,10 @@ export function TopBar() {
       {user && (
         <div className="flex items-center gap-4">
           {/* Tasks Button */}
-          <Button variant="ghost" size="sm" className="relative gap-2 text-white hover:bg-white/10">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="relative gap-2 text-white hover:bg-white/10">
             <Bell size={16} />
             <span className="sr-only">Tasks</span>
             <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
@@ -101,8 +116,7 @@ export function TopBar() {
                 <span className="sr-only">{user.email}</span>
               </>
             }
-            align="right"
-          >
+            align="right">
             <DropdownSection>
               {user.email && (
                 <div className="px-4 py-2 text-xs font-semibold text-[var(--muted)]">
@@ -111,7 +125,9 @@ export function TopBar() {
               )}
             </DropdownSection>
             <DropdownSection>
-              <DropdownItem href="/admin/profile" icon={<UserCircle size={14} />}>
+              <DropdownItem
+                href="/admin/profile"
+                icon={<UserCircle size={14} />}>
                 Edit Profile
               </DropdownItem>
             </DropdownSection>
@@ -136,14 +152,15 @@ export function TopBar() {
                 </span>
               </>
             }
-            align="right"
-          >
+            align="right">
             <DropdownSection>
               <DropdownItem href="?locale=en">English</DropdownItem>
               <DropdownItem href="?locale=id">Indonesia</DropdownItem>
             </DropdownSection>
           </Dropdown>
-          <Link href="/login" className="text-sm font-semibold text-white hover:text-white/80">
+          <Link
+            href="/login"
+            className="text-sm font-semibold text-white hover:text-white/80">
             Sign in
           </Link>
         </div>
@@ -151,4 +168,3 @@ export function TopBar() {
     </header>
   );
 }
-
