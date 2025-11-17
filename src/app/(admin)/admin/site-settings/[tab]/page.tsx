@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormMessage } from "@/components/ui/form-message";
+import {
+  getSiteSettings,
+  updateSiteSettingsAction,
+  getSiteAppearance,
+  updateSiteAppearanceAction,
+  getSitePlugins,
+  toggleSitePluginAction,
+} from "../actions";
 
 type Props = {
   params: Promise<{ tab: SiteSettingTab }>;
@@ -17,11 +25,16 @@ export default async function SiteSettingsTabPage({ params }: Props) {
     notFound();
   }
 
+  const initial = await getSiteSettings();
+  const appearance = await getSiteAppearance();
+  const plugins = await getSitePlugins();
+
   return (
     <div className="space-y-8">
-      {tab === "site-setup" && <SiteSetupTab />}
+      {tab === "site-setup" && <SiteSetupTab initial={initial} />}
+      {tab === "appearance" && <AppearanceTab initial={appearance} />}
       {tab === "languages" && <LanguagesTab />}
-      {tab === "plugins" && <PluginsTab />}
+      {tab === "plugins" && <PluginsTab items={plugins} />}
       {tab === "navigation-menus" && <NavigationMenusTab />}
       {tab === "bulk-emails" && <BulkEmailsTab />}
     </div>
@@ -52,32 +65,25 @@ function Section({
   );
 }
 
-function SiteSetupTab() {
+function SiteSetupTab({ initial }: { initial: Awaited<ReturnType<typeof getSiteSettings>> }) {
   return (
     <>
       <Section
         title="Site Identity"
         description="Atur nama situs, logo, dan pernyataan pembuka."
       >
-        <div className="space-y-4">
+        <form action={updateSiteSettingsAction} className="space-y-4">
           <div>
-            <Label htmlFor="site-name" className="mb-2 block text-sm font-medium">
+            <Label htmlFor="site_name" className="mb-2 block text-sm font-medium">
               Site name <span className="text-[#b91c1c]">*</span>
             </Label>
-            <Input id="site-name" defaultValue="Open Journal Systems" className="max-w-md" />
+            <Input id="site_name" name="site_name" defaultValue={initial.site_name} className="max-w-md" />
           </div>
           <div>
-            <Label htmlFor="site-logo" className="mb-2 block text-sm font-medium">
-              Site logo
+            <Label htmlFor="logo_url" className="mb-2 block text-sm font-medium">
+              Site logo URL
             </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="site-logo"
-                type="file"
-                accept="image/*"
-                className="max-w-xs text-sm file:mr-4 file:rounded-md file:border-0 file:bg-[var(--primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:hover:bg-[var(--primary-dark)]"
-              />
-            </div>
+            <Input id="logo_url" name="logo_url" defaultValue={initial.logo_url} className="max-w-md" />
           </div>
           <div>
             <Label htmlFor="intro" className="mb-2 block text-sm font-medium">
@@ -85,23 +91,16 @@ function SiteSetupTab() {
             </Label>
             <textarea
               id="intro"
+              name="intro"
               rows={4}
-              defaultValue="Selamat datang di portal jurnal kami."
+              defaultValue={initial.intro}
               className="w-full max-w-2xl rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
             />
           </div>
-          <div>
-            <Label htmlFor="footer" className="mb-2 block text-sm font-medium">
-              Site footer
-            </Label>
-            <textarea
-              id="footer"
-              rows={3}
-              defaultValue="© 2025 - Open Journal Systems."
-              className="w-full max-w-2xl rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
-            />
+          <div className="flex justify-end">
+            <Button type="submit">Simpan Pengaturan</Button>
           </div>
-        </div>
+        </form>
       </Section>
 
       <Section
@@ -155,9 +154,62 @@ function SiteSetupTab() {
             </div>
           </div>
           <div className="flex justify-end pt-4">
-            <Button>Simpan pengaturan</Button>
+            <Button>Simulasi</Button>
           </div>
         </div>
+      </Section>
+    </>
+  );
+}
+
+function AppearanceTab({ initial }: { initial: Awaited<ReturnType<typeof getSiteAppearance>> }) {
+  return (
+    <>
+      <Section title="Theme" description="Pilih tema dan warna header.">
+        <form action={updateSiteAppearanceAction} className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="theme" className="mb-2 block text-sm font-medium">
+                Theme
+              </Label>
+              <select
+                id="theme"
+                name="theme"
+                defaultValue={initial.theme}
+                className="h-11 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm text-[var(--foreground)] shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
+              >
+                <option value="default">Default</option>
+                <option value="classic">Classic</option>
+                <option value="modern">Modern</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="header_bg" className="mb-2 block text-sm font-medium">
+                Header background color
+              </Label>
+              <Input id="header_bg" name="header_bg" type="text" defaultValue={initial.header_bg} className="max-w-xs" />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="show_logo" defaultChecked={initial.show_logo} className="h-4 w-4 rounded border border-[var(--border)]" />
+            Tampilkan logo situs di header
+          </label>
+          <div>
+            <Label htmlFor="footer_html" className="mb-2 block text-sm font-medium">
+              Footer HTML
+            </Label>
+            <textarea
+              id="footer_html"
+              name="footer_html"
+              rows={4}
+              defaultValue={initial.footer_html}
+              className="w-full max-w-2xl rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit">Simpan Tampilan</Button>
+          </div>
+        </form>
       </Section>
     </>
   );
@@ -216,80 +268,46 @@ function LanguagesTab() {
   );
 }
 
-function PluginsTab() {
-  const pluginCategories = [
-    {
-      name: "Generic Plugins",
-      plugins: [
-        {
-          id: "custom-block",
-          name: "Custom Block Manager",
-          description:
-            "Kelola blok konten yang dapat ditempatkan di sidebar jurnal.",
-          enabled: true,
-        },
-        {
-          id: "google-analytics",
-          name: "Google Analytics",
-          description:
-            "Tambahkan tracking Google Analytics ke situs jurnal Anda.",
-          enabled: false,
-        },
-      ],
-    },
-    {
-      name: "Import/Export Plugins",
-      plugins: [
-        {
-          id: "crossref",
-          name: "Crossref XML Export",
-          description:
-            "Ekspor metadata artikel ke format Crossref XML untuk registrasi DOI.",
-          enabled: true,
-        },
-        {
-          id: "doaj",
-          name: "DOAJ Export Plugin",
-          description: "Ekspor metadata ke Directory of Open Access Journals.",
-          enabled: false,
-        },
-      ],
-    },
+function PluginsTab({ items }: { items: Awaited<ReturnType<typeof getSitePlugins>> }) {
+  const groups = [
+    { name: "Generic Plugins", ids: ["custom-block", "google-analytics"] },
+    { name: "Import/Export Plugins", ids: ["crossref", "doaj"] },
   ];
 
   return (
     <>
-      {pluginCategories.map((category) => (
-        <Section key={category.name} title={category.name}>
+      {groups.map((group) => (
+        <Section key={group.name} title={group.name}>
           <div className="space-y-4">
-            {category.plugins.map((plugin) => (
-              <div
-                key={plugin.id}
-                className="flex flex-col gap-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--foreground)]">
-                    {plugin.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    {plugin.description}
-                  </p>
+            {items
+              .filter((p) => group.ids.includes(p.id))
+              .map((plugin) => (
+                <div
+                  key={plugin.id}
+                  className="flex flex-col gap-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] p-4 md:flex-row md:items-center md:justify-between"
+                >
+                  <div>
+                    <h3 className="text-sm font-semibold text-[var(--foreground)]">{plugin.name}</h3>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{plugin.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <form action={toggleSitePluginAction} className="flex items-center gap-2">
+                      <input type="hidden" name="plugin_id" value={plugin.id} />
+                      <Label className="mb-0 flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          name="enabled"
+                          defaultChecked={plugin.enabled}
+                          className="h-4 w-4 rounded border border-[var(--border)]"
+                        />
+                        Aktif
+                      </Label>
+                      <Button size="sm" type="submit" variant="secondary">Save</Button>
+                    </form>
+                    <Button size="sm" variant="secondary">Konfigurasi</Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Label className="mb-0 flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      defaultChecked={plugin.enabled}
-                      className="h-4 w-4 rounded border border-[var(--border)]"
-                    />
-                    Aktif
-                  </Label>
-                  <Button size="sm" variant="secondary">
-                    Konfigurasi
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </Section>
       ))}

@@ -1,12 +1,18 @@
- "use client";
+"use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
+import { expireAllSessionsAction } from "./actions";
+
+type State = null | { ok: true; expired: number } | { ok: false; message: string };
 
 export default function ExpireSessionsPage() {
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [state, formAction, pending] = useActionState<State, FormData>(
+    async () => expireAllSessionsAction(),
+    null,
+  );
 
   return (
     <div className="space-y-6">
@@ -20,15 +26,13 @@ export default function ExpireSessionsPage() {
         </p>
       </section>
 
-      {status === "success" && (
+      {state?.ok && (
         <FormMessage tone="success">
-          Seluruh sesi pengguna berhasil diakhiri. Pengguna harus login kembali.
+          Seluruh sesi pengguna berhasil diakhiri untuk {state.expired} akun.
         </FormMessage>
       )}
-      {status === "error" && (
-        <FormMessage tone="error">
-          Terjadi kesalahan saat mengakhiri sesi. Silakan coba lagi.
-        </FormMessage>
+      {state && !state.ok && (
+        <FormMessage tone="error">{state.message}</FormMessage>
       )}
 
       <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-5">
@@ -37,11 +41,13 @@ export default function ExpireSessionsPage() {
           dikirim ke pengguna.
         </p>
         <div className="mt-4 flex gap-3">
-          <Button variant="danger" onClick={() => setStatus("success")}>
-            Expire semua sesi sekarang
-          </Button>
-          <Button variant="secondary" onClick={() => setStatus("idle")}>
-            Reset status
+          <form action={formAction} className="contents">
+            <Button variant="danger" type="submit" loading={pending}>
+              Expire semua sesi sekarang
+            </Button>
+          </form>
+          <Button variant="secondary" disabled={pending} onClick={() => location.reload()}>
+            Muat ulang
           </Button>
         </div>
       </div>

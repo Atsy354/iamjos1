@@ -73,19 +73,15 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
 
 export const SITE_SETTING_TABS = [
   "site-setup",
-  "languages",
+  "appearance",
   "plugins",
-  "navigation-menus",
-  "bulk-emails",
 ] as const;
 
 export type SiteSettingTab = (typeof SITE_SETTING_TABS)[number];
 
 export const SITE_SETTING_TAB_LABELS: Record<SiteSettingTab, string> = {
   "site-setup": "Site Setup",
-  languages: "Languages",
+  appearance: "Appearance",
   plugins: "Plugins",
-  "navigation-menus": "Navigation Menus",
-  "bulk-emails": "Bulk Emails",
 };
 

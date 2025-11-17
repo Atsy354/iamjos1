@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
+import { clearTemplateCacheAction } from "./actions";
 
 export default function ClearTemplateCachePage() {
-  const [status, setStatus] = useState<"idle" | "success">("idle");
+  const [state, formAction, pending] = useActionState<{ ok: true } | null, FormData>(
+    async () => clearTemplateCacheAction(),
+    null,
+  );
 
   return (
     <div className="space-y-6">
@@ -19,7 +23,7 @@ export default function ClearTemplateCachePage() {
         </p>
       </header>
 
-      {status === "success" && (
+      {state && (
         <FormMessage tone="success">
           Template cache berhasil dibersihkan. Template terbaru akan dimuat saat permintaan berikutnya.
         </FormMessage>
@@ -29,9 +33,11 @@ export default function ClearTemplateCachePage() {
         <p className="text-sm text-[var(--muted)]">
           Proses ini hanya memengaruhi file template. Tidak ada konten jurnal yang berubah.
         </p>
-        <Button className="mt-4" onClick={() => setStatus("success")}>
-          Clear Template Cache
-        </Button>
+        <form action={formAction}>
+          <Button className="mt-4" type="submit" loading={pending}>
+            Clear Template Cache
+          </Button>
+        </form>
       </div>
     </div>
   );

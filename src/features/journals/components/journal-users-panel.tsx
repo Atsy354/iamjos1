@@ -1,35 +1,37 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import type { HostedJournal } from "../types";
 
-const MOCK_USERS = [
-  {
-    id: "u1",
-    name: "Ariana Kusuma",
-    email: "ariana@example.com",
-    roles: ["Journal Manager", "Editor"],
-  },
-  {
-    id: "u2",
-    name: "Budi Santoso",
-    email: "budi.santoso@example.com",
-    roles: ["Section Editor"],
-  },
-  {
-    id: "u3",
-    name: "Clara Wijaya",
-    email: "clara.wijaya@example.com",
-    roles: ["Author", "Reader"],
-  },
-];
-
 type Props = {
   journal: HostedJournal;
 };
 
 export function JournalUsersPanel({ journal }: Props) {
+  const [users, setUsers] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    roles: string[];
+  }[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/list-users");
+        const json = await res.json();
+        if (active && json.ok && Array.isArray(json.users)) {
+          setUsers(json.users);
+        }
+      } catch {}
+    })();
+    return () => {
+      active = false;
+    };
+  }, [journal.id]);
   return (
     <div className="space-y-6">
       <div>
@@ -77,7 +79,7 @@ export function JournalUsersPanel({ journal }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
-              {MOCK_USERS.map((user) => (
+              {users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-4 py-3 text-sm font-semibold text-[var(--foreground)]">
                     {user.name}
@@ -87,14 +89,18 @@ export function JournalUsersPanel({ journal }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      {user.roles.map((role) => (
+                      {user.roles.length > 0 ? user.roles.map((role) => (
                         <span
                           key={role}
                           className="inline-flex rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--foreground)]"
                         >
                           {role}
                         </span>
-                      ))}
+                      )) : (
+                        <span className="inline-flex rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--foreground)]">
+                          No roles
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">

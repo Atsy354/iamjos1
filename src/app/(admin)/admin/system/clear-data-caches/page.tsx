@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
+import { clearDataCachesAction } from "./actions";
 
 const CACHE_ITEMS = [
   { id: "locale", label: "Locale data cache", description: "Istilah dan terjemahan." },
@@ -12,7 +13,10 @@ const CACHE_ITEMS = [
 ];
 
 export default function ClearDataCachesPage() {
-  const [status, setStatus] = useState<"idle" | "success">("idle");
+  const [state, formAction, pending] = useActionState<{ ok: true } | null, FormData>(
+    async () => clearDataCachesAction(),
+    null,
+  );
 
   return (
     <div className="space-y-6">
@@ -25,7 +29,7 @@ export default function ClearDataCachesPage() {
         </p>
       </header>
 
-      {status === "success" && (
+      {state && (
         <FormMessage tone="success">
           Cache data berhasil dibersihkan. Versi terbaru akan dibuat ulang secara otomatis.
         </FormMessage>
@@ -47,7 +51,9 @@ export default function ClearDataCachesPage() {
         ))}
       </div>
 
-      <Button onClick={() => setStatus("success")}>Clear Data Caches</Button>
+      <form action={formAction}>
+        <Button type="submit" loading={pending}>Clear Data Caches</Button>
+      </form>
     </div>
   );
 }

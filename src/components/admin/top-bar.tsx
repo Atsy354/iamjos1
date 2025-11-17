@@ -21,6 +21,9 @@ export function TopBar() {
   const [journals, setJournals] = useState<
     { id: string; title: string; path: string }[]
   >([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [showLogo, setShowLogo] = useState<boolean>(false);
+  const [headerBg, setHeaderBg] = useState<string>("#0a2d44");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -55,21 +58,51 @@ export function TopBar() {
     fetchJournals();
   }, [supabase]);
 
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const { data: s } = await supabase
+          .from("site_settings")
+          .select("logo_url")
+          .eq("id", "site")
+          .single();
+        const { data: a } = await supabase
+          .from("site_appearance")
+          .select("show_logo,header_bg")
+          .eq("id", "site")
+          .single();
+        const lu = (s as { logo_url?: string } | null)?.logo_url ?? null;
+        const sl = Boolean((a as { show_logo?: boolean } | null)?.show_logo);
+        const hb = (a as { header_bg?: string } | null)?.header_bg ?? "#0a2d44";
+        setLogoUrl(lu && lu.length ? lu : null);
+        setShowLogo(sl);
+        setHeaderBg(hb && hb.length ? hb : "#0a2d44");
+      } catch {}
+    };
+    fetchBranding();
+  }, [supabase]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-transparent bg-[#0a2d44] px-6 shadow-sm text-white">
+    <header className="flex h-16 items-center justify-between border-b border-transparent px-6 shadow-sm text-white" style={{ backgroundColor: headerBg }}>
       <div className="flex items-center gap-4">
-        <div className="flex flex-col">
-          <Link
-            href="/admin/dashboard"
-            className="text-lg font-semibold text-white hover:text-white/80"
-            style={{ color: "#ffffff" }}>
-            Open Journal Systems
-          </Link>
+        <div className="flex items-center gap-2">
+          {showLogo && logoUrl ? (
+            <Link href="/admin/dashboard" className="block">
+              <img src={logoUrl} alt="Site Logo" className="h-7 w-auto" />
+            </Link>
+          ) : (
+            <Link
+              href="/admin/dashboard"
+              className="text-lg font-semibold text-white hover:text-white/80"
+              style={{ color: "#ffffff" }}>
+              Open Journal Systems
+            </Link>
+          )}
         </div>
 
         {journals.length > 1 && (

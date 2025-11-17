@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
+import { clearScheduledTaskLogsAction } from "./actions";
 
 const MOCK_LOGS = [
   { id: "log-1", name: "Reminder email", executedAt: "2025-03-10 02:00" },
@@ -12,7 +13,12 @@ const MOCK_LOGS = [
 ];
 
 export default function ClearScheduledTaskLogsPage() {
-  const [status, setStatus] = useState<"idle" | "success">("idle");
+  const [state, formAction, pending] = useActionState<
+    | null
+    | { ok: true; deleted: number }
+    | { ok: false; message: string },
+    FormData
+  >(async () => clearScheduledTaskLogsAction(), null);
 
   return (
     <div className="space-y-6">
@@ -26,10 +32,13 @@ export default function ClearScheduledTaskLogsPage() {
         </p>
       </header>
 
-      {status === "success" && (
+      {state?.ok && (
         <FormMessage tone="success">
-          Log tugas terjadwal berhasil dihapus.
+          Log tugas terjadwal berhasil dihapus{typeof state.deleted === "number" ? ` (${state.deleted})` : ""}.
         </FormMessage>
+      )}
+      {state && !state.ok && (
+        <FormMessage tone="error">{state.message}</FormMessage>
       )}
 
       <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-white shadow-sm">
@@ -59,9 +68,11 @@ export default function ClearScheduledTaskLogsPage() {
         </table>
       </div>
 
-      <Button variant="danger" onClick={() => setStatus("success")}>
-        Clear Logs
-      </Button>
+      <form action={formAction}>
+        <Button variant="danger" type="submit" loading={pending}>
+          Clear Logs
+        </Button>
+      </form>
     </div>
   );
 }

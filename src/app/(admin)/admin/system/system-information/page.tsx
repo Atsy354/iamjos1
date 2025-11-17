@@ -1,6 +1,13 @@
+import os from "os";
 import { Button } from "@/components/ui/button";
+import { publicEnv } from "@/lib/env";
 
 export default function SystemInformationPage() {
+  const nodeVersion = process.version;
+  const osInfo = `${os.type()} ${os.release()}`;
+  const dbInfo = "PostgreSQL (Supabase)";
+  const webServer = "Next.js / Node.js";
+  const supabaseUrl = publicEnv.NEXT_PUBLIC_SUPABASE_URL;
   return (
     <div className="space-y-6">
       <section className="space-y-4 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-5">
@@ -17,10 +24,8 @@ export default function SystemInformationPage() {
         </header>
         <dl className="grid gap-4 text-sm">
           <div className="flex items-center justify-between">
-            <dt className="font-semibold text-[var(--foreground)]">
-              Current version
-            </dt>
-            <dd className="text-[var(--muted)]">3.3.0.15 (Build 20250301)</dd>
+            <dt className="font-semibold text-[var(--foreground)]">Current version</dt>
+            <dd className="text-[var(--muted)]">3.3.0.21 (Clone)</dd>
           </div>
           <div className="flex items-center justify-between">
             <dt className="font-semibold text-[var(--foreground)]">
@@ -38,11 +43,11 @@ export default function SystemInformationPage() {
           </h2>
         </header>
         <dl className="grid gap-3 text-sm">
-          <Row label="Operating system" value="Ubuntu 24.04 LTS" />
-          <Row label="PHP version" value="8.3.2" />
-          <Row label="Database driver" value="PostgreSQL 15 (Supabase)" />
-          <Row label="Web server" value="Vercel Edge / Node.js 20" />
-        </dl>
+          <Row label="Operating system" value={osInfo} />
+          <Row label="Node.js version" value={nodeVersion} />
+          <Row label="Database" value={dbInfo} />
+          <Row label="Web server" value={webServer} />
+      </dl>
       </section>
 
       <section className="space-y-4 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-5">
@@ -61,6 +66,7 @@ export default function SystemInformationPage() {
               ["files.directory", "/srv/ojs/files"],
               ["installed", "On"],
               ["session.force_ssl", "Off"],
+              ["supabase.url", supabaseUrl],
             ].map(([key, value]) => (
               <tr key={key}>
                 <td className="px-4 py-2 font-semibold text-[var(--foreground)]">
