@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 function ProofreaderHomePage() {
   redirect('/editor/submissions?filter=production')
+  return null
 }
 
 export default withAuth(ProofreaderHomePage, ['proofreader'])

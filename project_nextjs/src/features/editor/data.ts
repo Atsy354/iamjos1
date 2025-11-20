@@ -10,6 +10,7 @@ import type {
   SubmissionFile,
   SubmissionParticipant,
   SubmissionStage,
+  SubmissionStatus,
   SubmissionSummary,
   SubmissionVersion,
   SubmissionReviewRound,
@@ -143,7 +144,8 @@ export async function listSubmissions(params: ListSubmissionsParams = {}): Promi
       journalId: row.journal_id,
       journalTitle: (row.journals as { title?: string } | null)?.title,
       stage: row.current_stage as SubmissionStage,
-      status: row.status,
+      current_stage: row.current_stage as SubmissionStage,
+      status: row.status as SubmissionStatus,
       isArchived: row.is_archived,
       submittedAt: row.submitted_at,
       updatedAt: row.updated_at,
@@ -235,7 +237,8 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
       journalId: submission.journal_id,
       journalTitle: (submission.journals as { title?: string } | null)?.title,
       stage: submission.current_stage as SubmissionStage,
-      status: submission.status,
+      current_stage: submission.current_stage as SubmissionStage,
+      status: submission.status as SubmissionStatus,
       isArchived: submission.is_archived,
       submittedAt: submission.submitted_at,
       updatedAt: submission.updated_at,
@@ -401,6 +404,23 @@ async function getAssignedSubmissionIds(userId: string) {
     return Array.from(new Set(data.map((row) => row.submission_id)));
   } catch {
     return [];
+  }
+}
+
+async function getAssignedSubmissionIdsForRoles() {
+  try {
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("submission_participants")
+      .select("submission_id")
+      .in("role", ["editor", "section_editor"]);
+    if (error || !data) {
+      throw error;
+    }
+    return Array.from(new Set(data.map((row) => row.submission_id)));
+  } catch {
+    return [];
+  }
 }
 
 function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[] {
@@ -414,7 +434,7 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       journalTitle: "Jurnal Teknologi Informasi",
       stage: "review",
       current_stage: "review",
-      status: "in-review",
+      status: "in_review",
       isArchived: false,
       submittedAt: "2024-01-15T08:00:00Z",
       updatedAt: "2024-01-20T10:30:00Z",
@@ -428,7 +448,7 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       journalTitle: "Jurnal Teknologi Informasi",
       stage: "copyediting",
       current_stage: "copyediting",
-      status: "submitted",
+      status: "queued",
       isArchived: false,
       submittedAt: "2024-01-10T09:15:00Z",
       updatedAt: "2024-01-18T14:20:00Z",
@@ -456,7 +476,7 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       journalTitle: "Jurnal Teknologi Informasi",
       stage: "submission",
       current_stage: "submission",
-      status: "submitted",
+      status: "queued",
       isArchived: false,
       submittedAt: "2024-01-20T11:00:00Z",
       updatedAt: "2024-01-21T09:15:00Z",
@@ -470,7 +490,7 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       journalTitle: "Jurnal Kesehatan Digital",
       stage: "review",
       current_stage: "review",
-      status: "overdue",
+      status: "in_review",
       isArchived: false,
       submittedAt: "2023-12-20T10:00:00Z",
       updatedAt: "2024-01-12T13:30:00Z",
@@ -484,7 +504,7 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       journalTitle: "Jurnal Teknologi Informasi",
       stage: "copyediting",
       current_stage: "copyediting",
-      status: "response-due",
+      status: "in_review",
       isArchived: false,
       submittedAt: "2024-01-12T14:00:00Z",
       updatedAt: "2024-01-19T11:20:00Z",
@@ -498,7 +518,7 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       journalTitle: "Jurnal Sistem Informasi",
       stage: "submission",
       current_stage: "submission",
-      status: "unassigned",
+      status: "queued",
       isArchived: false,
       submittedAt: "2024-01-18T09:30:00Z",
       updatedAt: "2024-01-18T09:30:00Z",
@@ -529,10 +549,12 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
       ["1", "2", "5", "6"].includes(item.id) // Simulate assigned submissions
     );
   } else if (queue === "unassigned") {
-    filteredData = dummyData.filter(item => item.status === "unassigned");
+    // Unassigned submissions are those with no assignees
+    filteredData = dummyData.filter(item => item.assignees.length === 0);
   } else if (queue === "archived") {
     filteredData = dummyData.filter(item => item.isArchived);
-  } else if (queue === "active") {
+  } else if (queue === "all") {
+    // "all" means all active (non-archived) submissions
     filteredData = dummyData.filter(item => !item.isArchived);
   }
   
@@ -541,22 +563,5 @@ function getDummySubmissions(params: ListSubmissionsParams): SubmissionSummary[]
   }
   
   return filteredData.slice(0, limit);
-}
-}
-
-async function getAssignedSubmissionIdsForRoles() {
-  try {
-    const supabase = getSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("submission_participants")
-      .select("submission_id")
-      .in("role", ["editor", "section_editor"]);
-    if (error || !data) {
-      throw error;
-    }
-    return Array.from(new Set(data.map((row) => row.submission_id)));
-  } catch {
-    return [];
-  }
 }
 

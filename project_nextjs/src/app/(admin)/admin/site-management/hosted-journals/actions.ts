@@ -49,22 +49,45 @@ const restrictSchema = z.object({
   disabledRoles: z.array(z.string().trim()).default([]),
 });
 
+const workflowSchema = z.object({
+  submissions: z.object({
+    allowChecklists: z.coerce.boolean().default(true),
+    requireMetadataComplete: z.coerce.boolean().default(true),
+  }),
+  review: z.object({
+    allowReviewerRecommendations: z.coerce.boolean().default(true),
+    enableReviewForms: z.coerce.boolean().default(false),
+  }),
+  copyediting: z.object({
+    requireChecklist: z.coerce.boolean().default(true),
+  }),
+  production: z.object({
+    allowedGalleyFormats: z.array(z.string().trim()).default(["PDF", "HTML"]),
+    enableProofreading: z.coerce.boolean().default(true),
+  }),
+  discussions: z.object({
+    enableEditorialDiscussions: z.coerce.boolean().default(true),
+  }),
+});
+
 type Result = { success: true } | { success: false; message: string };
 
 const revalidateHostedJournals = () => revalidatePath("/admin/site-management/hosted-journals");
 
-const SECTION_SCHEMAS = {
+const SECTION_SCHEMAS: Record<keyof Required<JournalSettings>, z.ZodTypeAny> = {
   context: contextSchema,
   search: searchSchema,
   theme: themeSchema,
   restrictBulkEmails: restrictSchema,
-} satisfies Record<keyof JournalSettings, z.ZodTypeAny>;
+  workflow: workflowSchema,
+};
 
 type PartialSettingsInput = {
   context?: Partial<JournalSettings["context"]>;
   search?: Partial<JournalSettings["search"]>;
   theme?: Partial<JournalSettings["theme"]>;
   restrictBulkEmails?: Partial<JournalSettings["restrictBulkEmails"]>;
+  workflow?: Partial<JournalSettings["workflow"]>;
 } | null;
 
 const mergeSettings = (settings?: PartialSettingsInput): JournalSettings => ({
@@ -75,6 +98,12 @@ const mergeSettings = (settings?: PartialSettingsInput): JournalSettings => ({
     ...DEFAULT_JOURNAL_SETTINGS.restrictBulkEmails,
     ...(settings?.restrictBulkEmails ?? {}),
   },
+  workflow: settings?.workflow
+    ? {
+        ...DEFAULT_JOURNAL_SETTINGS.workflow!,
+        ...settings.workflow,
+      }
+    : DEFAULT_JOURNAL_SETTINGS.workflow,
 });
 
 export async function createJournalAction(input: {

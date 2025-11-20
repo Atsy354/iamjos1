@@ -58,7 +58,7 @@ export default function AuthorLayout({
             .select("journal_id, setting_value")
             .eq("setting_name", "name")
             .in("journal_id", missingNameIds);
-          const nameMap = new Map((js?.data ?? []).map((j) => [j.journal_id, j.setting_value]));
+          const nameMap = new Map((js ?? []).map((j) => [j.journal_id, j.setting_value]));
           rows = rows.map((j) => (nameMap.has(j.id) ? { ...j, title: nameMap.get(j.id) as string } : j));
         }
         setJournals(rows.filter((j) => j.title && j.title.trim().length > 0));

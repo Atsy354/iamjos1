@@ -29,7 +29,7 @@ export default async function SubmissionDetailPage({ params, searchParams }: Pro
       journalTitle: "Jurnal Teknologi Informasi",
       stage: "review" as const,
       current_stage: "review" as const,
-      status: "in-review" as const,
+      status: "in_review" as const,
       isArchived: false,
       submittedAt: "2024-01-15T08:00:00Z",
       updatedAt: "2024-01-20T10:30:00Z",
@@ -47,24 +47,11 @@ export default async function SubmissionDetailPage({ params, searchParams }: Pro
       ],
       abstract: "Penelitian ini bertujuan untuk mengembangkan sistem prediksi cuaca menggunakan algoritma machine learning untuk daerah tropis di Indonesia."
     },
-    stages: {
-      submission: {
-        files: [
-          { id: "1", name: "manuscript.pdf", type: "submission", uploadedAt: "2024-01-15T08:00:00Z" }
-        ]
-      },
-      review: {
-        reviews: [
-          {
-            id: "1",
-            reviewer: "Dr. Budi Santoso",
-            status: "completed",
-            recommendation: "accept",
-            completedAt: "2024-01-18T15:30:00Z"
-          }
-        ]
-      }
-    }
+    versions: [],
+    participants: [],
+    files: [],
+    activity: [],
+    reviewRounds: [],
   };
 
   if (!detail) {

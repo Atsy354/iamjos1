@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 function SubscriptionManagerHomePage() {
   redirect('/dashboard')
+  return null
 }
 
 export default withAuth(SubscriptionManagerHomePage, ['subscription-manager'])
