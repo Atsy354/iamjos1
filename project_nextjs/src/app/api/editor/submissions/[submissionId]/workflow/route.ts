@@ -1,6 +1,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";

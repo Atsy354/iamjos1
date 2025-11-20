@@ -1,6 +1,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SUBMISSION_STAGES } from "@/features/editor/types";
@@ -86,8 +87,8 @@ export async function POST(request: Request, context: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
-  const submissionId = params.submissionId;
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const submissionId = (await params).submissionId;
   if (!submissionId) {
     return NextResponse.json({ ok: false, message: "Submission tidak ditemukan." }, { status: 400 });
   }
