@@ -24,6 +24,8 @@ export function getRedirectPathByRole(user: User | null): string {
     return "/author";
   } else if (rolePaths.includes("reviewer")) {
     return "/reviewer";
+  } else if (rolePaths.includes("reader")) {
+    return "/reader";
   }
   
   return "/dashboard";

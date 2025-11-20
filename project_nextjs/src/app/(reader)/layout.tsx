@@ -283,13 +283,28 @@ export default function ReaderLayout({
                       padding: '0.875rem 1rem',
                       fontSize: '1.0625rem',
                       fontWeight: item.current ? '600' : '500',
-                      borderRadius: '0.5rem'
+                      borderRadius: '0.5rem',
+                      color: item.current ? '#002C40' : 'white'
                     }}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <div className="flex items-center space-x-3" style={{gap: '0.75rem'}}>
-                      <Icon className={item.current ? "h-5 w-5 text-[#002C40]" : "h-5 w-5"} style={{width: '1.25rem', height: '1.25rem'}} />
-                      <span>{item.name}</span>
+                      <Icon 
+                        className={item.current ? "h-5 w-5 text-[#002C40]" : "h-5 w-5 text-white"} 
+                        style={{
+                          width: '1.25rem', 
+                          height: '1.25rem', 
+                          color: item.current ? '#002C40' : 'white'
+                        }} 
+                      />
+                      <span 
+                        style={{
+                          color: item.current ? '#002C40' : 'white',
+                          fontWeight: item.current ? '600' : '500'
+                        }}
+                      >
+                        {item.name}
+                      </span>
                     </div>
                   </Link>
                 );
