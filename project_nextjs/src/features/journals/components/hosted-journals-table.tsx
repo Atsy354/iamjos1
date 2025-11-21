@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Globe2, Lock } from "lucide-react";
+import { ChevronDown, ChevronRight, Globe2, Lock, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { deleteJournalAction } from "@/app/(admin)/admin/site-management/hosted-journals/actions";
@@ -226,13 +227,15 @@ export function HostedJournalsTable({ journals }: Props) {
                             >
                               Delete
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setModalState({ type: "settings", journal })}
-                            >
-                              Settings Wizard
-                            </Button>
+                            <Link href={`/admin/wizard/${journal.id}`}>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                              >
+                                <Settings2 size={14} className="mr-1" />
+                                Settings Wizard
+                              </Button>
+                            </Link>
                             <Button
                               size="sm"
                               variant="ghost"

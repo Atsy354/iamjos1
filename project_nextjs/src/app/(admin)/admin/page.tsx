@@ -1,47 +1,52 @@
+'use client';
+
 import Link from "next/link";
 import { AdminActionLink } from "@/components/admin/admin-action-link";
-
-const SITE_MANAGEMENT_LINKS = [
-  {
-    label: "Hosted Journals",
-    href: "/admin/site-management/hosted-journals",
-  },
-  {
-    label: "Site Settings",
-    href: "/admin/site-settings/site-setup",
-  },
-];
-
-const ADMIN_FUNCTIONS_LINKS = [
-  {
-    label: "System Information",
-    href: "/admin/system/system-information",
-    actionType: "link" as const,
-  },
-  {
-    label: "Expire User Sessions",
-    href: "/admin/system/expire-sessions",
-    actionType: "form" as const,
-    confirmMessage: "Tindakan ini akan mengeluarkan seluruh pengguna. Lanjutkan?",
-  },
-  {
-    label: "Clear Data Caches",
-    href: "/admin/system/clear-data-caches",
-    actionType: "form" as const,
-  },
-  {
-    label: "Clear Template Cache",
-    href: "/admin/system/clear-template-cache",
-    actionType: "form" as const,
-  },
-  {
-    label: "Clear Scheduled Task Execution Logs",
-    href: "/admin/system/clear-scheduled-tasks",
-    actionType: "form" as const,
-  },
-];
+import { useI18n } from "@/contexts/I18nContext";
+// import { VersionWarning } from "@/components/admin/version-warning"; // Disabled - akan diaktifkan nanti dengan API real
 
 export default function AdminPage() {
+  const { t } = useI18n();
+
+  const SITE_MANAGEMENT_LINKS = [
+    {
+      label: t('admin.hostedJournals'),
+      href: "/admin/site-management/hosted-journals",
+    },
+    {
+      label: t('admin.siteSettings'),
+      href: "/admin/site-settings/site-setup",
+    },
+  ];
+
+  const ADMIN_FUNCTIONS_LINKS = [
+    {
+      label: t('admin.systemInformation'),
+      href: "/admin/system/system-information",
+      actionType: "link" as const,
+    },
+    {
+      label: t('admin.expireUserSessions'),
+      href: "/admin/system/expire-sessions",
+      actionType: "form" as const,
+      confirmMessage: t('admin.confirmExpireSessions'),
+    },
+    {
+      label: t('admin.clearDataCaches'),
+      href: "/admin/system/clear-data-caches",
+      actionType: "form" as const,
+    },
+    {
+      label: t('admin.clearTemplateCache'),
+      href: "/admin/system/clear-template-cache",
+      actionType: "form" as const,
+    },
+    {
+      label: t('admin.clearScheduledTaskExecutionLogs'),
+      href: "/admin/system/clear-scheduled-tasks",
+      actionType: "form" as const,
+    },
+  ];
   return (
     <div className="min-h-screen bg-white">
       {/* Header Bar - Light Gray */}
@@ -54,7 +59,7 @@ export default function AdminPage() {
           fontWeight: '600',
           color: '#111827'
         }}>
-          Site Administration
+          {t('admin.siteAdministration')}
         </h1>
       </div>
 
@@ -62,6 +67,9 @@ export default function AdminPage() {
       <div className="px-6 py-6" style={{
         padding: '2rem 1.5rem'
       }}>
+        {/* Version Check Warning - DISABLED (akan diaktifkan nanti dengan API real) */}
+        {/* <VersionWarning /> */}
+        
         {/* Site Management Section - Larger Font */}
         <h2 style={{
           fontSize: '1.5rem',
@@ -69,7 +77,7 @@ export default function AdminPage() {
           marginBottom: '1.25rem',
           color: '#002C40'
         }}>
-          Site Management
+          {t('admin.siteManagement')}
         </h2>
         <ul style={{
           listStyle: 'none',
@@ -101,7 +109,7 @@ export default function AdminPage() {
           marginBottom: '1.25rem',
           color: '#002C40'
         }}>
-          Administrative Functions
+          {t('admin.administrativeFunctions')}
         </h2>
         <ul style={{
           listStyle: 'none',

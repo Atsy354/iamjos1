@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import { hasRole } from "@/lib/auth";
 import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdown";
 import { useSupabase } from "@/providers/supabase-provider";
+import { LanguageSwitcher } from "@/components/admin/language-switcher";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AdminLayout({
   children,
@@ -34,6 +36,7 @@ export default function AdminLayout({
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const pathname = usePathname();
+  const { t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const supabase = useSupabase();
   const [journals, setJournals] = useState<{ id: string; title: string; path: string }[]>([]);
@@ -73,31 +76,31 @@ export default function AdminLayout({
 
   const navigation = [
     {
-      name: "Dashboard",
+      name: t('admin.dashboard'),
       href: "/admin",
       icon: Home,
       current: pathname === "/admin"
     },
     {
-      name: "Hosted Journals",
+      name: t('admin.hostedJournals'),
       href: "/admin/site-management",
       icon: BookOpen,
       current: pathname.startsWith("/admin/site-management")
     },
     {
-      name: "Users",
+      name: t('admin.users'),
       href: "/admin/users",
       icon: Users,
       current: pathname.startsWith("/admin/users")
     },
     {
-      name: "Site Settings",
+      name: t('admin.siteSettings'),
       href: "/admin/site-settings/site-setup",
       icon: Settings,
       current: pathname.startsWith("/admin/site-settings")
     },
     {
-      name: "Statistics",
+      name: t('admin.statistics'),
       href: "/admin/statistics",
       icon: BarChart3,
       current: pathname.startsWith("/admin/statistics")
@@ -105,10 +108,10 @@ export default function AdminLayout({
   ];
 
   const siteSettingsSubmenu = [
-    { name: "Setup", href: "/admin/site-settings/site-setup" },
-    { name: "Languages", href: "/admin/site-settings/site-setup/languages" },
-    { name: "Bulk Emails", href: "/admin/site-settings/site-setup/bulk-emails" },
-    { name: "Navigation", href: "/admin/site-settings/site-setup/navigation" }
+    { name: t('siteSettings.setup'), href: "/admin/site-settings/site-setup" },
+    { name: t('siteSettings.languages'), href: "/admin/site-settings/site-setup/languages" },
+    { name: t('siteSettings.bulkEmails'), href: "/admin/site-settings/site-setup/bulk-emails" },
+    { name: t('siteSettings.navigation'), href: "/admin/site-settings/site-setup/navigation" }
   ];
 
   // Proteksi role - hanya admin yang bisa akses area ini
@@ -132,8 +135,8 @@ export default function AdminLayout({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006798] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006798] mx-auto"></div>
+                  <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -154,7 +157,7 @@ export default function AdminLayout({
               <Dropdown
                 button={
                   <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                    <span className="text-white text-base font-medium" style={{fontSize: '1rem'}}>Open Journal Systems</span>
+                    <span className="text-white text-base font-medium" style={{fontSize: '1rem'}}>{t('admin.openJournalSystems')}</span>
                     <ChevronDown className="h-4 w-4 text-white" />
                   </div>
                 }
@@ -166,7 +169,7 @@ export default function AdminLayout({
                     className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100 transition-colors"
                   >
                     <Home className="h-4 w-4" />
-                    Site Administration
+                    {t('admin.siteAdministration')}
                   </Link>
                   {journals.length > 0 && (
                     <>
@@ -187,7 +190,7 @@ export default function AdminLayout({
             </div>
             {/* Tasks */}
             <div className="flex items-center gap-2">
-              <span className="text-white text-base font-medium" style={{fontSize: '1rem'}}>Tasks</span>
+              <span className="text-white text-base font-medium" style={{fontSize: '1rem'}}>{t('admin.tasks')}</span>
               <span className="bg-gray-600 text-white rounded-full px-2 py-0.5 text-sm" style={{
                 backgroundColor: '#4B5563',
                 padding: '0.125rem 0.5rem',
@@ -200,31 +203,7 @@ export default function AdminLayout({
           {/* Right: Language and User */}
           <div className="flex items-center gap-6">
             {/* Language */}
-            <Dropdown
-              button={
-                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                  <Globe className="h-4 w-4 text-white" />
-                  <span className="text-white text-base font-medium" style={{fontSize: '1rem'}}>English</span>
-                  <ChevronDown className="h-4 w-4 text-white" />
-                </div>
-              }
-              align="right"
-            >
-              <DropdownSection>
-                <DropdownItem href="#" icon={<Globe className="h-4 w-4" />}>
-                  English
-                </DropdownItem>
-                <DropdownItem href="#" icon={<Globe className="h-4 w-4" />}>
-                  Bahasa Indonesia
-                </DropdownItem>
-                <DropdownItem href="#" icon={<Globe className="h-4 w-4" />}>
-                  Français
-                </DropdownItem>
-                <DropdownItem href="#" icon={<Globe className="h-4 w-4" />}>
-                  Español
-                </DropdownItem>
-              </DropdownSection>
-            </Dropdown>
+            <LanguageSwitcher />
 
             {/* User with Logout */}
             <Dropdown
@@ -245,7 +224,7 @@ export default function AdminLayout({
                   }}
                   icon={<LogOut className="h-4 w-4" />}
                 >
-                  Logout
+                  {t('admin.logout')}
                 </DropdownItem>
               </DropdownSection>
             </Dropdown>
@@ -313,7 +292,7 @@ export default function AdminLayout({
               <h2 className="text-white font-bold" style={{
                 fontSize: '1.25rem',
                 fontWeight: 'bold'
-              }}>Administration</h2>
+              }}>{t('admin.administration')}</h2>
             </div>
           </div>
         </aside>

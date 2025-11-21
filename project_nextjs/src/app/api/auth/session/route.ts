@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getUserById, getUserRoles } from '@/lib/db'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{}> }) {
   try {
-    // Try our custom auth first
+    // Try our custom auth first (uses session-token cookie)
     const user = await getCurrentUser(request)
     
     if (user) {
@@ -17,13 +18,41 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{}
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session?.user) {
-        // Create user object from Supabase session
+        // Important: Supabase Auth user.id might differ from user_accounts.id
+        // So we need to get the correct user_id from database using email or metadata
+        let dbUserId = session.user.user_metadata?.user_id
+        
+        // If not in metadata, find user by email from database
+        if (!dbUserId) {
+          const { getUserByEmail } = await import('@/lib/db')
+          const userDataByEmail = await getUserByEmail(session.user.email || '')
+          dbUserId = userDataByEmail?.user_id
+        }
+        
+        // If still no user_id, use Supabase Auth user.id as fallback
+        if (!dbUserId) {
+          dbUserId = session.user.id
+        }
+        
+        // Get user data from database using the correct user_id
+        const userData = await getUserById(dbUserId)
+        if (!userData) {
+          return NextResponse.json(
+            { error: 'User not found' },
+            { status: 404 }
+          )
+        }
+
+        // Get user roles from database using the correct user_id
+        const roles = await getUserRoles(dbUserId)
+        
+        // Create user object with roles from database
         const supabaseUser = {
-          id: session.user.id,
-          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || '',
-          email: session.user.email || '',
-          full_name: session.user.user_metadata?.full_name || undefined,
-          roles: session.user.user_metadata?.roles || []
+          id: userData.user_id,
+          username: userData.username,
+          email: userData.email,
+          full_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || undefined,
+          roles: roles
         }
         
         return NextResponse.json({ user: supabaseUser })

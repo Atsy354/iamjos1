@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { withAuth } from "@/lib/auth-client";
+import { useI18n } from "@/contexts/I18nContext";
 import { useState, useEffect } from "react";
 
 function SiteSetupSettingsPage() {
+  const { t } = useI18n();
   const [settings, setSettings] = useState({
     site_name: "Open Journal Systems",
     min_password_length: 6
@@ -27,15 +29,7 @@ function SiteSetupSettingsPage() {
         <h2 className="text-base font-semibold text-gray-900" style={{
           fontSize: '1rem',
           fontWeight: '600'
-        }}>Settings</h2>
-        <nav className="flex gap-3 text-sm font-semibold" style={{
-          gap: '0.75rem',
-          fontSize: '0.875rem'
-        }}>
-          <a className="text-gray-600 hover:text-gray-900">Español (España)</a>
-          <a className="text-gray-600 hover:text-gray-900">Bahasa Indonesia</a>
-          <a className="text-gray-900">English</a>
-        </nav>
+        }}>{t('siteSettings.settings')}</h2>
       </header>
       <form onSubmit={handleSubmit} className="space-y-6" style={{
         gap: '1.5rem'
@@ -44,7 +38,7 @@ function SiteSetupSettingsPage() {
           <Label htmlFor="site_name" style={{
             fontSize: '0.875rem',
             fontWeight: '500'
-          }}>Site Name <span className="text-red-600">*</span></Label>
+          }}>{t('siteSettings.siteName')} <span className="text-red-600">*</span></Label>
           <Input 
             id="site_name" 
             name="site_name" 
@@ -61,7 +55,7 @@ function SiteSetupSettingsPage() {
           <Label htmlFor="min_password_length" style={{
             fontSize: '0.875rem',
             fontWeight: '500'
-          }}>Minimum password length (characters) <span className="text-red-600">*</span></Label>
+          }}>{t('siteSettings.minimumPasswordLength')} <span className="text-red-600">*</span></Label>
           <Input 
             id="min_password_length" 
             name="min_password_length" 
@@ -77,7 +71,7 @@ function SiteSetupSettingsPage() {
           />
         </div>
         <div className="flex justify-end">
-          <Button type="submit">Save</Button>
+          <Button type="submit">{t('common.save')}</Button>
         </div>
       </form>
     </div>

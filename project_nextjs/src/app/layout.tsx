@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <body className={`${notoSans.variable} bg-[var(--background)] antialiased`}>
         <AppProviders>{children}</AppProviders>
       </body>

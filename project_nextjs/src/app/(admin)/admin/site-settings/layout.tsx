@@ -2,19 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useI18n } from "@/contexts/I18nContext";
 import type { ReactNode } from "react";
 
 type Props = { children: ReactNode };
 
 export default function SiteSettingsLayout({ children }: Props) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
-  const tabs = [
-    { href: "/admin/site-settings/site-setup", label: "Setup" },
-    { href: "/admin/site-settings/site-setup/languages", label: "Languages" },
-    { href: "/admin/site-settings/site-setup/bulk-emails", label: "Bulk Emails" },
-    { href: "/admin/site-settings/site-setup/navigation", label: "Navigation" },
-  ];
+  // Main tabs seperti OJS: Setup, Appearance, Plugins
+  const MAIN_TABS = [
+    { id: "setup", label: t('siteSettings.setup'), href: "/admin/site-settings/site-setup" },
+    { id: "appearance", label: t('siteSettings.appearance'), href: "/admin/site-settings/appearance" },
+    { id: "plugins", label: t('siteSettings.plugins'), href: "/admin/site-settings/plugins" },
+  ] as const;
+  
+  // Determine active main tab
+  const activeMainTab = MAIN_TABS.find(tab => pathname?.startsWith(tab.href)) || MAIN_TABS[0];
 
   return (
     <div className="min-h-screen bg-white">
@@ -28,7 +33,7 @@ export default function SiteSettingsLayout({ children }: Props) {
           fontWeight: 'bold',
           color: '#111827'
         }}>
-          Site Settings
+          {t('admin.siteSettings')}
         </h1>
       </div>
 
@@ -36,31 +41,35 @@ export default function SiteSettingsLayout({ children }: Props) {
       <div className="px-6 py-6" style={{
         padding: '2rem 1.5rem'
       }}>
-        <nav className="space-x-4 mb-6 border-b border-gray-200 pb-4" style={{
-          gap: '1rem',
-          fontSize: '1rem',
+        {/* Main Tabs - OJS 3.3 Style */}
+        <nav className="mb-6 border-b border-gray-200" style={{
           marginBottom: '1.5rem',
-          paddingBottom: '1rem',
           borderBottom: '1px solid #e5e7eb'
         }}>
-          {tabs.map((t) => {
-            const active = pathname === t.href || pathname?.startsWith(t.href);
-            return (
-              <Link
-                key={t.href}
-                href={t.href}
-                className={`${active ? "text-[#006798] font-semibold" : "text-[#006798] hover:underline"}`}
-                style={{
-                  color: active ? '#006798' : '#006798',
-                  fontWeight: active ? '600' : '400',
-                  fontSize: '1rem',
-                  textDecoration: 'underline'
-                }}
-              >
-                {t.label}
-              </Link>
-            );
-          })}
+          <div className="flex gap-6" style={{ gap: '1.5rem' }}>
+            {MAIN_TABS.map((tab) => {
+              const active = pathname?.startsWith(tab.href);
+              return (
+                <Link
+                  key={tab.id}
+                  href={tab.href}
+                  className={`pb-3 px-1 font-semibold transition-colors ${
+                    active 
+                      ? "border-b-2 border-[#006798] text-[#006798]" 
+                      : "text-[#006798] hover:text-[#004d75]"
+                  }`}
+                  style={{
+                    fontSize: '1rem',
+                    paddingBottom: '0.75rem',
+                    borderBottom: active ? '2px solid #006798' : 'none',
+                    fontWeight: '600'
+                  }}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
         {children}
       </div>

@@ -50,25 +50,35 @@ export function LoginForm() {
       
       await login(email, password);
       
-      // Wait a bit for AuthContext to update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for session to be set in cookies
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Get user data after login to determine redirect
-      const response = await fetch('/api/auth/session');
-      if (response.ok) {
-        const data = await response.json();
-        const loggedInUser = data.user;
-        
-        // Redirect based on role or source
-        if (source && source.startsWith("/")) {
-          router.push(source);
-        } else if (loggedInUser) {
-          const redirectPath = getRedirectPathByRole(loggedInUser);
-          router.push(redirectPath);
-        } else {
-          router.push("/dashboard");
+      let loggedInUser = null;
+      try {
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include', // Include cookies
+          cache: 'no-store' // Don't cache
+        });
+        if (response.ok) {
+          const data = await response.json();
+          loggedInUser = data.user;
         }
+      } catch (error) {
+        console.error('Error fetching session:', error);
+      }
+      
+      // Redirect based on role or source
+      // Always redirect to dashboard first to ensure session is loaded
+      if (source && source.startsWith("/") && source !== "/login") {
+        router.push(source);
+      } else if (loggedInUser) {
+        // Wait a bit more before redirecting to role-specific page
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const redirectPath = getRedirectPathByRole(loggedInUser);
+        router.push(redirectPath);
       } else {
+        // Default to dashboard if no user data
         router.push("/dashboard");
       }
     } catch (err: any) {

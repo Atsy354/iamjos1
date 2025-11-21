@@ -15,7 +15,7 @@ export function getRedirectPathByRole(user: User | null): string {
   if (rolePaths.includes("admin")) {
     return "/admin";
   } else if (rolePaths.includes("manager")) {
-    return "/admin";
+    return "/manager";
   } else if (rolePaths.includes("editor") || rolePaths.includes("section_editor")) {
     return "/editor";
   } else if (rolePaths.includes("copyeditor")) {

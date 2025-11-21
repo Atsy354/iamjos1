@@ -1,435 +1,328 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-
-import { FormMessage } from "@/components/ui/form-message";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { DEFAULT_JOURNAL_SETTINGS, JOURNAL_ROLE_OPTIONS, type JournalRoleValue, type JournalSettings } from "../types";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import { useSupabase } from "@/providers/supabase-provider";
+
+type JournalData = {
+  id: string;
+  name: string;
+  path: string;
+  description?: string;
+  settings: any[];
+};
 
 type Props = {
-  journal: { id: string; name: string };
+  journalId: string;
+  initialData: JournalData;
 };
 
-const TAB_LIST = ["context", "search-indexing", "theme", "restrict-bulk-emails"] as const;
-type TabId = (typeof TAB_LIST)[number];
+// Wizard tabs seperti OJS
+const WIZARD_TABS = [
+  { id: 'context', label: 'Journal Information' },
+  { id: 'theme', label: 'Theme' },
+  { id: 'indexing', label: 'Search Indexing' },
+] as const;
 
-const TAB_LABELS: Record<TabId, string> = {
-  context: "Context",
-  "search-indexing": "Search Indexing",
-  theme: "Theme",
-  "restrict-bulk-emails": "Restrict Bulk Emails",
-};
+export function JournalSettingsWizard({ journalId, initialData }: Props) {
+  const router = useRouter();
+  const supabase = useSupabase();
+  const [activeTab, setActiveTab] = useState<typeof WIZARD_TABS[number]['id']>('context');
+  const [loading, setLoading] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: initialData.name || '',
+    path: initialData.path || '',
+    description: initialData.description || '',
+    theme: 'default',
+    header_bg_color: '#002C40',
+    primary_color: '#006798',
+    // Indexing settings
+    keywords: '',
+    description_text: '',
+    include_supplemental: true,
+  });
 
-type SectionKey = keyof JournalSettings;
-type SectionFeedback = Partial<Record<SectionKey, { status: "success" | "error"; message: string }>>;
-
-export function JournalSettingsWizard({ journal }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("context");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const [feedback, setFeedback] = useState<SectionFeedback>({});
-
-  const [contextForm, setContextForm] = useState(DEFAULT_JOURNAL_SETTINGS.context);
-  const [searchForm, setSearchForm] = useState(DEFAULT_JOURNAL_SETTINGS.search);
-  const [themeForm, setThemeForm] = useState(DEFAULT_JOURNAL_SETTINGS.theme);
-  const [restrictForm, setRestrictForm] = useState(DEFAULT_JOURNAL_SETTINGS.restrictBulkEmails);
-
-  useEffect(() => {
-    let active = true;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    fetch(`/api/journals/${journal.id}/settings`)
-      .then(async (res) => {
-        if (!active) return;
-        const json = await res.json();
-        if (!json.ok) {
-          setError(json.message ?? "Tidak dapat memuat pengaturan jurnal.");
-          return;
-        }
-        setContextForm(json.settings.context);
-        setSearchForm(json.settings.search);
-        setThemeForm(json.settings.theme);
-        setRestrictForm(json.settings.restrictBulkEmails);
-        setError(null);
-      })
-      .catch(() => {
-        if (!active) return;
-        setError("Tidak dapat memuat pengaturan jurnal.");
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [journal.id]);
 
-  const handleSave = (section: SectionKey, payload: unknown) => {
-    setFeedback((prev) => ({ ...prev, [section]: undefined }));
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/journals/${journal.id}/settings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ section, payload }),
-        });
-        const json = await res.json();
-        if (!json.ok) {
-          setFeedback((prev) => ({
-            ...prev,
-            [section]: { status: "error", message: json.message ?? "Gagal menyimpan pengaturan." },
-          }));
-          return;
-        }
-        setContextForm(json.settings.context);
-        setSearchForm(json.settings.search);
-        setThemeForm(json.settings.theme);
-        setRestrictForm(json.settings.restrictBulkEmails);
-        setFeedback((prev) => ({
-          ...prev,
-          [section]: { status: "success", message: "Pengaturan tersimpan." },
-        }));
-      } catch {
-        setFeedback((prev) => ({
-          ...prev,
-          [section]: { status: "error", message: "Terjadi kesalahan jaringan." },
-        }));
+    try {
+      // Update journal data
+      const { error: journalError } = await supabase
+        .from('journals')
+        .update({
+          title: formData.name,
+          path: formData.path,
+          description: formData.description,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', journalId);
+
+      if (journalError) {
+        throw journalError;
       }
-    });
+
+      // Update journal settings
+      const settingsUpdates = [
+        { setting_name: 'theme', setting_value: formData.theme },
+        { setting_name: 'header_bg_color', setting_value: formData.header_bg_color },
+        { setting_name: 'primary_color', setting_value: formData.primary_color },
+        { setting_name: 'keywords', setting_value: formData.keywords },
+        { setting_name: 'description', setting_value: formData.description_text },
+      ];
+
+      for (const setting of settingsUpdates) {
+        await supabase
+          .from('journal_settings')
+          .upsert({
+            journal_id: journalId,
+            setting_name: setting.setting_name,
+            setting_value: setting.setting_value,
+            setting_type: 'string',
+          }, {
+            onConflict: 'journal_id,setting_name'
+          });
+      }
+
+      // Success - redirect to hosted journals
+      router.push('/admin/site-management/hosted-journals');
+    } catch (error) {
+      console.error('Error saving journal settings:', error);
+      alert('Failed to save journal settings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const restrictSelections = useMemo(() => new Set<JournalRoleValue>(restrictForm.disabledRoles as JournalRoleValue[]), [restrictForm]);
-
-  if (loading) {
-    return <div className="py-8 text-center text-sm text-[var(--muted)]">Memuat pengaturan jurnal…</div>;
-  }
-
-  if (error) {
-    return <div className="rounded-md border border-[var(--border)] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">{error}</div>;
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)}>
-        <TabsList>
-          {TAB_LIST.map((tab) => (
-            <TabsTrigger key={tab} value={tab}>
-              {TAB_LABELS[tab]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
-      <div className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-        {activeTab === "context" && (
-          <ContextTab
-            form={contextForm}
-            onChange={setContextForm}
-            onSave={() => handleSave("context", contextForm)}
-            pending={isPending}
-            feedback={feedback.context}
-          />
-        )}
-        {activeTab === "search-indexing" && (
-          <SearchIndexingTab
-            form={searchForm}
-            onChange={setSearchForm}
-            onSave={() => handleSave("search", searchForm)}
-            pending={isPending}
-            feedback={feedback.search}
-          />
-        )}
-        {activeTab === "theme" && (
-          <ThemeTab
-            form={themeForm}
-            onChange={setThemeForm}
-            onSave={() => handleSave("theme", themeForm)}
-            pending={isPending}
-            feedback={feedback.theme}
-          />
-        )}
-        {activeTab === "restrict-bulk-emails" && (
-          <RestrictBulkEmailsTab
-            selections={restrictSelections}
-            toggleRole={(role) => {
-              const next = new Set(restrictSelections);
-              if (next.has(role)) {
-                next.delete(role);
-              } else {
-                next.add(role);
-              }
-              const values = Array.from(next);
-              setRestrictForm({ disabledRoles: values });
-            }}
-            onSave={() => handleSave("restrictBulkEmails", { disabledRoles: Array.from(restrictSelections) })}
-            pending={isPending}
-            feedback={feedback.restrictBulkEmails}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-3 rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm">
-      <div>
-        <h3 className="text-lg font-semibold text-[var(--foreground)]">{title}</h3>
-        {description && <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>}
-      </div>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
-
-function ContextTab({
-  form,
-  onChange,
-  onSave,
-  pending,
-  feedback,
-}: {
-  form: JournalSettings["context"];
-  onChange: (next: JournalSettings["context"]) => void;
-  onSave: () => void;
-  pending: boolean;
-  feedback?: { status: "success" | "error"; message: string };
-}) {
-  return (
-    <div className="space-y-6">
-      <Section title="Context" description="Pengaturan dasar jurnal.">
-        <LabelInput label="Journal Name" required value={form.name} onChange={(e) => onChange({ ...form, name: e.target.value })} />
-        <LabelInput label="Journal initials" value={form.initials} onChange={(e) => onChange({ ...form, initials: e.target.value })} />
-        <LabelInput
-          label="Journal abbreviation"
-          value={form.abbreviation}
-          onChange={(e) => onChange({ ...form, abbreviation: e.target.value })}
-        />
-        <LabelInput label="Publisher" value={form.publisher} onChange={(e) => onChange({ ...form, publisher: e.target.value })} />
-        <div className="grid gap-4 md:grid-cols-2">
-          <LabelInput label="Online ISSN" value={form.issnOnline} onChange={(e) => onChange({ ...form, issnOnline: e.target.value })} />
-          <LabelInput label="Print ISSN" value={form.issnPrint} onChange={(e) => onChange({ ...form, issnPrint: e.target.value })} />
-        </div>
-      </Section>
-
-      <Section title="Focus and Scope">
-        <label className="block text-sm text-[var(--foreground)]">
-          <span className="mb-2 block font-semibold">Focus and Scope</span>
-          <textarea
-            rows={5}
-            value={form.focusScope}
-            onChange={(e) => onChange({ ...form, focusScope: e.target.value })}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
-          />
-        </label>
-      </Section>
-
-      {feedback && <FormMessage tone={feedback.status}>{feedback.message}</FormMessage>}
-      <div className="flex justify-end">
-        <Button onClick={onSave} loading={pending} disabled={pending}>
-          Simpan Context
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function SearchIndexingTab({
-  form,
-  onChange,
-  onSave,
-  pending,
-  feedback,
-}: {
-  form: JournalSettings["search"];
-  onChange: (next: JournalSettings["search"]) => void;
-  onSave: () => void;
-  pending: boolean;
-  feedback?: { status: "success" | "error"; message: string };
-}) {
-  return (
-    <div className="space-y-6">
-      <Section title="Search Indexing">
-        <label className="block text-sm text-[var(--foreground)]">
-          <span className="mb-2 block font-semibold">Keywords</span>
-          <textarea
-            rows={3}
-            value={form.keywords}
-            onChange={(e) => onChange({ ...form, keywords: e.target.value })}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
-          />
-        </label>
-        <label className="block text-sm text-[var(--foreground)]">
-          <span className="mb-2 block font-semibold">Description</span>
-          <textarea
-            rows={4}
-            value={form.description}
-            onChange={(e) => onChange({ ...form, description: e.target.value })}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
-          />
-        </label>
-      </Section>
-
-      <Section title="Search Settings">
-        <label className="flex items-start gap-3 rounded-md border border-[var(--border)] bg-white p-4 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={form.includeSupplemental}
-            onChange={(e) => onChange({ ...form, includeSupplemental: e.target.checked })}
-            className="mt-1 h-4 w-4 rounded border border-[var(--border)]"
-          />
-          <span className="text-[var(--foreground)]">Include supplemental files in search index</span>
-        </label>
-      </Section>
-
-      {feedback && <FormMessage tone={feedback.status}>{feedback.message}</FormMessage>}
-      <div className="flex justify-end">
-        <Button onClick={onSave} loading={pending} disabled={pending}>
-          Simpan Search Settings
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function ThemeTab({
-  form,
-  onChange,
-  onSave,
-  pending,
-  feedback,
-}: {
-  form: JournalSettings["theme"];
-  onChange: (next: JournalSettings["theme"]) => void;
-  onSave: () => void;
-  pending: boolean;
-  feedback?: { status: "success" | "error"; message: string };
-}) {
-  return (
-    <div className="space-y-6">
-      <Section title="Theme" description="Pilih tampilan yang akan digunakan jurnal ini.">
-        <label className="block text-sm text-[var(--foreground)]">
-          <span className="mb-2 block font-semibold">Theme</span>
-          <select
-            value={form.theme}
-            onChange={(e) => onChange({ ...form, theme: e.target.value })}
-            className="h-11 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm text-[var(--foreground)] shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
-          >
-            <option value="default">Default</option>
-            <option value="classic">Classic</option>
-            <option value="modern">Modern</option>
-          </select>
-        </label>
-        <LabelInput
-          label="Header background color"
-          value={form.headerBg}
-          onChange={(e) => onChange({ ...form, headerBg: e.target.value })}
-        />
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={form.useSiteTheme}
-            onChange={(e) => onChange({ ...form, useSiteTheme: e.target.checked })}
-            className="h-4 w-4 rounded border border-[var(--border)]"
-          />
-          Use site-wide theme defaults
-        </label>
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={form.showLogo}
-            onChange={(e) => onChange({ ...form, showLogo: e.target.checked })}
-            className="h-4 w-4 rounded border border-[var(--border)]"
-          />
-          Tampilkan logo jurnal di header
-        </label>
-      </Section>
-
-      {feedback && <FormMessage tone={feedback.status}>{feedback.message}</FormMessage>}
-      <div className="flex justify-end">
-        <Button onClick={onSave} loading={pending} disabled={pending}>
-          Simpan Theme
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function RestrictBulkEmailsTab({
-  selections,
-  toggleRole,
-  onSave,
-  pending,
-  feedback,
-}: {
-  selections: Set<JournalRoleValue>;
-  toggleRole: (role: JournalRoleValue) => void;
-  onSave: () => void;
-  pending: boolean;
-  feedback?: { status: "success" | "error"; message: string };
-}) {
-  return (
-    <div className="space-y-6">
-      <Section
-        title="Disable Roles"
-        description="Role yang dipilih tidak dapat menerima email massal dari jurnal ini."
-      >
-        <div className="space-y-2">
-          {JOURNAL_ROLE_OPTIONS.map((role) => (
-            <label
-              key={role.value}
-              className="flex items-start gap-3 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold"
-            >
-              <input
-                type="checkbox"
-                checked={selections.has(role.value)}
-                onChange={() => toggleRole(role.value)}
-                className="mt-1 h-4 w-4 rounded border border-[var(--border)]"
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'context':
+        return (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="name">
+                Journal Name <span className="text-red-600">*</span>
+              </Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                className="max-w-2xl"
               />
-              {role.label}
-            </label>
-          ))}
-        </div>
-      </Section>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="path">
+                Journal Path <span className="text-red-600">*</span>
+              </Label>
+              <Input
+                id="path"
+                value={formData.path}
+                onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                required
+                className="max-w-xl"
+                placeholder="journal-name"
+              />
+              <p className="text-sm text-gray-600">
+                The URL path for this journal (e.g., /journal-name)
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                className="max-w-2xl"
+              />
+            </div>
+          </div>
+        );
 
-      {feedback && <FormMessage tone={feedback.status}>{feedback.message}</FormMessage>}
-      <div className="flex justify-end">
-        <Button onClick={onSave} loading={pending} disabled={pending}>
-          Simpan Restriksi
-        </Button>
-      </div>
-    </div>
-  );
-}
+      case 'theme':
+        return (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="theme">Theme</Label>
+              <select
+                id="theme"
+                value={formData.theme}
+                onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                className="flex h-10 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+              >
+                <option value="default">Default</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="header_bg_color">Header Background Color</Label>
+              <div className="flex gap-3 items-center">
+                <Input
+                  id="header_bg_color"
+                  type="color"
+                  value={formData.header_bg_color}
+                  onChange={(e) => setFormData({ ...formData, header_bg_color: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={formData.header_bg_color}
+                  onChange={(e) => setFormData({ ...formData, header_bg_color: e.target.value })}
+                  className="max-w-xs"
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="primary_color">Primary Color</Label>
+              <div className="flex gap-3 items-center">
+                <Input
+                  id="primary_color"
+                  type="color"
+                  value={formData.primary_color}
+                  onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={formData.primary_color}
+                  onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                  className="max-w-xs"
+                />
+              </div>
+            </div>
+          </div>
+        );
 
-function LabelInput({
-  label,
-  required = false,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; required?: boolean }) {
+      case 'indexing':
+        return (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="keywords">Keywords</Label>
+              <Input
+                id="keywords"
+                value={formData.keywords}
+                onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                className="max-w-2xl"
+                placeholder="keyword1, keyword2, keyword3"
+              />
+              <p className="text-sm text-gray-600">
+                Comma-separated keywords for search engine indexing
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="description_text">Meta Description</Label>
+              <Textarea
+                id="description_text"
+                value={formData.description_text}
+                onChange={(e) => setFormData({ ...formData, description_text: e.target.value })}
+                rows={4}
+                className="max-w-2xl"
+                placeholder="A brief description for search engines"
+              />
+            </div>
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.include_supplemental}
+                  onChange={(e) => setFormData({ ...formData, include_supplemental: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm">Include supplemental files in search results</span>
+              </label>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <label className="block text-sm text-[var(--foreground)]">
-      <span className="mb-2 block font-semibold">
-        {label} {required && <span className="text-[#b91c1c]">*</span>}
-      </span>
-      <Input
-        {...props}
-        className="h-11 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm text-[var(--foreground)] shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
-      />
-    </label>
+    <div className="space-y-6">
+      {/* Wizard Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6">
+          {WIZARD_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 px-1 font-semibold transition-colors ${
+                activeTab === tab.id
+                  ? "border-b-2 border-[#006798] text-[#006798]"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+              style={{
+                fontSize: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: activeTab === tab.id ? '2px solid #006798' : 'none',
+                fontWeight: '600'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          {renderTabContent()}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push('/admin/site-management/hosted-journals')}
+          >
+            Cancel
+          </Button>
+          <div className="flex gap-3">
+            {activeTab !== 'context' && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const currentIndex = WIZARD_TABS.findIndex(t => t.id === activeTab);
+                  if (currentIndex > 0) {
+                    setActiveTab(WIZARD_TABS[currentIndex - 1].id);
+                  }
+                }}
+              >
+                Previous
+              </Button>
+            )}
+            {activeTab !== WIZARD_TABS[WIZARD_TABS.length - 1].id ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  const currentIndex = WIZARD_TABS.findIndex(t => t.id === activeTab);
+                  if (currentIndex < WIZARD_TABS.length - 1) {
+                    setActiveTab(WIZARD_TABS[currentIndex + 1].id);
+                  }
+                }}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }
