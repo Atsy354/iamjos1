@@ -2,18 +2,25 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { Query } from "../../types";
+import type { Query, SubmissionStage } from "../../types";
 import { PkpModal } from "@/components/ui/pkp-modal";
 import { PkpButton } from "@/components/ui/pkp-button";
 import { PkpTextarea } from "@/components/ui/pkp-textarea";
 import { FormMessage } from "@/components/ui/form-message";
+
+type ParticipantSummary = {
+  userId: string;
+  name: string;
+  role: string;
+  stage?: SubmissionStage;
+};
 
 type Props = {
   open: boolean;
   onClose: () => void;
   submissionId: string;
   query: Query;
-  participants: Array<{ userId: string; name: string; role: string }>;
+  participants: ParticipantSummary[];
 };
 
 /**

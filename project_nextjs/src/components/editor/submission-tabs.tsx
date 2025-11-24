@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { SubmissionTable } from "@/features/editor/components/submission-table";
+import type { SubmissionSummary } from "@/features/editor/types";
 
 interface TabData {
   id: string;
   label: string;
   count?: number;
-  submissions: any[];
+  submissions: SubmissionSummary[];
 }
 
 interface SubmissionTabsProps {

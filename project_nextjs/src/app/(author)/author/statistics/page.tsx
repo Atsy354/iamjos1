@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { FileText, TrendingUp, Eye, Download, Award } from 'lucide-react';
 
@@ -38,150 +36,381 @@ function AuthorStatistics() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Author Statistics</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '0.25rem'
+        }}>
+          Author Statistics
+        </h1>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#666',
+          margin: 0
+        }}>
+          View your publication statistics and metrics
+        </p>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">13</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Published Articles</CardTitle>
-            <Award className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">5</div>
-            <p className="text-xs text-muted-foreground">38.5% acceptance rate</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Citations</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">31</div>
-            <p className="text-xs text-muted-foreground">+8 this month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Downloads</CardTitle>
-            <Download className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">802</div>
-            <p className="text-xs text-muted-foreground">+156 this month</p>
-          </CardContent>
-        </Card>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.5rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Submissions
+            </h3>
+            <FileText style={{ width: '1rem', height: '1rem', color: '#666' }} />
+          </div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002C40', marginBottom: '0.25rem' }}>
+            13
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#666', margin: 0 }}>+2 from last month</p>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.5rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Published Articles
+            </h3>
+            <Award style={{ width: '1rem', height: '1rem', color: '#00B24E' }} />
+          </div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#00B24E', marginBottom: '0.25rem' }}>
+            5
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#666', margin: 0 }}>38.5% acceptance rate</p>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.5rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Citations
+            </h3>
+            <TrendingUp style={{ width: '1rem', height: '1rem', color: '#006798' }} />
+          </div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#006798', marginBottom: '0.25rem' }}>
+            31
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#666', margin: 0 }}>+8 this month</p>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.5rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Downloads
+            </h3>
+            <Download style={{ width: '1rem', height: '1rem', color: '#006798' }} />
+          </div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#006798', marginBottom: '0.25rem' }}>
+            802
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#666', margin: 0 }}>+156 this month</p>
+        </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Submissions vs Published (6 Months)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={submissionData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="submissions" fill="#3b82f6" name="Submissions" />
-                <Bar dataKey="published" fill="#10b981" name="Published" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            paddingBottom: '1rem',
+            marginBottom: '1rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Submissions vs Published (6 Months)
+            </h3>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={submissionData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="submissions" fill="#006798" name="Submissions" />
+              <Bar dataKey="published" fill="#00B24E" name="Published" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Citation Trend (6 Months)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={citationData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="citations" stroke="#f59e0b" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            paddingBottom: '1rem',
+            marginBottom: '1rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Citation Trend (6 Months)
+            </h3>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={citationData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="citations" stroke="#006798" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Submissions by Stage</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={stageDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {stageDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            paddingBottom: '1rem',
+            marginBottom: '1rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Current Submissions by Stage
+            </h3>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={stageDistribution}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, value }) => `${name}: ${value}`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {stageDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Acceptance Rate</span>
-                <Badge className="bg-green-100 text-green-800">38.5%</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Average Review Time</span>
-                <Badge className="bg-blue-100 text-blue-800">8.2 days</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Average Time to Publication</span>
-                <Badge className="bg-orange-100 text-orange-800">45 days</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">H-Index</span>
-                <Badge className="bg-purple-100 text-purple-800">3</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">i10-Index</span>
-                <Badge className="bg-indigo-100 text-indigo-800">1</Badge>
-              </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            paddingBottom: '1rem',
+            marginBottom: '1rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Performance Metrics
+            </h3>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#002C40' }}>Acceptance Rate</span>
+              <span style={{
+                backgroundColor: '#d4edda',
+                color: '#155724',
+                fontSize: '0.75rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '4px',
+                fontWeight: 600
+              }}>
+                38.5%
+              </span>
             </div>
-          </CardContent>
-        </Card>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#002C40' }}>Average Review Time</span>
+              <span style={{
+                backgroundColor: '#d1ecf1',
+                color: '#0c5460',
+                fontSize: '0.75rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '4px',
+                fontWeight: 600
+              }}>
+                8.2 days
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#002C40' }}>Average Time to Publication</span>
+              <span style={{
+                backgroundColor: '#fff3cd',
+                color: '#856404',
+                fontSize: '0.75rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '4px',
+                fontWeight: 600
+              }}>
+                45 days
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#002C40' }}>H-Index</span>
+              <span style={{
+                backgroundColor: '#e7d4f8',
+                color: '#6f42c1',
+                fontSize: '0.75rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '4px',
+                fontWeight: 600
+              }}>
+                3
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#002C40' }}>i10-Index</span>
+              <span style={{
+                backgroundColor: '#e2e3e5',
+                color: '#383d41',
+                fontSize: '0.75rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '4px',
+                fontWeight: 600
+              }}>
+                1
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

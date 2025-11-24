@@ -15,12 +15,25 @@ import {
   User,
   Globe,
   Search,
-  Eye,
   FileText
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdown";
 import { useSupabase } from "@/providers/supabase-provider";
+
+type JournalRow = {
+  id: string | number;
+  title?: string | null;
+  name?: string | null;
+  journal_title?: string | null;
+  path?: string | null;
+  slug?: string | null;
+  journal_path?: string | null;
+};
+
+type JournalSettingRow = {
+  journal_id: string;
+  setting_value: string;
+};
 
 export default function ReaderLayout({
   children,
@@ -42,10 +55,15 @@ export default function ReaderLayout({
           .from("journals")
           .select("*")
           .order("created_at", { ascending: true });
-        let rows = ((data ?? []) as Record<string, any>[]).map((r) => ({
-          id: r.id as string,
-          title: (r.title ?? r.name ?? r.journal_title ?? "") as string,
-          path: (r.path ?? r.slug ?? r.journal_path ?? "") as string,
+        const fetchedRows = (data ?? []) as JournalRow[];
+        let rows = fetchedRows.map<{
+          id: string;
+          title: string;
+          path: string;
+        }>((r) => ({
+          id: String(r.id),
+          title: (r.title ?? r.name ?? r.journal_title ?? "") ?? "",
+          path: (r.path ?? r.slug ?? r.journal_path ?? "") ?? "",
         }));
         const missingNameIds = rows.filter((j) => !j.title || j.title.trim().length === 0).map((j) => j.id);
         if (missingNameIds.length) {
@@ -54,8 +72,12 @@ export default function ReaderLayout({
             .select("journal_id, setting_value")
             .eq("setting_name", "name")
             .in("journal_id", missingNameIds);
-          const nameMap = new Map((js ?? []).map((j) => [j.journal_id, j.setting_value]));
-          rows = rows.map((j) => (nameMap.has(j.id) ? { ...j, title: nameMap.get(j.id) as string } : j));
+          const nameRows = (js ?? []) as JournalSettingRow[];
+          const nameMap = new Map(nameRows.map((j) => [j.journal_id, j.setting_value]));
+          rows = rows.map((j) => {
+            const overrideTitle = nameMap.get(j.id);
+            return overrideTitle ? { ...j, title: overrideTitle } : j;
+          });
         }
         setJournals(rows.filter((j) => j.title && j.title.trim().length > 0));
       } catch (error) {

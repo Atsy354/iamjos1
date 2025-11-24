@@ -1,14 +1,6 @@
 'use client'
 
 import { useState } from 'react';
-import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { 
   Upload, 
   FileText, 
@@ -139,336 +131,935 @@ function NewSubmissionPage() {
     switch (currentStep) {
       case 1:
         return (
-          <Card className="border border-gray-200">
-            <CardHeader>
-              <CardTitle>Step 1: Start</CardTitle>
-              <CardDescription>
+          <form style={{ marginBottom: '1.5rem' }}>
+            <div style={{
+              backgroundColor: '#fff',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              padding: '1.5rem',
+              marginBottom: '1rem'
+            }}>
+              <h2 style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: '#002C40',
+                margin: '0 0 0.5rem 0'
+              }}>
+                Step 1: Start
+              </h2>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#666',
+                margin: '0 0 1.5rem 0'
+              }}>
                 Select the journal and section for your submission
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="journal">Journal *</Label>
-                <Select value={formData.journal} onValueChange={(value) => handleInputChange('journal', value)}>
-                  <SelectTrigger id="journal">
-                    <SelectValue placeholder="Select a journal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {journals.map((journal) => (
-                      <SelectItem key={journal.id} value={journal.id}>
-                        {journal.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              </p>
+              <div style={{ marginBottom: '1rem' }}>
+                <label htmlFor="journal" style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  display: 'block',
+                  marginBottom: '0.5rem'
+                }}>
+                  Journal <span style={{ color: '#d32f2f' }}>*</span>
+                </label>
+                <select
+                  id="journal"
+                  value={formData.journal}
+                  onChange={(e) => handleInputChange('journal', e.target.value)}
+                  style={{
+                    width: '100%',
+                    fontSize: '0.875rem',
+                    padding: '0.5rem',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    fontFamily: 'inherit',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  <option value="">Select a journal</option>
+                  {journals.map((journal) => (
+                    <option key={journal.id} value={journal.id}>
+                      {journal.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="section">Section *</Label>
-                <Select value={formData.section} onValueChange={(value) => handleInputChange('section', value)}>
-                  <SelectTrigger id="section">
-                    <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div style={{ marginBottom: '1rem' }}>
+                <label htmlFor="section" style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  display: 'block',
+                  marginBottom: '0.5rem'
+                }}>
+                  Section <span style={{ color: '#d32f2f' }}>*</span>
+                </label>
+                <select
+                  id="section"
+                  value={formData.section}
+                  onChange={(e) => handleInputChange('section', e.target.value)}
+                  style={{
+                    width: '100%',
+                    fontSize: '0.875rem',
+                    padding: '0.5rem',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    fontFamily: 'inherit',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  <option value="">Select a section</option>
+                  {sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="language">Language *</Label>
-                <Select value={formData.language} onValueChange={(value) => handleInputChange('language', value)}>
-                  <SelectTrigger id="language">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="id">Indonesian</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div style={{ marginBottom: '1rem' }}>
+                <label htmlFor="language" style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  display: 'block',
+                  marginBottom: '0.5rem'
+                }}>
+                  Language <span style={{ color: '#d32f2f' }}>*</span>
+                </label>
+                <select
+                  id="language"
+                  value={formData.language}
+                  onChange={(e) => handleInputChange('language', e.target.value)}
+                  style={{
+                    width: '100%',
+                    fontSize: '0.875rem',
+                    padding: '0.5rem',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    fontFamily: 'inherit',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  <option value="en">English</option>
+                  <option value="id">Indonesian</option>
+                </select>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </form>
         );
 
       case 2:
         return (
-          <Card className="border border-gray-200">
-            <CardHeader>
-              <CardTitle>Step 2: Upload Submission</CardTitle>
-              <CardDescription>
+          <div style={{
+            backgroundColor: '#fff',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            padding: '1.5rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{
+              paddingBottom: '1rem',
+              marginBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <h2 style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: '#002C40',
+                margin: '0 0 0.25rem 0'
+              }}>
+                Step 2: Upload Submission
+              </h2>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#666',
+                margin: 0
+              }}>
                 Upload your manuscript file(s). Accepted formats: PDF, DOC, DOCX
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-sm text-gray-600 mb-2">Drag and drop your files here, or click to browse</p>
+              </p>
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}>
+              <div style={{
+                border: '2px dashed #dee2e6',
+                borderRadius: '4px',
+                padding: '2rem',
+                textAlign: 'center',
+                backgroundColor: '#f8f9fa',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#006798';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#dee2e6';
+              }}
+              onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                <Upload style={{
+                  width: '3rem',
+                  height: '3rem',
+                  color: '#666',
+                  margin: '0 auto 1rem'
+                }} />
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#666',
+                  margin: '0 0 0.5rem 0'
+                }}>
+                  Drag and drop your files here, or click to browse
+                </p>
                 <input
                   type="file"
                   multiple
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileUpload}
-                  className="hidden"
+                  style={{ display: 'none' }}
                   id="file-upload"
                 />
-                <Button 
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                  variant="outline"
-                  className="mt-2"
+                <button
+                  type="button"
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#fff',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    color: '#006798',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.5rem'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('file-upload')?.click();
+                  }}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload style={{ width: '1rem', height: '1rem' }} />
                   Choose Files
-                </Button>
+                </button>
               </div>
 
               {formData.files.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Uploaded Files</Label>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}>
+                  <label style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#002C40'
+                  }}>
+                    Uploaded Files
+                  </label>
                   {formData.files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-4 w-4 text-gray-600" />
+                    <div key={index} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '4px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem'
+                      }}>
+                        <FileText style={{
+                          width: '1rem',
+                          height: '1rem',
+                          color: '#666'
+                        }} />
                         <div>
-                          <p className="text-sm font-medium">{file.name}</p>
-                          <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          <p style={{
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            color: '#002C40',
+                            margin: 0
+                          }}>
+                            {file.name}
+                          </p>
+                          <p style={{
+                            fontSize: '0.75rem',
+                            color: '#666',
+                            margin: 0
+                          }}>
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-700"
+                        style={{
+                          padding: '0.25rem',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#d32f2f'
+                        }}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        <Trash2 style={{ width: '1rem', height: '1rem' }} />
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         );
 
       case 3:
         return (
-          <div className="space-y-6">
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <CardTitle>Step 3: Enter Metadata</CardTitle>
-                <CardDescription>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem'
+          }}>
+            <div style={{
+              backgroundColor: '#fff',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              padding: '1.5rem'
+            }}>
+              <div style={{
+                paddingBottom: '1rem',
+                marginBottom: '1rem',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <h2 style={{
+                  fontSize: '1.125rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  margin: '0 0 0.25rem 0'
+                }}>
+                  Step 3: Enter Metadata
+                </h2>
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#666',
+                  margin: 0
+                }}>
                   Provide information about your submission
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
+                </p>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}>
+                  <label htmlFor="title" style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    color: '#002C40'
+                  }}>
+                    Title <span style={{ color: '#d32f2f' }}>*</span>
+                  </label>
+                  <input
                     id="title"
+                    type="text"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     placeholder="Enter the title of your manuscript"
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit'
+                    }}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="abstract">Abstract *</Label>
-                  <Textarea
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}>
+                  <label htmlFor="abstract" style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    color: '#002C40'
+                  }}>
+                    Abstract <span style={{ color: '#d32f2f' }}>*</span>
+                  </label>
+                  <textarea
                     id="abstract"
                     value={formData.abstract}
                     onChange={(e) => handleInputChange('abstract', e.target.value)}
                     placeholder="Enter your abstract here..."
                     rows={6}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit',
+                      resize: 'vertical'
+                    }}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="keywords">Keywords *</Label>
-                  <Input
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}>
+                  <label htmlFor="keywords" style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    color: '#002C40'
+                  }}>
+                    Keywords <span style={{ color: '#d32f2f' }}>*</span>
+                  </label>
+                  <input
                     id="keywords"
+                    type="text"
                     value={formData.keywords}
                     onChange={(e) => handleInputChange('keywords', e.target.value)}
                     placeholder="Enter keywords separated by commas"
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit'
+                    }}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Authors</CardTitle>
-                    <CardDescription>
-                      Add author information for your submission
-                    </CardDescription>
-                  </div>
-                  <Button onClick={addAuthor} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Author
-                  </Button>
+            <div style={{
+              backgroundColor: '#fff',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              padding: '1.5rem'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingBottom: '1rem',
+                marginBottom: '1rem',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <div>
+                  <h2 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 700,
+                    color: '#002C40',
+                    margin: '0 0 0.25rem 0'
+                  }}>
+                    Authors
+                  </h2>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    color: '#666',
+                    margin: 0
+                  }}>
+                    Add author information for your submission
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                <button
+                  type="button"
+                  onClick={addAuthor}
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: '#006798',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <Plus style={{ width: '1rem', height: '1rem' }} />
+                  Add Author
+                </button>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}>
                 {formData.authors.map((author, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-900">
+                  <div key={index} style={{
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    padding: '1rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '1rem'
+                    }}>
+                      <h4 style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        color: '#002C40',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
                         Author {index + 1}
                         {author.isCorresponding && (
-                          <Badge variant="outline" className="ml-2 text-xs">
+                          <span style={{
+                            fontSize: '0.75rem',
+                            padding: '0.125rem 0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            backgroundColor: '#f8f9fa',
+                            color: '#333',
+                            fontWeight: 600
+                          }}>
                             Corresponding
-                          </Badge>
+                          </span>
                         )}
                       </h4>
                       {formData.authors.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => removeAuthor(index)}
-                          className="text-red-600 hover:text-red-700"
+                          style={{
+                            padding: '0.25rem',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#d32f2f'
+                          }}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <Trash2 style={{ width: '1rem', height: '1rem' }} />
+                        </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Given Name *</Label>
-                        <Input
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: '1rem'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <label style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#002C40'
+                        }}>
+                          Given Name <span style={{ color: '#d32f2f' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
                           value={author.givenName}
                           onChange={(e) => handleAuthorChange(index, 'givenName', e.target.value)}
                           placeholder="First name"
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit'
+                          }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Family Name *</Label>
-                        <Input
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <label style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#002C40'
+                        }}>
+                          Family Name <span style={{ color: '#d32f2f' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
                           value={author.familyName}
                           onChange={(e) => handleAuthorChange(index, 'familyName', e.target.value)}
                           placeholder="Last name"
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit'
+                          }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Email *</Label>
-                        <Input
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <label style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#002C40'
+                        }}>
+                          Email <span style={{ color: '#d32f2f' }}>*</span>
+                        </label>
+                        <input
                           type="email"
                           value={author.email}
                           onChange={(e) => handleAuthorChange(index, 'email', e.target.value)}
                           placeholder="author@example.com"
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit'
+                          }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>ORCID</Label>
-                        <Input
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <label style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#002C40'
+                        }}>
+                          ORCID
+                        </label>
+                        <input
+                          type="text"
                           value={author.orcid}
                           onChange={(e) => handleAuthorChange(index, 'orcid', e.target.value)}
                           placeholder="0000-0000-0000-0000"
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit'
+                          }}
                         />
                       </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>Affiliation *</Label>
-                        <Input
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem',
+                        gridColumn: '1 / -1'
+                      }}>
+                        <label style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#002C40'
+                        }}>
+                          Affiliation <span style={{ color: '#d32f2f' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
                           value={author.affiliation}
                           onChange={(e) => handleAuthorChange(index, 'affiliation', e.target.value)}
                           placeholder="University or institution"
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit'
+                          }}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Country *</Label>
-                        <Select value={author.country} onValueChange={(value) => handleAuthorChange(index, 'country', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {countries.map((country) => (
-                              <SelectItem key={country.code} value={country.code}>
-                                {country.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <label style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#002C40'
+                        }}>
+                          Country <span style={{ color: '#d32f2f' }}>*</span>
+                        </label>
+                        <select
+                          value={author.country}
+                          onChange={(e) => handleAuthorChange(index, 'country', e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit',
+                            backgroundColor: '#fff'
+                          }}
+                        >
+                          <option value="">Select country</option>
+                          {countries.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         );
 
       case 4:
         return (
-          <Card className="border border-gray-200">
-            <CardHeader>
-              <CardTitle>Step 4: Upload Supplementary Files</CardTitle>
-              <CardDescription>
+          <div style={{
+            backgroundColor: '#fff',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            padding: '1.5rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{
+              paddingBottom: '1rem',
+              marginBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <h2 style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: '#002C40',
+                margin: '0 0 0.25rem 0'
+              }}>
+                Step 4: Upload Supplementary Files
+              </h2>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#666',
+                margin: 0
+              }}>
                 Upload any supplementary files (optional). This could include datasets, code, or additional materials.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-sm text-gray-600 mb-2">Upload supplementary files here</p>
+              </p>
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}>
+              <div style={{
+                border: '2px dashed #dee2e6',
+                borderRadius: '4px',
+                padding: '2rem',
+                textAlign: 'center',
+                backgroundColor: '#f8f9fa',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#006798';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#dee2e6';
+              }}
+              onClick={() => document.getElementById('supplementary-upload')?.click()}
+              >
+                <Upload style={{
+                  width: '3rem',
+                  height: '3rem',
+                  color: '#666',
+                  margin: '0 auto 1rem'
+                }} />
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#666',
+                  margin: '0 0 0.5rem 0'
+                }}>
+                  Upload supplementary files here
+                </p>
                 <input
                   type="file"
                   multiple
                   onChange={handleFileUpload}
-                  className="hidden"
+                  style={{ display: 'none' }}
                   id="supplementary-upload"
                 />
-                <Button 
-                  onClick={() => document.getElementById('supplementary-upload')?.click()}
-                  variant="outline"
-                  className="mt-2"
+                <button
+                  type="button"
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#fff',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    color: '#006798',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.5rem'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('supplementary-upload')?.click();
+                  }}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload style={{ width: '1rem', height: '1rem' }} />
                   Choose Files
-                </Button>
+                </button>
               </div>
 
-              <p className="text-sm text-gray-600">
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#666',
+                margin: 0
+              }}>
                 Supplementary files are optional and can include datasets, code, figures, or other materials that support your submission.
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         );
 
       case 5:
         return (
-          <div className="space-y-6">
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <CardTitle>Step 5: Confirmation</CardTitle>
-                <CardDescription>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem'
+          }}>
+            <div style={{
+              backgroundColor: '#fff',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              padding: '1.5rem'
+            }}>
+              <div style={{
+                paddingBottom: '1rem',
+                marginBottom: '1rem',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <h2 style={{
+                  fontSize: '1.125rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  margin: '0 0 0.25rem 0'
+                }}>
+                  Step 5: Confirmation
+                </h2>
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#666',
+                  margin: 0
+                }}>
                   Please review your submission details before final submission
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                </p>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem'
+              }}>
+                <div style={{
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                  padding: '1rem'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem'
+                  }}>
+                    <AlertCircle style={{
+                      width: '1.25rem',
+                      height: '1.25rem',
+                      color: '#856404',
+                      marginTop: '0.125rem',
+                      flexShrink: 0
+                    }} />
                     <div>
-                      <h4 className="text-sm font-medium text-yellow-800">Submission Checklist</h4>
-                      <ul className="mt-2 text-sm text-yellow-700 space-y-1">
-                        <li>• The submission has not been previously published</li>
-                        <li>• The submission file is in Microsoft Word or PDF format</li>
-                        <li>• All authors have been added with complete information</li>
-                        <li>• The text adheres to the stylistic and bibliographic requirements</li>
+                      <h4 style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        color: '#856404',
+                        margin: '0 0 0.5rem 0'
+                      }}>
+                        Submission Checklist
+                      </h4>
+                      <ul style={{
+                        fontSize: '0.875rem',
+                        color: '#856404',
+                        margin: 0,
+                        paddingLeft: '1.25rem',
+                        listStyle: 'disc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem'
+                      }}>
+                        <li>The submission has not been previously published</li>
+                        <li>The submission file is in Microsoft Word or PDF format</li>
+                        <li>All authors have been added with complete information</li>
+                        <li>The text adheres to the stylistic and bibliographic requirements</li>
                       </ul>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem'
+                }}>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Submission Details</h4>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                    <h4 style={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: '#002C40',
+                      margin: '0 0 0.5rem 0'
+                    }}>
+                      Submission Details
+                    </h4>
+                    <div style={{
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '4px',
+                      padding: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      fontSize: '0.875rem'
+                    }}>
                       <div><strong>Title:</strong> {formData.title || 'Not specified'}</div>
                       <div><strong>Journal:</strong> {journals.find(j => j.id === formData.journal)?.name || 'Not selected'}</div>
                       <div><strong>Section:</strong> {sections.find(s => s.id === formData.section)?.name || 'Not selected'}</div>
@@ -479,14 +1070,30 @@ function NewSubmissionPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="terms" className="rounded border-gray-300" />
-                  <label htmlFor="terms" className="text-sm text-gray-700">
-                    I agree to the <a href="#" className="text-[#006798] hover:underline">terms and conditions</a> and <a href="#" className="text-[#006798] hover:underline">privacy policy</a>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    style={{
+                      width: '1rem',
+                      height: '1rem',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <label htmlFor="terms" style={{
+                    fontSize: '0.875rem',
+                    color: '#333',
+                    cursor: 'pointer'
+                  }}>
+                    I agree to the <a href="#" style={{ color: '#006798', textDecoration: 'underline' }}>terms and conditions</a> and <a href="#" style={{ color: '#006798', textDecoration: 'underline' }}>privacy policy</a>
                   </label>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         );
 
@@ -496,76 +1103,169 @@ function NewSubmissionPage() {
   };
 
   return (
-    <section className="space-y-6">
-      <PageHeader
-        title="New Submission"
-        subtitle="Submit your manuscript for peer review"
-        showBreadcrumbs={true}
-      />
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '0.25rem'
+        }}>
+          New Submission
+        </h1>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#666',
+          margin: 0
+        }}>
+          Submit your manuscript for peer review
+        </p>
+      </div>
 
-      {/* Progress Steps */}
-      <Card className="border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
-                    currentStep > step.id ? 'bg-green-500 text-white' :
-                    currentStep === step.id ? 'bg-[#006798] text-white' :
-                    'bg-gray-200 text-gray-600'
-                  }`}>
-                    {currentStep > step.id ? '✓' : step.id}
-                  </div>
-                  <div className="mt-2 text-center">
-                    <p className="text-xs font-medium text-gray-900">{step.name}</p>
-                    <p className="text-xs text-gray-500">{step.description}</p>
-                  </div>
+      {/* Progress Steps - OJS PKP 3.3 Style */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          {steps.map((step, index) => (
+            <div key={step.id} style={{ display: 'flex', alignItems: 'center', flex: '1', minWidth: '150px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                <div style={{
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  backgroundColor: currentStep > step.id ? '#00B24E' : currentStep === step.id ? '#006798' : '#e5e5e5',
+                  color: currentStep > step.id || currentStep === step.id ? '#fff' : '#666'
+                }}>
+                  {currentStep > step.id ? '✓' : step.id}
                 </div>
-                {index < steps.length - 1 && (
-                  <div className={`flex-1 h-1 mx-4 ${
-                    currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
-                  }`} />
-                )}
+                <div style={{ marginTop: '0.5rem', textAlign: 'center', width: '100%' }}>
+                  <p style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: '#002C40',
+                    margin: '0 0 0.125rem 0'
+                  }}>
+                    {step.name}
+                  </p>
+                  <p style={{
+                    fontSize: '0.75rem',
+                    color: '#666',
+                    margin: 0
+                  }}>
+                    {step.description}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              {index < steps.length - 1 && (
+                <div style={{
+                  flex: '1',
+                  height: '2px',
+                  margin: '0 1rem',
+                  minWidth: '50px',
+                  backgroundColor: currentStep > step.id ? '#00B24E' : '#e5e5e5'
+                }} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Step Content */}
       {renderStepContent()}
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between">
-        <Button
+      {/* Navigation Buttons - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: '1.5rem',
+        paddingTop: '1rem',
+        borderTop: '1px solid #e5e5e5'
+      }}>
+        <button
+          type="button"
           onClick={prevStep}
           disabled={currentStep === 1}
-          variant="outline"
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            backgroundColor: '#fff',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
+            opacity: currentStep === 1 ? 0.5 : 1,
+            color: '#006798'
+          }}
         >
           Previous
-        </Button>
+        </button>
         
-        <div className="space-x-3">
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
           {currentStep < totalSteps && (
-            <Button
+            <button
+              type="button"
               onClick={nextStep}
-              className="bg-[#006798] hover:bg-[#005687]"
+              style={{
+                backgroundColor: '#006798',
+                color: '#fff',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
             >
               {currentStep === 4 ? 'Review' : 'Next'}
-            </Button>
+            </button>
           )}
           {currentStep === totalSteps && (
-            <Button
-              className="bg-green-600 hover:bg-green-700"
+            <button
+              type="button"
+              style={{
+                backgroundColor: '#00B24E',
+                color: '#fff',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
             >
-              <Send className="h-4 w-4 mr-2" />
+              <Send style={{ width: '1rem', height: '1rem' }} />
               Submit Manuscript
-            </Button>
+            </button>
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

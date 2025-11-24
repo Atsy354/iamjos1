@@ -52,6 +52,7 @@ export function PublicationTab({ submissionId, detail }: Props) {
       <PublicationContent
         submissionId={submissionId}
         detail={detail}
+        currentVersion={currentVersion}
         activeSubTab={activeSubTab}
         setActiveSubTab={setActiveSubTab}
         subTabs={subTabs}

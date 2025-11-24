@@ -8,7 +8,7 @@ import {
   loadSetting,
   saveSetting,
 } from "@/lib/settings-helpers";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { ensureDummySettingsSeed } from "@/features/editor/dummy-settings";
 
 type RouteParams = {
   params: Promise<{ section: string }>;
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest, context: RouteParams) {
     const { searchParams } = new URL(request.url);
     const journalId = searchParams.get("journalId");
 
-    if (!journalId) {
-      // Try to get from user roles
+    let resolvedJournalId = journalId;
+    if (!resolvedJournalId) {
       const journalRole = user.roles.find((r) => r.context_id);
       if (!journalRole?.context_id) {
         return NextResponse.json(
@@ -40,8 +40,7 @@ export async function GET(request: NextRequest, context: RouteParams) {
           { status: 400 }
         );
       }
-      const settings = await loadSectionSettings(journalRole.context_id, section);
-      return NextResponse.json({ ok: true, settings });
+      resolvedJournalId = journalRole.context_id;
     }
 
     // Check permissions - only journal managers, editors, and admins can view settings
@@ -50,7 +49,7 @@ export async function GET(request: NextRequest, context: RouteParams) {
         role.role_path === "admin" ||
         role.role_path === "manager" ||
         role.role_path === "editor" ||
-        (role.context_id === journalId &&
+        (role.context_id === resolvedJournalId &&
           ["manager", "editor", "section_editor"].includes(role.role_path))
     );
 
@@ -58,7 +57,8 @@ export async function GET(request: NextRequest, context: RouteParams) {
       return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 });
     }
 
-    const settings = await loadSectionSettings(journalId, section);
+    await ensureDummySettingsSeed(section, resolvedJournalId);
+    const settings = await loadSectionSettings(resolvedJournalId, section);
     return NextResponse.json({ ok: true, settings });
   } catch (error) {
     console.error("Error loading settings:", error);

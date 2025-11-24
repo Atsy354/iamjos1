@@ -1,11 +1,7 @@
 'use client'
 
-import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, Settings, Plus, Edit, Eye } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Users, Settings, Plus, Eye } from "lucide-react";
 import { withAuth } from "@/lib/auth-client";
 
 // Mock data for journals
@@ -43,155 +39,486 @@ const mockJournals = [
 ];
 
 function SiteManagementPage() {
-  const getStatusBadgeVariant = (status: string) => {
-    return status === "Enabled" ? "success" : "secondary";
-  };
-
   return (
-    <section className="space-y-6">
-      <PageHeader
-        title="Hosted Journals"
-        subtitle="Manage journals hosted on this site"
-        showBreadcrumbs={true}
-      />
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '0.25rem'
+        }}>
+          Hosted Journals
+        </h1>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#666',
+          margin: 0
+        }}>
+          Manage journals hosted on this site
+        </p>
+      </div>
 
       {/* Journal Statistics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Journals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{mockJournals.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Hosted on this site</p>
-          </CardContent>
-        </Card>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            paddingBottom: '0.75rem',
+            marginBottom: '0.75rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#666',
+              margin: 0
+            }}>
+              Total Journals
+            </h3>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#002C40',
+            marginBottom: '0.25rem'
+          }}>
+            {mockJournals.length}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Hosted on this site
+          </p>
+        </div>
 
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Active Journals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {mockJournals.filter(j => j.status === "Enabled").length}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Currently active</p>
-          </CardContent>
-        </Card>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            paddingBottom: '0.75rem',
+            marginBottom: '0.75rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#666',
+              margin: 0
+            }}>
+              Active Journals
+            </h3>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#00B24E',
+            marginBottom: '0.25rem'
+          }}>
+            {mockJournals.filter(j => j.status === "Enabled").length}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Currently active
+          </p>
+        </div>
 
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Submissions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {mockJournals.reduce((sum, j) => sum + j.submissions, 0)}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Across all journals</p>
-          </CardContent>
-        </Card>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            paddingBottom: '0.75rem',
+            marginBottom: '0.75rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#666',
+              margin: 0
+            }}>
+              Total Submissions
+            </h3>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#006798',
+            marginBottom: '0.25rem'
+          }}>
+            {mockJournals.reduce((sum, j) => sum + j.submissions, 0)}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Across all journals
+          </p>
+        </div>
 
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {mockJournals.reduce((sum, j) => sum + j.users, 0)}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Across all journals</p>
-          </CardContent>
-        </Card>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            paddingBottom: '0.75rem',
+            marginBottom: '0.75rem',
+            borderBottom: '1px solid #e5e5e5'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#666',
+              margin: 0
+            }}>
+              Total Users
+            </h3>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#006798',
+            marginBottom: '0.25rem'
+          }}>
+            {mockJournals.reduce((sum, j) => sum + j.users, 0)}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Across all journals
+          </p>
+        </div>
       </div>
 
       {/* Create New Journal Button */}
-      <div className="flex justify-end">
-        <Button className="bg-[#006798] hover:bg-[#005687]">
-          <Plus className="h-4 w-4 mr-2" />
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        marginBottom: '1.5rem'
+      }}>
+        <Link
+          href="/admin/site-management/hosted-journals/create"
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            backgroundColor: '#006798',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Plus style={{ width: '1rem', height: '1rem' }} />
           Create Journal
-        </Button>
+        </Link>
       </div>
 
       {/* Journals Table */}
-      <Card className="border border-gray-200">
-        <CardHeader>
-          <div>
-            <CardTitle className="text-lg font-semibold text-gray-900">
-              Journal Management
-            </CardTitle>
-            <CardDescription>
-              Manage journals hosted on this site
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Journal</TableHead>
-                  <TableHead>Path</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Submissions</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Created Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockJournals.map((journal) => (
-                  <TableRow key={journal.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-gray-900">{journal.title}</div>
-                        <div className="text-sm text-gray-500 max-w-xs truncate">
-                          {journal.description}
-                        </div>
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderBottom: '1px solid #e5e5e5',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: '0 0 0.25rem 0'
+          }}>
+            Journal Management
+          </h2>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Manage journals hosted on this site
+          </p>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <thead>
+              <tr style={{
+                backgroundColor: '#f8f9fa',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Journal
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Path
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Status
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Submissions
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Users
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Created Date
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40'
+                }}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockJournals.map((journal) => (
+                <tr key={journal.id} style={{
+                  borderBottom: '1px solid #e5e5e5',
+                  backgroundColor: '#fff'
+                }}>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <div>
+                      <div style={{
+                        fontWeight: 500,
+                        color: '#002C40',
+                        marginBottom: '0.25rem'
+                      }}>
+                        {journal.title}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                        {journal.path}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeVariant(journal.status)}>
-                        {journal.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <BookOpen className="h-3 w-3 text-gray-400" />
-                        <span>{journal.submissions}</span>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        color: '#666',
+                        maxWidth: '300px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {journal.description}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3 text-gray-400" />
-                        <span>{journal.users}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{journal.created_date}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" className="h-8 px-2">
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 px-2">
-                          <Settings className="h-3 w-3 mr-1" />
-                          Settings
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-    </section>
+                    </div>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <code style={{
+                      fontSize: '0.875rem',
+                      backgroundColor: '#f8f9fa',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontFamily: 'monospace'
+                    }}>
+                      {journal.path}
+                    </code>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '4px',
+                      backgroundColor: journal.status === "Enabled" ? '#d4edda' : '#e2e3e5',
+                      color: journal.status === "Enabled" ? '#155724' : '#383d41',
+                      fontWeight: 600
+                    }}>
+                      {journal.status}
+                    </span>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}>
+                      <BookOpen style={{
+                        width: '0.75rem',
+                        height: '0.75rem',
+                        color: '#666'
+                      }} />
+                      <span>{journal.submissions}</span>
+                    </div>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}>
+                      <Users style={{
+                        width: '0.75rem',
+                        height: '0.75rem',
+                        color: '#666'
+                      }} />
+                      <span>{journal.users}</span>
+                    </div>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    color: '#333',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    {journal.created_date}
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem'
+                    }}>
+                      <Link
+                        href={`/admin/site-management/hosted-journals/${journal.id}`}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          color: '#006798',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        <Eye style={{ width: '0.75rem', height: '0.75rem' }} />
+                        View
+                      </Link>
+                      <Link
+                        href={`/admin/site-management/hosted-journals/${journal.id}/settings`}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          color: '#006798',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        <Settings style={{ width: '0.75rem', height: '0.75rem' }} />
+                        Settings
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,25 +1,81 @@
 "use client";
 
 import { useState } from "react";
-import type { SubmissionDetail } from "../../../types";
+import { useRouter } from "next/navigation";
+import type { SubmissionDetail, SubmissionVersion } from "../../../types";
+import { FormMessage } from "@/components/ui/form-message";
 
 type Props = {
   submissionId: string;
   detail: SubmissionDetail;
+  version?: SubmissionVersion;
   isPublished: boolean;
 };
 
-export function TitleAbstractTab({ submissionId, detail, isPublished }: Props) {
-  const [title, setTitle] = useState(detail.summary.title ?? "");
-  const [abstract, setAbstract] = useState((detail.metadata as { abstract?: string })?.abstract ?? "");
-  const [prefix, setPrefix] = useState((detail.metadata as { prefix?: string })?.prefix ?? "");
-  const [subtitle, setSubtitle] = useState((detail.metadata as { subtitle?: string })?.subtitle ?? "");
+type PublicationMetadata = {
+  title?: string;
+  prefix?: string;
+  subtitle?: string;
+  abstract?: string;
+};
+
+export function TitleAbstractTab({ submissionId, detail, version, isPublished }: Props) {
+  const router = useRouter();
+  const initialMeta = (version?.metadata as PublicationMetadata | undefined) ?? {};
+
+  const [title, setTitle] = useState(initialMeta.title ?? detail.summary.title ?? "");
+  const [abstract, setAbstract] = useState(initialMeta.abstract ?? "");
+  const [prefix, setPrefix] = useState(initialMeta.prefix ?? "");
+  const [subtitle, setSubtitle] = useState(initialMeta.subtitle ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Save title and abstract via server action
-    console.log("Save title and abstract:", { title, abstract, prefix, subtitle });
+    if (!version) {
+      setFeedback({ tone: "error", message: "Belum ada versi publikasi untuk diperbarui." });
+      return;
+    }
+    setIsSaving(true);
+    setFeedback(null);
+    try {
+      const res = await fetch(
+        `/api/editor/submissions/${submissionId}/publications/${version.id}/metadata`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim(),
+            prefix: prefix.trim() || null,
+            subtitle: subtitle.trim() || null,
+            abstract: abstract.trim() || null,
+          }),
+        },
+      );
+
+      const json = await res.json();
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error ?? "Gagal menyimpan metadata publikasi.");
+      }
+      setFeedback({ tone: "success", message: "Metadata publikasi berhasil disimpan." });
+      router.refresh();
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Gagal menyimpan metadata.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (!version) {
+    return (
+      <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-muted)] px-4 py-6 text-sm text-[var(--muted)]">
+        Belum ada versi publikasi yang dapat diedit. Silakan buat versi baru terlebih dahulu.
+      </div>
+    );
+  }
 
   return (
     <div
@@ -39,6 +95,8 @@ export function TitleAbstractTab({ submissionId, detail, isPublished }: Props) {
       >
         Title & Abstract
       </h2>
+
+      {feedback && <FormMessage tone={feedback.tone}>{feedback.message}</FormMessage>}
 
       <form
         onSubmit={handleSubmit}
@@ -205,6 +263,7 @@ export function TitleAbstractTab({ submissionId, detail, isPublished }: Props) {
           >
             <button
               type="submit"
+              disabled={isSaving}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -218,19 +277,23 @@ export function TitleAbstractTab({ submissionId, detail, isPublished }: Props) {
                 paddingRight: "0.75rem",
                 fontSize: "0.875rem",
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: isSaving ? "not-allowed" : "pointer",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#005a82";
-                e.currentTarget.style.borderColor = "#005a82";
+                if (!isSaving) {
+                  e.currentTarget.style.backgroundColor = "#005a82";
+                  e.currentTarget.style.borderColor = "#005a82";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#006798";
-                e.currentTarget.style.borderColor = "#006798";
+                if (!isSaving) {
+                  e.currentTarget.style.backgroundColor = "#006798";
+                  e.currentTarget.style.borderColor = "#006798";
+                }
               }}
             >
-              Save
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
         )}

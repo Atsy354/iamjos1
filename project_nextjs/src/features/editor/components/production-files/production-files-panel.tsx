@@ -2,20 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
-import { GalleyGrid, type Galley } from "./galley-grid";
+import { GalleyGrid } from "./galley-grid";
 import { GalleyCreationModal } from "./galley-creation-modal";
 import { GalleyEditor } from "./galley-editor";
-import type { SubmissionStage } from "../../types";
+import type { PublicationGalley, SubmissionFile, SubmissionStage } from "../../types";
+import { PkpButton } from "@/components/ui/pkp-button";
 
 type Props = {
   submissionId: string;
   stage: SubmissionStage;
-  galleys: Galley[];
+  submissionVersionId: string;
+  galleys: PublicationGalley[];
+  availableFiles?: SubmissionFile[];
   onCreateGalley?: (data: {
     submissionId: string;
     stage: SubmissionStage;
+    submissionVersionId: string;
     label: string;
     locale: string;
     fileId?: string;
@@ -23,6 +26,7 @@ type Props = {
   }) => Promise<void>;
   onUpdateGalley?: (data: {
     galleyId: string;
+    submissionVersionId: string;
     label: string;
     locale: string;
     isApproved: boolean;
@@ -40,7 +44,9 @@ type Props = {
 export function ProductionFilesPanel({
   submissionId,
   stage,
+  submissionVersionId,
   galleys,
+  availableFiles = [],
   onCreateGalley,
   onUpdateGalley,
   onDeleteGalley,
@@ -48,12 +54,13 @@ export function ProductionFilesPanel({
   const router = useRouter();
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedGalley, setSelectedGalley] = useState<Galley | null>(null);
+  const [selectedGalley, setSelectedGalley] = useState<PublicationGalley | null>(null);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
   const handleCreateGalley = async (data: {
     submissionId: string;
     stage: SubmissionStage;
+    submissionVersionId: string;
     label: string;
     locale: string;
     fileId?: string;
@@ -78,6 +85,7 @@ export function ProductionFilesPanel({
 
   const handleUpdateGalley = async (data: {
     galleyId: string;
+    submissionVersionId: string;
     label: string;
     locale: string;
     isApproved: boolean;
@@ -135,12 +143,9 @@ export function ProductionFilesPanel({
             Production Files (Galleys) ({galleys.length})
           </h3>
           {onCreateGalley && (
-            <Button
-              size="sm"
-              onClick={() => setOpenCreateModal(true)}
-            >
+            <PkpButton size="sm" variant="primary" onClick={() => setOpenCreateModal(true)}>
               Create Galley
-            </Button>
+            </PkpButton>
           )}
         </div>
 
@@ -164,6 +169,8 @@ export function ProductionFilesPanel({
           onClose={() => setOpenCreateModal(false)}
           submissionId={submissionId}
           stage={stage}
+          submissionVersionId={submissionVersionId}
+          availableFiles={availableFiles}
           onSubmit={handleCreateGalley}
         />
       )}
@@ -179,6 +186,8 @@ export function ProductionFilesPanel({
           submissionId={submissionId}
           stage={stage}
           galley={selectedGalley}
+          submissionVersionId={submissionVersionId}
+          availableFiles={availableFiles}
           onSubmit={handleUpdateGalley}
         />
       )}

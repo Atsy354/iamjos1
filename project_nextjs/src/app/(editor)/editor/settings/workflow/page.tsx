@@ -13,13 +13,38 @@ import {
   DUMMY_METADATA_FIELDS,
   DUMMY_COMPONENTS,
   DUMMY_CHECKLIST,
-  DUMMY_REVIEW_FORMS,
-  DUMMY_LIBRARY_FILES,
   DUMMY_EMAIL_TEMPLATES,
 } from "@/features/editor/settings-dummy-data";
 import { USE_DUMMY } from "@/lib/dummy";
 import { useJournalSettings, useMigrateLocalStorageToDatabase } from "@/features/editor/hooks/useJournalSettings";
 import { useI18n } from "@/contexts/I18nContext";
+import { LibraryFilesPanel } from "@/features/editor/components/library-files/library-files-panel";
+import { ReviewFormsPanel } from "@/features/editor/components/review-forms/review-forms-panel";
+
+type ReviewSetupSettings = {
+  review_defaultReviewMode?: string;
+  review_restrictReviewerFileAccess?: boolean;
+  review_reviewerAccessKeysEnabled?: boolean;
+  review_numWeeksPerResponse?: string;
+  review_numWeeksPerReview?: string;
+  review_numDaysBeforeInviteReminder?: string;
+  review_numDaysBeforeSubmitReminder?: string;
+};
+
+type ReviewerGuidanceSettings = {
+  reviewerGuidance_reviewGuidelines?: string;
+  reviewerGuidance_competingInterests?: string;
+  reviewerGuidance_showEnsuringLink?: boolean;
+};
+
+type AuthorGuidelinesSettings = {
+  authorGuidelines?: string;
+};
+
+type EmailSetupSettings = {
+  emailSetup_emailSignature?: string;
+  emailSetup_envelopeSender?: string;
+};
 
 export default function SettingsWorkflowPage() {
   const { t } = useI18n();
@@ -119,46 +144,51 @@ export default function SettingsWorkflowPage() {
 
   // Sync form states with database settings when loaded
   useEffect(() => {
-    if (reviewSetupSettings.settings && Object.keys(reviewSetupSettings.settings).length > 0) {
-      const settings = reviewSetupSettings.settings as any;
-      setReviewSetup({
-        defaultReviewMode: settings.review_defaultReviewMode ?? reviewSetup.defaultReviewMode,
-        restrictReviewerFileAccess: settings.review_restrictReviewerFileAccess ?? reviewSetup.restrictReviewerFileAccess,
-        reviewerAccessKeysEnabled: settings.review_reviewerAccessKeysEnabled ?? reviewSetup.reviewerAccessKeysEnabled,
-        numWeeksPerResponse: settings.review_numWeeksPerResponse ?? reviewSetup.numWeeksPerResponse,
-        numWeeksPerReview: settings.review_numWeeksPerReview ?? reviewSetup.numWeeksPerReview,
-        numDaysBeforeInviteReminder: settings.review_numDaysBeforeInviteReminder ?? reviewSetup.numDaysBeforeInviteReminder,
-        numDaysBeforeSubmitReminder: settings.review_numDaysBeforeSubmitReminder ?? reviewSetup.numDaysBeforeSubmitReminder,
-      });
+    const settings = reviewSetupSettings.settings as ReviewSetupSettings | undefined;
+    if (!settings) {
+      return;
     }
+    setReviewSetup((prev) => ({
+      defaultReviewMode: settings.review_defaultReviewMode ?? prev.defaultReviewMode,
+      restrictReviewerFileAccess: settings.review_restrictReviewerFileAccess ?? prev.restrictReviewerFileAccess,
+      reviewerAccessKeysEnabled: settings.review_reviewerAccessKeysEnabled ?? prev.reviewerAccessKeysEnabled,
+      numWeeksPerResponse: settings.review_numWeeksPerResponse ?? prev.numWeeksPerResponse,
+      numWeeksPerReview: settings.review_numWeeksPerReview ?? prev.numWeeksPerReview,
+      numDaysBeforeInviteReminder: settings.review_numDaysBeforeInviteReminder ?? prev.numDaysBeforeInviteReminder,
+      numDaysBeforeSubmitReminder: settings.review_numDaysBeforeSubmitReminder ?? prev.numDaysBeforeSubmitReminder,
+    }));
   }, [reviewSetupSettings.settings]);
 
   useEffect(() => {
-    if (reviewerGuidanceSettings.settings && Object.keys(reviewerGuidanceSettings.settings).length > 0) {
-      const settings = reviewerGuidanceSettings.settings as any;
-      setReviewerGuidance({
-        reviewGuidelines: settings.reviewerGuidance_reviewGuidelines ?? reviewerGuidance.reviewGuidelines,
-        competingInterests: settings.reviewerGuidance_competingInterests ?? reviewerGuidance.competingInterests,
-        showEnsuringLink: settings.reviewerGuidance_showEnsuringLink ?? reviewerGuidance.showEnsuringLink,
-      });
+    const settings = reviewerGuidanceSettings.settings as ReviewerGuidanceSettings | undefined;
+    if (!settings) {
+      return;
     }
+    setReviewerGuidance((prev) => ({
+      reviewGuidelines: settings.reviewerGuidance_reviewGuidelines ?? prev.reviewGuidelines,
+      competingInterests: settings.reviewerGuidance_competingInterests ?? prev.competingInterests,
+      showEnsuringLink: settings.reviewerGuidance_showEnsuringLink ?? prev.showEnsuringLink,
+    }));
   }, [reviewerGuidanceSettings.settings]);
 
   useEffect(() => {
-    if (authorGuidelinesSettings.settings && Object.keys(authorGuidelinesSettings.settings).length > 0) {
-      const settings = authorGuidelinesSettings.settings as any;
-      setAuthorGuidelines(settings.authorGuidelines ?? "");
+    const settings = authorGuidelinesSettings.settings as AuthorGuidelinesSettings | undefined;
+    if (!settings) {
+      return;
     }
+    const nextValue = settings.authorGuidelines ?? "";
+    setAuthorGuidelines((prev) => (prev === nextValue ? prev : nextValue));
   }, [authorGuidelinesSettings.settings]);
 
   useEffect(() => {
-    if (emailSetupSettings.settings && Object.keys(emailSetupSettings.settings).length > 0) {
-      const settings = emailSetupSettings.settings as any;
-      setEmailSetup({
-        emailSignature: settings.emailSetup_emailSignature ?? emailSetup.emailSignature,
-        envelopeSender: settings.emailSetup_envelopeSender ?? emailSetup.envelopeSender,
-      });
+    const settings = emailSetupSettings.settings as EmailSetupSettings | undefined;
+    if (!settings) {
+      return;
     }
+    setEmailSetup((prev) => ({
+      emailSignature: settings.emailSetup_emailSignature ?? prev.emailSignature,
+      envelopeSender: settings.emailSetup_envelopeSender ?? prev.envelopeSender,
+    }));
   }, [emailSetupSettings.settings]);
 
   // Feedback states
@@ -452,10 +482,10 @@ export default function SettingsWorkflowPage() {
                         border: "1px solid #e5e5e5",
                         padding: "1.5rem",
                       }}>
-                        <PkpCheckbox
-                          id="disableSubmissions"
-                          label="Disable submissions to this journal"
-                        />
+                        <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#002C40", fontWeight: 600 }}>
+                          <PkpCheckbox id="disableSubmissions" />
+                          <span>Disable submissions to this journal</span>
+                        </label>
                         <p style={{
                           fontSize: "0.875rem",
                           color: "rgba(0, 0, 0, 0.54)",
@@ -907,12 +937,14 @@ export default function SettingsWorkflowPage() {
 
                       {/* Restrict Reviewer File Access */}
                       <div style={{ marginBottom: "1.5rem" }}>
-                        <PkpCheckbox
-                          id="restrictReviewerFileAccess"
-                          checked={reviewSetup.restrictReviewerFileAccess}
-                          onChange={(e) => setReviewSetup({ ...reviewSetup, restrictReviewerFileAccess: e.target.checked })}
-                          label="Restrict reviewer file access to assigned submissions only"
-                        />
+                        <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#002C40", fontWeight: 600 }}>
+                          <PkpCheckbox
+                            id="restrictReviewerFileAccess"
+                            checked={reviewSetup.restrictReviewerFileAccess}
+                            onChange={(e) => setReviewSetup({ ...reviewSetup, restrictReviewerFileAccess: e.target.checked })}
+                          />
+                          <span>Restrict reviewer file access to assigned submissions only</span>
+                        </label>
                         <p style={{
                           fontSize: "0.75rem",
                           color: "rgba(0, 0, 0, 0.54)",
@@ -925,12 +957,14 @@ export default function SettingsWorkflowPage() {
 
                       {/* One-Click Reviewer Access */}
                       <div style={{ marginBottom: "1.5rem" }}>
-                        <PkpCheckbox
-                          id="reviewerAccessKeysEnabled"
-                          checked={reviewSetup.reviewerAccessKeysEnabled}
-                          onChange={(e) => setReviewSetup({ ...reviewSetup, reviewerAccessKeysEnabled: e.target.checked })}
-                          label="Enable one-click reviewer access"
-                        />
+                        <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#002C40", fontWeight: 600 }}>
+                          <PkpCheckbox
+                            id="reviewerAccessKeysEnabled"
+                            checked={reviewSetup.reviewerAccessKeysEnabled}
+                            onChange={(e) => setReviewSetup({ ...reviewSetup, reviewerAccessKeysEnabled: e.target.checked })}
+                          />
+                          <span>Enable one-click reviewer access</span>
+                        </label>
                         <p style={{
                           fontSize: "0.75rem",
                           color: "rgba(0, 0, 0, 0.54)",
@@ -1160,12 +1194,14 @@ export default function SettingsWorkflowPage() {
 
                       {/* Show Ensuring Link */}
                       <div style={{ marginBottom: "1.5rem" }}>
-                        <PkpCheckbox
-                          id="showEnsuringLink"
-                          checked={reviewerGuidance.showEnsuringLink}
-                          onChange={(e) => setReviewerGuidance({ ...reviewerGuidance, showEnsuringLink: e.target.checked })}
-                          label="Show link to the anonymous review process documentation"
-                        />
+                        <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "#002C40", fontWeight: 600 }}>
+                          <PkpCheckbox
+                            id="showEnsuringLink"
+                            checked={reviewerGuidance.showEnsuringLink}
+                            onChange={(e) => setReviewerGuidance({ ...reviewerGuidance, showEnsuringLink: e.target.checked })}
+                          />
+                          <span>Show link to the anonymous review process documentation</span>
+                        </label>
                       </div>
 
                       <PkpButton 
@@ -1203,51 +1239,7 @@ export default function SettingsWorkflowPage() {
                       }}>
                         If you would like to request specific information from reviewers, you can build forms here. An editor will be able to select a form when assigning a reviewer, and the reviewer will be asked to complete that form when they are submitting their review.
                       </p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                        <PkpButton variant="primary">
-                          Add Review Form
-                        </PkpButton>
-                      </div>
-                      <PkpTable>
-                        <PkpTableHeader>
-                          <PkpTableRow isHeader>
-                            <PkpTableHead style={{ width: "60px" }}>ID</PkpTableHead>
-                            <PkpTableHead>Review Form</PkpTableHead>
-                            <PkpTableHead style={{ width: "120px", textAlign: "center" }}>Active</PkpTableHead>
-                            <PkpTableHead style={{ width: "120px", textAlign: "center" }}>Actions</PkpTableHead>
-                          </PkpTableRow>
-                        </PkpTableHeader>
-                        <tbody>
-                          {USE_DUMMY && DUMMY_REVIEW_FORMS.length > 0 ? (
-                            DUMMY_REVIEW_FORMS.map((form) => (
-                              <PkpTableRow key={form.id}>
-                                <PkpTableCell style={{ width: "60px" }}>{form.id}</PkpTableCell>
-                                <PkpTableCell>
-                                  <div style={{ fontWeight: 500 }}>{form.title}</div>
-                                  {form.description && (
-                                    <div style={{ fontSize: "0.75rem", color: "rgba(0, 0, 0, 0.54)", marginTop: "0.25rem" }}>
-                                      {form.description}
-                                    </div>
-                                  )}
-                                </PkpTableCell>
-                                <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                                  <PkpCheckbox checked={form.active} readOnly />
-                                </PkpTableCell>
-                                <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }}>Edit</PkpButton>
-                                  <PkpButton variant="onclick" size="sm">Delete</PkpButton>
-                                </PkpTableCell>
-                              </PkpTableRow>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "rgba(0, 0, 0, 0.54)", fontSize: "0.875rem" }}>
-                                {USE_DUMMY ? "No review forms found." : "Review forms grid will be implemented here with add, edit, delete, and activate/deactivate functionality."}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </PkpTable>
+                      <ReviewFormsPanel />
                     </div>
                   </div>
                 )}
@@ -1278,53 +1270,7 @@ export default function SettingsWorkflowPage() {
             }}>
               The Library provides a file repository for storing and quickly sharing common files, such as writing guidelines, author contracts and release forms, and marketing materials. Items that are stored in the Library can be quickly retrieved and added into a Submission Library to be shared with authors or assistants.
             </p>
-            <div style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid #e5e5e5",
-              padding: "1.5rem",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <PkpButton variant="primary">
-                  Upload Library File
-                </PkpButton>
-              </div>
-              <PkpTable>
-                <PkpTableHeader>
-                  <PkpTableRow isHeader>
-                    <PkpTableHead>File Name</PkpTableHead>
-                    <PkpTableHead style={{ width: "150px" }}>File Type</PkpTableHead>
-                    <PkpTableHead style={{ width: "120px" }}>Date Uploaded</PkpTableHead>
-                    <PkpTableHead style={{ width: "120px", textAlign: "center" }}>Actions</PkpTableHead>
-                  </PkpTableRow>
-                </PkpTableHeader>
-                <tbody>
-                  {USE_DUMMY && DUMMY_LIBRARY_FILES.length > 0 ? (
-                    DUMMY_LIBRARY_FILES.map((file) => (
-                      <PkpTableRow key={file.id}>
-                        <PkpTableCell>
-                          <div style={{ fontWeight: 500 }}>{file.fileName}</div>
-                        </PkpTableCell>
-                        <PkpTableCell style={{ width: "150px" }}>{file.fileType}</PkpTableCell>
-                        <PkpTableCell style={{ width: "120px" }}>
-                          <div style={{ fontSize: "0.875rem", color: "rgba(0, 0, 0, 0.84)" }}>{file.dateUploaded}</div>
-                          <div style={{ fontSize: "0.75rem", color: "rgba(0, 0, 0, 0.54)", marginTop: "0.25rem" }}>{file.size}</div>
-                        </PkpTableCell>
-                        <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                          <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }}>Edit</PkpButton>
-                          <PkpButton variant="onclick" size="sm">Delete</PkpButton>
-                        </PkpTableCell>
-                      </PkpTableRow>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "rgba(0, 0, 0, 0.54)", fontSize: "0.875rem" }}>
-                        {USE_DUMMY ? "No library files found." : "Library files grid will be implemented here with upload, edit, delete, and download functionality."}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </PkpTable>
-            </div>
+            <LibraryFilesPanel />
           </PkpTabsContent>
 
           {/* Emails Tab */}

@@ -23,7 +23,10 @@ export function SubmissionMetadataForm({ submissionId, initialTitle, initialAbst
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setTitle(initialTitle ?? "");
+    const timeoutId = window.setTimeout(() => {
+      setTitle(initialTitle ?? "");
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [initialTitle]);
 
   const handleSubmit = (event: React.FormEvent) => {

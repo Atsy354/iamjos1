@@ -1,9 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { FormMessage } from "@/components/ui/form-message";
 import { clearDataCachesAction } from "./actions";
 
 const CACHE_ITEMS = [
@@ -39,9 +36,17 @@ export default function ClearDataCachesPage() {
       </header>
 
       {state && (
-        <FormMessage tone="success">
+        <div style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: '#d4edda',
+          border: '1px solid #c3e6cb',
+          borderRadius: '4px',
+          color: '#155724',
+          fontSize: '0.875rem',
+          marginBottom: '1rem'
+        }}>
           Cache data berhasil dibersihkan. Versi terbaru akan dibuat ulang secara otomatis.
-        </FormMessage>
+        </div>
       )}
 
       <div className="space-y-4" style={{
@@ -72,7 +77,23 @@ export default function ClearDataCachesPage() {
       </div>
 
       <form action={formAction}>
-        <Button type="submit" loading={pending}>Clear Data Caches</Button>
+        <button
+          type="submit"
+          disabled={pending}
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            backgroundColor: pending ? '#ccc' : '#006798',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: pending ? 'not-allowed' : 'pointer',
+            opacity: pending ? 0.6 : 1
+          }}
+        >
+          {pending ? 'Processing...' : 'Clear Data Caches'}
+        </button>
       </form>
     </div>
   );

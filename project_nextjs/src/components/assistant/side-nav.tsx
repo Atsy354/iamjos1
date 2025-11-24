@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,21 +36,14 @@ export function AssistantSideNav() {
     );
   };
 
-  // Auto-expand submenus that have active items
-  useEffect(() => {
-    const initiallyOpen = new Set<string>();
+  const autoOpenLabels = useMemo(() => {
+    const detected = new Set<string>();
     NAV_ITEMS.forEach(item => {
       if (item.submenu && shouldExpandSubmenu(item)) {
-        initiallyOpen.add(item.label);
+        detected.add(item.label);
       }
     });
-    if (initiallyOpen.size > 0) {
-      setOpenSubmenus(prev => {
-        const combined = new Set(prev);
-        initiallyOpen.forEach(label => combined.add(label));
-        return combined;
-      });
-    }
+    return detected;
   }, [pathname, searchParams]);
 
   const toggleSubmenu = (label: string) => {
@@ -67,7 +60,7 @@ export function AssistantSideNav() {
 
   const renderNavItem = (item: NavItem) => {
     const active = isActive(pathname, searchParams?.toString() ?? "", item.href);
-    const isSubmenuOpen = item.submenu ? openSubmenus.has(item.label) : false;
+    const isSubmenuOpen = item.submenu ? autoOpenLabels.has(item.label) || openSubmenus.has(item.label) : false;
     const hasActiveSubmenu = item.submenu ? shouldExpandSubmenu(item) : false;
 
     return (

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/I18nContext";
 
 type Props = {
@@ -46,7 +45,21 @@ export function SystemInformationClient({ nodeVersion, osInfo, dbInfo, webServer
               {t('systemInfo.versionDescription')}
             </p>
           </div>
-          <Button size="sm">{t('systemInfo.checkForUpdates')}</Button>
+          <button
+            type="button"
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.375rem 0.75rem',
+              backgroundColor: '#006798',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            {t('systemInfo.checkForUpdates')}
+          </button>
         </header>
         <dl className="grid gap-4 text-sm" style={{
           gap: '1rem',
@@ -97,10 +110,21 @@ export function SystemInformationClient({ nodeVersion, osInfo, dbInfo, webServer
           }}>
             {t('systemInfo.ojsConfiguration')}
           </h2>
-          <Link href="/admin/system/nodejs-info">
-            <Button size="sm" variant="secondary">
-              {t('systemInfo.extendedNodejsInformation')}
-            </Button>
+          <Link
+            href="/admin/system/nodejs-info"
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.375rem 0.75rem',
+              backgroundColor: '#f8f9fa',
+              color: '#006798',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}
+          >
+            {t('systemInfo.extendedNodejsInformation')}
           </Link>
         </header>
         <table className="w-full text-sm" style={{

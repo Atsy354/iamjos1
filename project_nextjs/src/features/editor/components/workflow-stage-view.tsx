@@ -4,7 +4,6 @@ import { ReviewRoundsPanel } from "./review-rounds-panel";
 import { ProductionFilesPanel } from "./production-files/production-files-panel";
 import { WorkflowStageActions } from "./workflow-stage-actions";
 import { createGalley, updateGalley, deleteGalley } from "../actions/production-files";
-import type { Galley } from "./production-files/galley-grid";
 import type { SubmissionDetail, SubmissionStage } from "../types";
 
 type Props = {
@@ -13,7 +12,7 @@ type Props = {
 };
 
 export function WorkflowStageView({ detail, stage }: Props) {
-  const { summary, files, reviewRounds } = detail;
+  const { summary, files, reviewRounds, participants } = detail;
 
   // Extract author name from metadata
   const authorName =
@@ -26,9 +25,8 @@ export function WorkflowStageView({ detail, stage }: Props) {
     ? reviewRounds[reviewRounds.length - 1]?.id
     : undefined;
 
-  // Get galleys from metadata (dummy data for now)
-  // TODO: Replace with actual galleys from submission detail
-  const galleys: Galley[] = (detail.metadata as { galleys?: Galley[] })?.galleys || [];
+  const productionVersion = detail.versions?.[0];
+  const productionFiles = files.filter((file) => file.stage === "production");
 
   return (
     <div
@@ -82,6 +80,7 @@ export function WorkflowStageView({ detail, stage }: Props) {
             reviewRoundId={currentReviewRound}
             files={files}
             reviewRounds={reviewRounds}
+            participants={participants}
           />
         </div>
 
@@ -171,7 +170,7 @@ export function WorkflowStageView({ detail, stage }: Props) {
           </div>
         )}
 
-        {stage === "production" && (
+        {stage === "production" && productionVersion && (
           <div
             style={{
               borderRadius: "0",
@@ -194,7 +193,9 @@ export function WorkflowStageView({ detail, stage }: Props) {
             <ProductionFilesPanel
               submissionId={summary.id}
               stage={stage}
-              galleys={galleys}
+              submissionVersionId={productionVersion.id}
+              galleys={productionVersion.galleys}
+              availableFiles={productionFiles}
               onCreateGalley={async (data) => {
                 const result = await createGalley(data);
                 if (!result.ok) {
@@ -214,6 +215,20 @@ export function WorkflowStageView({ detail, stage }: Props) {
                 }
               }}
             />
+          </div>
+        )}
+        {stage === "production" && !productionVersion && (
+          <div
+            style={{
+              borderRadius: "0.25rem",
+              border: "1px solid #e5e5e5",
+              backgroundColor: "#ffffff",
+              padding: "1.5rem",
+            }}
+          >
+            <p className="text-sm text-[var(--muted)]">
+              Belum ada versi publikasi yang dapat dikelola. Buat versi publikasi terlebih dahulu di tab Publication.
+            </p>
           </div>
         )}
 

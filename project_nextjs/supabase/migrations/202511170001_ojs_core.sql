@@ -117,6 +117,31 @@ begin
     end if;
 end$$;
 
+-- Ensure legacy submissions table has the columns we depend on before creating
+-- indexes or foreign keys that reference them (keeps old 001_x schema compatible)
+do $$
+begin
+    if exists (
+        select 1 from information_schema.tables
+        where table_schema = 'public' and table_name = 'submissions'
+    ) then
+        alter table if exists public.submissions
+            add column if not exists journal_id uuid references public.journals (id) on delete cascade,
+            add column if not exists current_stage workflow_stage not null default 'submission';
+
+        if exists (
+            select 1 from information_schema.columns
+            where table_schema = 'public'
+              and table_name = 'submissions'
+              and column_name = 'context_id'
+        ) then
+            update public.submissions
+            set journal_id = context_id
+            where journal_id is null and context_id is not null;
+        end if;
+    end if;
+end$$;
+
 create table if not exists public.issues (
     id uuid primary key default uuid_generate_v4(),
     journal_id uuid not null references public.journals (id) on delete cascade,

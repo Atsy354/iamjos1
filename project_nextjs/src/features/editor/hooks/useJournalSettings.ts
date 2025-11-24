@@ -3,13 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SettingsMap = Record<string, unknown>;
+
+type SettingsApiResponse<T extends SettingsMap> =
+  | { ok: true; settings: T }
+  | { ok: false; message?: string };
+
 export type UseJournalSettingsOptions = {
   section: string;
   journalId?: string;
   autoLoad?: boolean;
 };
 
-export type UseJournalSettingsReturn<T = Record<string, any>> = {
+export type UseJournalSettingsReturn<T extends SettingsMap> = {
   settings: T;
   loading: boolean;
   error: string | null;
@@ -21,7 +27,7 @@ export type UseJournalSettingsReturn<T = Record<string, any>> = {
  * Custom hook untuk load dan save journal settings dari database
  * Menggantikan localStorage dengan database integration
  */
-export function useJournalSettings<T = Record<string, any>>(
+export function useJournalSettings<T extends SettingsMap = SettingsMap>(
   options: UseJournalSettingsOptions
 ): UseJournalSettingsReturn<T> {
   const { section, journalId: providedJournalId, autoLoad = true } = options;
@@ -58,13 +64,13 @@ export function useJournalSettings<T = Record<string, any>>(
       const response = await fetch(
         `/api/editor/settings/${section}?journalId=${currentJournalId}`
       );
-      const data = await response.json();
+      const data = (await response.json()) as SettingsApiResponse<T>;
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.message || "Failed to load settings");
+        throw new Error(!response.ok ? response.statusText : data.message || "Failed to load settings");
       }
 
-      setSettings((data.settings || {}) as T);
+      setSettings(data.settings ?? ({} as T));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load settings";
       setError(errorMessage);
@@ -98,14 +104,14 @@ export function useJournalSettings<T = Record<string, any>>(
           }),
         });
 
-        const data = await response.json();
+        const data = (await response.json()) as SettingsApiResponse<T>;
 
         if (!response.ok || !data.ok) {
-          throw new Error(data.message || "Failed to save settings");
+          throw new Error(!response.ok ? response.statusText : data.message || "Failed to save settings");
         }
 
         // Update local state with saved settings
-        setSettings((prev) => ({ ...prev, ...(data.settings || {}) } as T));
+        setSettings((prev) => ({ ...prev, ...(data.settings ?? ({} as T)) }));
         return true;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to save settings";
@@ -169,7 +175,7 @@ export function useMigrateLocalStorageToDatabase(
       }
 
       // Load from localStorage
-      const localStorageData: Record<string, any> = {};
+      const localStorageData: Record<string, unknown> = {};
       for (const key of localStorageKeys) {
         const item = localStorage.getItem(`ojs_settings_${key}`);
         if (item) {

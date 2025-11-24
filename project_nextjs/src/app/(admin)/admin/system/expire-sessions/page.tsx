@@ -1,9 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { FormMessage } from "@/components/ui/form-message";
 import { expireAllSessionsAction } from "./actions";
 
 type State = null | { ok: true; expired: number } | { ok: false; message: string };
@@ -36,12 +33,30 @@ export default function ExpireSessionsPage() {
       </section>
 
       {state?.ok && (
-        <FormMessage tone="success">
+        <div style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: '#d4edda',
+          border: '1px solid #c3e6cb',
+          borderRadius: '4px',
+          color: '#155724',
+          fontSize: '0.875rem',
+          marginBottom: '1rem'
+        }}>
           Seluruh sesi pengguna berhasil diakhiri untuk {state.expired} akun.
-        </FormMessage>
+        </div>
       )}
       {state && !state.ok && (
-        <FormMessage tone="error">{state.message}</FormMessage>
+        <div style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: '#f8d7da',
+          border: '1px solid #f5c6cb',
+          borderRadius: '4px',
+          color: '#721c24',
+          fontSize: '0.875rem',
+          marginBottom: '1rem'
+        }}>
+          {state.message}
+        </div>
       )}
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-6" style={{
@@ -54,17 +69,47 @@ export default function ExpireSessionsPage() {
           Tindakan ini bersifat langsung dan permanen. Tidak ada notifikasi yang
           dikirim ke pengguna.
         </p>
-        <div className="flex gap-3" style={{
+        <div style={{
+          display: 'flex',
           gap: '0.75rem'
         }}>
-          <form action={formAction} className="contents">
-            <Button variant="danger" type="submit" loading={pending}>
-              Expire semua sesi sekarang
-            </Button>
+          <form action={formAction} style={{ display: 'contents' }}>
+            <button
+              type="submit"
+              disabled={pending}
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                padding: '0.5rem 1rem',
+                backgroundColor: pending ? '#ccc' : '#d32f2f',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: pending ? 'not-allowed' : 'pointer',
+                opacity: pending ? 0.6 : 1
+              }}
+            >
+              {pending ? 'Processing...' : 'Expire semua sesi sekarang'}
+            </button>
           </form>
-          <Button variant="secondary" disabled={pending} onClick={() => location.reload()}>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => location.reload()}
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.5rem 1rem',
+              backgroundColor: '#f8f9fa',
+              color: '#006798',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              cursor: pending ? 'not-allowed' : 'pointer',
+              opacity: pending ? 0.6 : 1
+            }}
+          >
             Muat ulang
-          </Button>
+          </button>
         </div>
       </div>
     </div>

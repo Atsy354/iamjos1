@@ -48,21 +48,37 @@ export async function getCurrentUser(request: NextRequest): Promise<User | null>
 }
 
 export function getRolePath(userGroupName: string): string {
+  // Normalize input to handle case variations
+  const normalized = userGroupName?.trim() || ''
+  
   const rolePaths: Record<string, string> = {
-    'Site admin': 'admin',
-    'Manager': 'manager',
-    'Editor': 'editor',
-    'Section editor': 'section_editor',
-    'Assistant': 'assistant',
-    'Copyeditor': 'copyeditor',
-    'Proofreader': 'proofreader',
-    'Layout Editor': 'layout-editor',
-    'Author': 'author',
-    'Reviewer': 'reviewer',
-    'Reader': 'reader',
-    'Subscription manager': 'subscription-manager'
+    'site admin': 'admin',
+    'manager': 'manager',
+    'editor': 'editor',
+    'section editor': 'section_editor',
+    'assistant': 'assistant',
+    'copyeditor': 'copyeditor',
+    'proofreader': 'proofreader',
+    'layout editor': 'layout-editor',
+    'author': 'author',
+    'reviewer': 'reviewer',
+    'reader': 'reader',
+    'subscription manager': 'subscription-manager'
   }
-  return rolePaths[userGroupName] || 'reader'
+  
+  // Try exact match first (case-insensitive)
+  const lowerNormalized = normalized.toLowerCase()
+  if (rolePaths[lowerNormalized]) {
+    return rolePaths[lowerNormalized]
+  }
+  
+  // Try with original case
+  if (rolePaths[userGroupName]) {
+    return rolePaths[userGroupName]
+  }
+  
+  // Fallback to reader
+  return 'reader'
 }
 
 export function hasRole(user: User | null, rolePath: string, contextId?: string): boolean {

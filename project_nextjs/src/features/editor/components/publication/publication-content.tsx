@@ -1,6 +1,6 @@
 "use client";
 
-import type { SubmissionDetail } from "../../types";
+import type { SubmissionDetail, SubmissionVersion } from "../../types";
 import { TitleAbstractTab } from "./tabs/title-abstract-tab";
 import { ContributorsTab } from "./tabs/contributors-tab";
 import { MetadataTab } from "./tabs/metadata-tab";
@@ -15,13 +15,22 @@ type SubTabKey = "titleAbstract" | "contributors" | "metadata" | "citations" | "
 type Props = {
   submissionId: string;
   detail: SubmissionDetail;
+  currentVersion?: SubmissionVersion;
   activeSubTab: SubTabKey;
   setActiveSubTab: (tab: SubTabKey) => void;
   subTabs: { key: SubTabKey; label: string }[];
   publicationStatus: "queued" | "scheduled" | "published";
 };
 
-export function PublicationContent({ submissionId, detail, activeSubTab, setActiveSubTab, subTabs, publicationStatus }: Props) {
+export function PublicationContent({
+  submissionId,
+  detail,
+  currentVersion,
+  activeSubTab,
+  setActiveSubTab,
+  subTabs,
+  publicationStatus,
+}: Props) {
   const isPublished = publicationStatus === "published";
 
   return (
@@ -113,19 +122,44 @@ export function PublicationContent({ submissionId, detail, activeSubTab, setActi
 
         {/* Render Active Tab Content */}
         {activeSubTab === "titleAbstract" && (
-          <TitleAbstractTab submissionId={submissionId} detail={detail} isPublished={isPublished} />
+          <TitleAbstractTab
+            submissionId={submissionId}
+            detail={detail}
+            version={currentVersion}
+            isPublished={isPublished}
+          />
         )}
         {activeSubTab === "contributors" && (
-          <ContributorsTab submissionId={submissionId} detail={detail} isPublished={isPublished} />
+          <ContributorsTab
+            submissionId={submissionId}
+            detail={detail}
+            version={currentVersion}
+            isPublished={isPublished}
+          />
         )}
         {activeSubTab === "metadata" && (
-          <MetadataTab submissionId={submissionId} detail={detail} isPublished={isPublished} />
+          <MetadataTab
+            submissionId={submissionId}
+            detail={detail}
+            version={currentVersion}
+            isPublished={isPublished}
+          />
         )}
         {activeSubTab === "citations" && (
-          <CitationsTab submissionId={submissionId} detail={detail} isPublished={isPublished} />
+          <CitationsTab
+            submissionId={submissionId}
+            detail={detail}
+            version={currentVersion}
+            isPublished={isPublished}
+          />
         )}
         {activeSubTab === "identifiers" && (
-          <IdentifiersTab submissionId={submissionId} detail={detail} isPublished={isPublished} />
+          <IdentifiersTab
+            submissionId={submissionId}
+            detail={detail}
+            version={currentVersion}
+            isPublished={isPublished}
+          />
         )}
         {activeSubTab === "galleys" && (
           <GalleysTab submissionId={submissionId} detail={detail} isPublished={isPublished} />

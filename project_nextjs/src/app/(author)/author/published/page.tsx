@@ -2,10 +2,6 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BookOpen, Calendar, Eye, Download, ExternalLink } from 'lucide-react';
 
 import { withAuth } from '@/lib/auth-client'
@@ -49,113 +45,452 @@ function AuthorPublished() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Published Articles</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '0.25rem'
+        }}>
+          Published Articles
+        </h1>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#666',
+          margin: 0
+        }}>
+          View your published research articles
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Published</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{articles.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Citations</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{articles.reduce((sum, article) => sum + article.citations, 0)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Downloads</CardTitle>
-            <BookOpen className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{articles.reduce((sum, article) => sum + article.downloads, 0)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Citations</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(articles.reduce((sum, article) => sum + article.citations, 0) / articles.length)}</div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Published
+            </h3>
+            <BookOpen style={{ width: '1rem', height: '1rem', color: '#666' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#002C40',
+            marginBottom: '0.25rem'
+          }}>
+            {articles.length}
+          </div>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Citations
+            </h3>
+            <Calendar style={{ width: '1rem', height: '1rem', color: '#666' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#006798',
+            marginBottom: '0.25rem'
+          }}>
+            {articles.reduce((sum, article) => sum + article.citations, 0)}
+          </div>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Downloads
+            </h3>
+            <BookOpen style={{ width: '1rem', height: '1rem', color: '#006798' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#006798',
+            marginBottom: '0.25rem'
+          }}>
+            {articles.reduce((sum, article) => sum + article.downloads, 0)}
+          </div>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Avg. Citations
+            </h3>
+            <Calendar style={{ width: '1rem', height: '1rem', color: '#666' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#002C40',
+            marginBottom: '0.25rem'
+          }}>
+            {Math.round(articles.reduce((sum, article) => sum + article.citations, 0) / articles.length)}
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Publication History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Journal</TableHead>
-                <TableHead>Volume/Issue</TableHead>
-                <TableHead>Publication Date</TableHead>
-                <TableHead>DOI</TableHead>
-                <TableHead>Citations</TableHead>
-                <TableHead>Downloads</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      {/* Publication History Table - OJS PKP 3.3 Style */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderBottom: '1px solid #e5e5e5',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0
+          }}>
+            Publication History
+          </h2>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <thead>
+              <tr style={{
+                backgroundColor: '#f8f9fa',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Title
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Journal
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Volume/Issue
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Publication Date
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  DOI
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Citations
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Downloads
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40'
+                }}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
               {articles.map((article) => (
-                <TableRow key={article.id}>
-                  <TableCell className="max-w-md">
-                    <div className="font-medium">{article.title}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{article.journal}</Badge>
-                  </TableCell>
-                  <TableCell>{article.volume}</TableCell>
-                  <TableCell>{article.publication_date}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">
-                      {article.doi}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="bg-blue-100 text-blue-800">
-                      {article.citations}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-800">
-                      {article.downloads}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
+                <tr 
+                  key={article.id}
+                  style={{
+                    borderBottom: '1px solid #e5e5e5',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    color: '#333',
+                    borderRight: '1px solid #e5e5e5',
+                    maxWidth: '300px'
+                  }}>
+                    <div style={{
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {article.title}
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <span style={{
+                      backgroundColor: '#e2e3e5',
+                      color: '#383d41',
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '4px',
+                      fontWeight: 600,
+                      display: 'inline-block'
+                    }}>
+                      {article.journal}
+                    </span>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    color: '#333',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    {article.volume}
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    color: '#333',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    {article.publication_date}
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <span style={{
+                      backgroundColor: '#e2e3e5',
+                      color: '#383d41',
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '4px',
+                      fontWeight: 600,
+                      display: 'inline-block'
+                    }}>
+                      {article.doi}
+                    </span>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <span style={{
+                      backgroundColor: '#d1ecf1',
+                      color: '#0c5460',
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '4px',
+                      fontWeight: 600,
+                      display: 'inline-block'
+                    }}>
+                      {article.citations}
+                    </span>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    borderRight: '1px solid #e5e5e5'
+                  }}>
+                    <span style={{
+                      backgroundColor: '#d4edda',
+                      color: '#155724',
+                      fontSize: '0.75rem',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '4px',
+                      fontWeight: 600,
+                      display: 'inline-block'
+                    }}>
+                      {article.downloads}
+                    </span>
+                  </td>
+                  <td style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem'
+                    }}>
+                      <button
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #d5d5d5',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          color: '#006798',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="View Article"
+                      >
+                        <Eye style={{ width: '1rem', height: '1rem' }} />
+                      </button>
+                      <button
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #d5d5d5',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          color: '#006798',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="Download"
+                      >
+                        <Download style={{ width: '1rem', height: '1rem' }} />
+                      </button>
+                      <button
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #d5d5d5',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          color: '#006798',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="External Link"
+                      >
+                        <ExternalLink style={{ width: '1rem', height: '1rem' }} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

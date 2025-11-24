@@ -594,8 +594,9 @@ export function SubmissionWorkflowView({ detail }: Props) {
           queries={queries}
           participants={participants.map((p) => ({
             userId: p.userId,
-            name: `User ${p.userId}`, // TODO: Get actual user names from users table
+            name: p.name ?? p.userId,
             role: p.role,
+            stage: p.stage,
           }))}
         />
       </section>

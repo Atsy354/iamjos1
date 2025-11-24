@@ -1,18 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { BookOpen, HelpCircle, Mail, Phone, MessageCircle, Search, Send, User, FileText, Clock, Eye, Award } from 'lucide-react';
-
+import { Search, Send, Mail, Phone, MessageCircle, Eye, Clock, Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { withAuth } from '@/lib/auth-client'
 
 function ReviewerHelp() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [supportTicket, setSupportTicket] = useState({
     subject: '',
     category: '',
@@ -54,228 +48,642 @@ function ReviewerHelp() {
     setSupportTicket({ subject: '', category: '', message: '', priority: 'normal' });
   };
 
+  const toggleFaq = (index: number) => {
+    setExpandedFaq(expandedFaq === index ? null : index);
+  };
+
+  const filteredFaqs = faqs.filter(faq => 
+    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Reviewer Help & Support</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '0.25rem'
+        }}>
+          Reviewer Help & Support
+        </h1>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#666',
+          margin: 0
+        }}>
+          Find answers to common questions and get support
+        </p>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search Help</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search for help topics..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search - OJS PKP 3.3 Style */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h2 style={{
+          fontSize: '1.125rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '1rem'
+        }}>
+          Search Help
+        </h2>
+        <div style={{ position: 'relative' }}>
+          <Search style={{
+            position: 'absolute',
+            left: '0.75rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '1rem',
+            height: '1rem',
+            color: '#666'
+          }} />
+          <input
+            type="text"
+            placeholder="Search for help topics..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem 0.5rem 2.5rem',
+              border: '1px solid #d5d5d5',
+              borderRadius: '4px',
+              fontSize: '0.875rem'
+            }}
+          />
+        </div>
+      </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Eye className="h-5 w-5 mr-2 text-blue-600" />
+      {/* Quick Links - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <Eye style={{ width: '1.25rem', height: '1.25rem', color: '#006798' }} />
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#002C40',
+              margin: 0
+            }}>
               Review Guidelines
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Learn how to conduct thorough and constructive peer reviews.
-            </p>
-            <Button variant="outline" size="sm">
-              View Guidelines
-            </Button>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.6'
+          }}>
+            Learn how to conduct thorough and constructive peer reviews.
+          </p>
+          <button style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            backgroundColor: 'transparent',
+            border: '1px solid #d5d5d5',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            color: '#006798'
+          }}>
+            View Guidelines
+          </button>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="h-5 w-5 mr-2 text-green-600" />
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <Clock style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#002C40',
+              margin: 0
+            }}>
               Review Timeline
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Understand review deadlines and how to request extensions.
-            </p>
-            <Button variant="outline" size="sm">
-              Learn More
-            </Button>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.6'
+          }}>
+            Understand review deadlines and how to request extensions.
+          </p>
+          <button style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            backgroundColor: 'transparent',
+            border: '1px solid #d5d5d5',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            color: '#006798'
+          }}>
+            Learn More
+          </button>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Award className="h-5 w-5 mr-2 text-purple-600" />
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <Award style={{ width: '1.25rem', height: '1.25rem', color: '#9c27b0' }} />
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#002C40',
+              margin: 0
+            }}>
               Ethics & Policies
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Review ethical guidelines and conflict of interest policies.
-            </p>
-            <Button variant="outline" size="sm">
-              Read Policies
-            </Button>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.6'
+          }}>
+            Review ethical guidelines and conflict of interest policies.
+          </p>
+          <button style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            backgroundColor: 'transparent',
+            border: '1px solid #d5d5d5',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            color: '#006798'
+          }}>
+            Read Policies
+          </button>
+        </div>
       </div>
 
-      {/* FAQ */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Frequently Asked Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Accordion>
-            {faqs.map((faq, index) => (
-              <AccordionItem key={index}>
-                <AccordionTrigger>{faq.question}</AccordionTrigger>
-                <AccordionContent>
-                  <p className="text-sm text-gray-600">{faq.answer}</p>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </CardContent>
-      </Card>
+      {/* FAQ - OJS PKP 3.3 Style */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h2 style={{
+          fontSize: '1.125rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '1rem'
+        }}>
+          Frequently Asked Questions
+        </h2>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem'
+        }}>
+          {filteredFaqs.length === 0 ? (
+            <p style={{
+              padding: '2rem',
+              textAlign: 'center',
+              fontSize: '0.875rem',
+              color: '#666',
+              fontStyle: 'italic',
+              margin: 0
+            }}>
+              No FAQs found matching your search.
+            </p>
+          ) : (
+            filteredFaqs.map((faq, index) => (
+              <div key={index} style={{
+                border: '1px solid #e5e5e5',
+                borderRadius: '4px',
+                overflow: 'hidden'
+              }}>
+                <button
+                  onClick={() => toggleFaq(index)}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: expandedFaq === index ? '#f8f9fa' : '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <span style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#002C40',
+                    flex: 1
+                  }}>
+                    {faq.question}
+                  </span>
+                  {expandedFaq === index ? (
+                    <ChevronUp style={{ width: '1rem', height: '1rem', color: '#666', flexShrink: 0 }} />
+                  ) : (
+                    <ChevronDown style={{ width: '1rem', height: '1rem', color: '#666', flexShrink: 0 }} />
+                  )}
+                </button>
+                {expandedFaq === index && (
+                  <div style={{
+                    padding: '0 1rem 1rem 1rem',
+                    backgroundColor: '#f8f9fa',
+                    borderTop: '1px solid #e5e5e5'
+                  }}>
+                    <p style={{
+                      fontSize: '0.875rem',
+                      color: '#666',
+                      margin: 0,
+                      lineHeight: '1.6',
+                      paddingTop: '1rem'
+                    }}>
+                      {faq.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
-      {/* Support Ticket */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Mail className="h-5 w-5 mr-2 text-orange-600" />
+      {/* Support Ticket - OJS PKP 3.3 Style */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '1rem'
+        }}>
+          <Mail style={{ width: '1.25rem', height: '1.25rem', color: '#ff9800' }} />
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0
+          }}>
             Contact Support
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  value={supportTicket.subject}
-                  onChange={(e) => setSupportTicket({...supportTicket, subject: e.target.value})}
-                  placeholder="Brief description of your issue"
-                />
-              </div>
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <select
-                  id="category"
-                  value={supportTicket.category}
-                  onChange={(e) => setSupportTicket({...supportTicket, category: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Select a category</option>
-                  <option value="review_process">Review Process</option>
-                  <option value="technical">Technical Support</option>
-                  <option value="account">Account Issues</option>
-                  <option value="manuscript_access">Manuscript Access</option>
-                  <option value="deadline">Deadline Issues</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="priority">Priority</Label>
-                <select
-                  id="priority"
-                  value={supportTicket.priority}
-                  onChange={(e) => setSupportTicket({...supportTicket, priority: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="low">Low</option>
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
-            </div>
+          </h2>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
             <div>
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                rows={8}
-                value={supportTicket.message}
-                onChange={(e) => setSupportTicket({...supportTicket, message: e.target.value})}
-                placeholder="Please provide detailed information about your issue..."
-                className="resize-none"
+              <label htmlFor="subject" style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: '#002C40',
+                marginBottom: '0.5rem'
+              }}>
+                Subject
+              </label>
+              <input
+                id="subject"
+                type="text"
+                value={supportTicket.subject}
+                onChange={(e) => setSupportTicket({...supportTicket, subject: e.target.value})}
+                placeholder="Brief description of your issue"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d5d5d5',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem'
+                }}
               />
             </div>
+            <div>
+              <label htmlFor="category" style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: '#002C40',
+                marginBottom: '0.5rem'
+              }}>
+                Category
+              </label>
+              <select
+                id="category"
+                value={supportTicket.category}
+                onChange={(e) => setSupportTicket({...supportTicket, category: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d5d5d5',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  backgroundColor: '#fff'
+                }}
+              >
+                <option value="">Select a category</option>
+                <option value="review_process">Review Process</option>
+                <option value="technical">Technical Support</option>
+                <option value="account">Account Issues</option>
+                <option value="manuscript_access">Manuscript Access</option>
+                <option value="deadline">Deadline Issues</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="priority" style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: '#002C40',
+                marginBottom: '0.5rem'
+              }}>
+                Priority
+              </label>
+              <select
+                id="priority"
+                value={supportTicket.priority}
+                onChange={(e) => setSupportTicket({...supportTicket, priority: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d5d5d5',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  backgroundColor: '#fff'
+                }}
+              >
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
           </div>
-          <div className="flex justify-end mt-4">
-            <Button onClick={handleSubmitTicket}>
-              <Send className="h-4 w-4 mr-2" />
-              Submit Ticket
-            </Button>
+          <div>
+            <label htmlFor="message" style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: '#002C40',
+              marginBottom: '0.5rem'
+            }}>
+              Message
+            </label>
+            <textarea
+              id="message"
+              rows={8}
+              value={supportTicket.message}
+              onChange={(e) => setSupportTicket({...supportTicket, message: e.target.value})}
+              placeholder="Please provide detailed information about your issue..."
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                border: '1px solid #d5d5d5',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                resize: 'vertical'
+              }}
+            />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}>
+          <button
+            onClick={handleSubmitTicket}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              backgroundColor: '#006798',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            <Send style={{ width: '1rem', height: '1rem' }} />
+            Submit Ticket
+          </button>
+        </div>
+      </div>
 
-      {/* Contact Information */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="h-5 w-5 mr-2 text-blue-600" />
+      {/* Contact Information - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '1rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <Mail style={{ width: '1.25rem', height: '1.25rem', color: '#006798' }} />
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#002C40',
+              margin: 0
+            }}>
               Email Support
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Send us an email for general inquiries and support.
-            </p>
-            <p className="text-sm font-medium">reviewersupport@journal.org</p>
-            <p className="text-xs text-gray-500 mt-1">Response time: 24-48 hours</p>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.6'
+          }}>
+            Send us an email for general inquiries and support.
+          </p>
+          <p style={{
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: '#002C40',
+            margin: '0 0 0.25rem 0'
+          }}>
+            reviewersupport@journal.org
+          </p>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Response time: 24-48 hours
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MessageCircle className="h-5 w-5 mr-2 text-green-600" />
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <MessageCircle style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#002C40',
+              margin: 0
+            }}>
               Live Chat
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Chat with our support team in real-time.
-            </p>
-            <Button variant="outline" size="sm">
-              Start Chat
-            </Button>
-            <p className="text-xs text-gray-500 mt-1">Available: Mon-Fri, 9AM-5PM</p>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.6'
+          }}>
+            Chat with our support team in real-time.
+          </p>
+          <button style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            backgroundColor: 'transparent',
+            border: '1px solid #d5d5d5',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            color: '#006798',
+            marginBottom: '0.5rem'
+          }}>
+            Start Chat
+          </button>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Available: Mon-Fri, 9AM-5PM
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Phone className="h-5 w-5 mr-2 text-purple-600" />
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <Phone style={{ width: '1.25rem', height: '1.25rem', color: '#9c27b0' }} />
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#002C40',
+              margin: 0
+            }}>
               Phone Support
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Call us for urgent technical issues.
-            </p>
-            <p className="text-sm font-medium">+1 (555) 234-5678</p>
-            <p className="text-xs text-gray-500 mt-1">Available: Mon-Fri, 9AM-6PM</p>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: '0 0 1rem 0',
+            lineHeight: '1.6'
+          }}>
+            Call us for urgent technical issues.
+          </p>
+          <p style={{
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: '#002C40',
+            margin: '0 0 0.25rem 0'
+          }}>
+            +1 (555) 234-5678
+          </p>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Available: Mon-Fri, 9AM-6PM
+          </p>
+        </div>
       </div>
     </div>
   );

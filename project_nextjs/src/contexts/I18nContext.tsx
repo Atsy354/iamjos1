@@ -19,17 +19,28 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   // Load locale from storage on mount
   useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (stored && locales.includes(stored as Locale)) {
-      setLocaleState(stored as Locale);
-    } else {
-      // Try to detect from browser
+    if (typeof window === 'undefined') {
+      return;
+    }
+    let rafId: number | null = null;
+    const initialize = () => {
+      setMounted(true);
+      const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+      if (stored && locales.includes(stored as Locale)) {
+        setLocaleState(stored as Locale);
+        return;
+      }
       const browserLang = navigator.language.split('-')[0];
       if (locales.includes(browserLang as Locale)) {
         setLocaleState(browserLang as Locale);
       }
-    }
+    };
+    rafId = window.requestAnimationFrame(initialize);
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
   // Update html lang attribute when locale changes

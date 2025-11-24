@@ -1,46 +1,127 @@
-import { Button } from "@/components/ui/button";
 import { fetchHostedJournals } from "@/features/journals/data";
-
 import { getBulkEmailPermissions, updateBulkEmailPermissionsAction } from "../../actions";
 
 export default async function SiteSetupBulkEmailsPage() {
-  const [journals, permissions] = await Promise.all([fetchHostedJournals(), getBulkEmailPermissions()]);
-  const allowed = new Set(permissions.permissions.filter((item) => item.allow).map((item) => item.id));
+  const [journals, permissions] = await Promise.all([
+    fetchHostedJournals(),
+    getBulkEmailPermissions()
+  ]);
+  const allowed = new Set(
+    permissions.permissions
+      .filter((item) => item.allow)
+      .map((item) => item.id)
+  );
 
   return (
-    <div className="space-y-6">
-      <header className="border-b border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3">
-        <h2 className="text-sm font-semibold text-[var(--foreground)]">Bulk Emails</h2>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      <header style={{
+        padding: "1rem 1.5rem",
+        backgroundColor: "#f9fafb",
+        borderBottom: '1px solid #e5e5e5',
+        marginBottom: '1.5rem'
+      }}>
+        <h2 style={{
+          fontSize: "1rem",
+          fontWeight: "600",
+          color: '#002C40',
+          margin: 0
+        }}>
+          Bulk Emails
+        </h2>
       </header>
-      <form action={updateBulkEmailPermissionsAction} className="space-y-6">
-        <div className="space-y-3">
+      
+      <form action={updateBulkEmailPermissionsAction} style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
           {journals.length === 0 && (
-            <p className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--muted)]">
+            <div style={{
+              padding: '0.75rem 1rem',
+              border: '1px dashed #dee2e6',
+              borderRadius: '4px',
+              backgroundColor: '#f8f9fa',
+              fontSize: '0.875rem',
+              color: '#666',
+              fontStyle: 'italic'
+            }}>
               Belum ada jurnal yang di-host. Tambahkan jurnal pada menu Hosted Journals untuk mengaktifkan izin email massal.
-            </p>
+            </div>
           )}
+          
           {journals.map((journal) => (
             <label
               key={journal.id}
-              className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.75rem 1rem',
+                borderRadius: '4px',
+                border: '1px solid #dee2e6',
+                backgroundColor: '#f8f9fa',
+                cursor: 'pointer'
+              }}
             >
               <input type="hidden" name="journal_id" value={journal.id} />
-              <span className="text-sm font-semibold text-[var(--foreground)]">{journal.name}</span>
+              <span style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: '#002C40'
+              }}>
+                {journal.name}
+              </span>
               <input
                 type="checkbox"
                 name="allow_journal"
                 value={journal.id}
                 defaultChecked={allowed.has(journal.id)}
-                className="h-4 w-4 rounded border border-[var(--border)]"
+                style={{
+                  width: '1rem',
+                  height: '1rem',
+                  cursor: 'pointer'
+                }}
               />
             </label>
           ))}
         </div>
-        <div className="space-y-3 text-sm text-[var(--muted)]">
-          <p>Pastikan kebijakan anti-spam & privasi user telah dipenuhi sebelum mengaktifkan email massal.</p>
+        
+        <div style={{
+          padding: '0.75rem 0',
+          fontSize: '0.875rem',
+          color: '#666'
+        }}>
+          <p style={{ margin: 0 }}>
+            Pastikan kebijakan anti-spam & privasi user telah dipenuhi sebelum mengaktifkan email massal.
+          </p>
         </div>
-        <div className="mt-4 flex justify-end gap-3">
-          <Button type="submit">Save</Button>
+        
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '0.75rem',
+          marginTop: '1rem'
+        }}>
+          <button
+            type="submit"
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.5rem 1rem',
+              backgroundColor: '#006798',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Save
+          </button>
         </div>
       </form>
     </div>

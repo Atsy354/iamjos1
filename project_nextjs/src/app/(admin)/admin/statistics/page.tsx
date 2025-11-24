@@ -1,7 +1,5 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { withAuth } from "@/lib/auth-client";
 
 const statsData = [
@@ -50,58 +48,169 @@ const recentActivities = [
 
 function AdminStatisticsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Site Statistics</h1>
-          <p className="text-gray-600 mt-2">Overview of journal activities and system metrics</p>
-        </div>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h1 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: '#002C40',
+          margin: 0,
+          marginBottom: '0.25rem'
+        }}>
+          Site Statistics
+        </h1>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#666',
+          margin: 0
+        }}>
+          Overview of journal activities and system metrics
+        </p>
+      </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsData.map((stat, index) => (
-            <Card key={index} className="border border-gray-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">{stat.label}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-sm text-green-600 mt-1">{stat.trend}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Recent Activity */}
-        <Card className="border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 text-sm font-medium">
-                        {activity.user.charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-900">
-                        <span className="font-medium">{activity.user}</span> {activity.action} <span className="font-medium">{activity.target}</span>
-                      </p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    Recent
-                  </Badge>
-                </div>
-              ))}
+      {/* Statistics Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        {statsData.map((stat, index) => (
+          <div key={index} style={{
+            backgroundColor: '#fff',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            padding: '1.25rem'
+          }}>
+            <div style={{
+              paddingBottom: '0.75rem',
+              marginBottom: '0.75rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#666',
+                margin: 0
+              }}>
+                {stat.label}
+              </h3>
             </div>
-          </CardContent>
-        </Card>
+            <div style={{
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: '#002C40',
+              marginBottom: '0.25rem'
+            }}>
+              {stat.value}
+            </div>
+            <p style={{
+              fontSize: '0.75rem',
+              color: '#00B24E',
+              margin: 0
+            }}>
+              {stat.trend}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Activity */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderBottom: '1px solid #e5e5e5',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0
+          }}>
+            Recent Activity
+          </h2>
+        </div>
+        <div style={{
+          padding: '1rem 1.5rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            {recentActivities.map((activity, index) => (
+              <div key={index} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: index < recentActivities.length - 1 ? '1rem' : '0',
+                borderBottom: index < recentActivities.length - 1 ? '1px solid #e5e5e5' : 'none'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}>
+                  <div style={{
+                    width: '2rem',
+                    height: '2rem',
+                    backgroundColor: '#dbeafe',
+                    borderRadius: '9999px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{
+                      color: '#1e40af',
+                      fontSize: '0.875rem',
+                      fontWeight: 500
+                    }}>
+                      {activity.user.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <p style={{
+                      fontSize: '0.875rem',
+                      color: '#002C40',
+                      margin: '0 0 0.25rem 0'
+                    }}>
+                      <span style={{ fontWeight: 500 }}>{activity.user}</span> {activity.action} <span style={{ fontWeight: 500 }}>{activity.target}</span>
+                    </p>
+                    <p style={{
+                      fontSize: '0.75rem',
+                      color: '#666',
+                      margin: 0
+                    }}>
+                      {activity.time}
+                    </p>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '0.75rem',
+                  padding: '0.125rem 0.5rem',
+                  borderRadius: '4px',
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #dee2e6',
+                  color: '#333',
+                  fontWeight: 600
+                }}>
+                  Recent
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

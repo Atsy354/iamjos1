@@ -2,14 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { Query } from "../../types";
+import type { Query, SubmissionStage } from "../../types";
 import { QueryDetailModal } from "./query-detail-modal";
 import { FormMessage } from "@/components/ui/form-message";
+
+type ParticipantSummary = {
+  userId: string;
+  name: string;
+  role: string;
+  stage?: SubmissionStage;
+};
 
 type Props = {
   submissionId: string;
   query: Query;
-  participants: Array<{ userId: string; name: string; role: string }>;
+  participants: ParticipantSummary[];
+  participantColors?: Record<string, string>;
+  highlightedParticipant?: string | null;
 };
 
 /**
@@ -17,15 +26,29 @@ type Props = {
  * Component for displaying a single query/discussion thread
  * Based on OJS 3.3 query display
  */
-export function QueryCard({ submissionId, query, participants }: Props) {
+export function QueryCard({
+  submissionId,
+  query,
+  participants,
+  participantColors,
+  highlightedParticipant,
+}: Props) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const lastNote = query.notes.length > 0 ? query.notes[query.notes.length - 1] : null;
-  const participantNames = query.participants
-    .map((userId) => participants.find((p) => p.userId === userId)?.name || "Unknown")
-    .join(", ");
+  const lastActivityAt = query.dateModified || lastNote?.dateCreated || query.datePosted;
+  const participantBadges = query.participants.map((userId) => {
+    const participant = participants.find((p) => p.userId === userId);
+    return {
+      userId,
+      name: participant?.name || "Unknown",
+      role: participant?.role,
+      color: participantColors?.[userId],
+    };
+  });
+  const isHighlighted = highlightedParticipant && query.participants.includes(highlightedParticipant);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -55,11 +78,12 @@ export function QueryCard({ submissionId, query, participants }: Props) {
         onClick={handleOpen}
         style={{
           borderRadius: "0.25rem",
-          border: "1px solid #e5e5e5",
+          border: isHighlighted ? "1px solid #006798" : "1px solid #e5e5e5",
           backgroundColor: query.closed ? "#f8f9fa" : "#ffffff",
           padding: "0.75rem 1rem",
           cursor: "pointer",
           transition: "all 0.2s ease",
+          boxShadow: isHighlighted ? "0 0 0 2px rgba(0, 103, 152, 0.15)" : undefined,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = "#f8f9fa";
@@ -96,6 +120,22 @@ export function QueryCard({ submissionId, query, participants }: Props) {
               >
                 {lastNote?.title || "Discussion Thread"}
               </span>
+              {query.stage && (
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 600,
+                    letterSpacing: 0.2,
+                    color: "#006798",
+                    border: "1px solid rgba(0, 103, 152, 0.3)",
+                    padding: "0.1rem 0.35rem",
+                    borderRadius: "999px",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {query.stage}
+                </span>
+              )}
               {query.closed && (
                 <span
                   style={{
@@ -129,17 +169,61 @@ export function QueryCard({ submissionId, query, participants }: Props) {
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
+                flexDirection: "column",
+                gap: "0.35rem",
                 fontSize: "0.75rem",
                 color: "rgba(0, 0, 0, 0.54)",
               }}
             >
-              <span>Participants: {participantNames || "None"}</span>
-              <span>•</span>
-              <span>{query.notes.length} {query.notes.length === 1 ? "message" : "messages"}</span>
-              <span>•</span>
-              <span>{formatDate(query.datePosted)}</span>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.35rem",
+                }}
+              >
+                {participantBadges.length === 0 ? (
+                  <span>Participants: none</span>
+                ) : (
+                  participantBadges.map((badge) => (
+                    <span
+                      key={badge.userId}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.25rem",
+                        fontSize: "0.7rem",
+                        fontWeight: badge.userId === highlightedParticipant ? 700 : 500,
+                        color: badge.userId === highlightedParticipant ? "#002C40" : "#ffffff",
+                        backgroundColor:
+                          badge.userId === highlightedParticipant
+                            ? "#cde9f8"
+                            : badge.color ?? "rgba(0,0,0,0.45)",
+                        borderRadius: "999px",
+                        padding: "0.2rem 0.6rem",
+                        border:
+                          badge.userId === highlightedParticipant
+                            ? "1px solid #006798"
+                            : "1px solid transparent",
+                      }}
+                    >
+                      <span>{badge.name}</span>
+                      {badge.role && <span style={{ opacity: 0.8 }}>({badge.role})</span>}
+                    </span>
+                  ))
+                )}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <span>{query.notes.length} {query.notes.length === 1 ? "message" : "messages"}</span>
+                <span>•</span>
+                <span>Updated {formatDate(lastActivityAt)}</span>
+              </div>
             </div>
           </div>
         </div>

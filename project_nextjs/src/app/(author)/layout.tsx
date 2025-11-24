@@ -85,13 +85,6 @@ export default function AuthorLayout({
       current: pathname.startsWith("/author/submission/new")
     },
     {
-      name: "My Submissions",
-      href: "/author/submissions",
-      icon: FileText,
-      current: pathname.startsWith("/author/submissions"),
-      badge: 8
-    },
-    {
       name: "Published Articles",
       href: "/author/published",
       icon: BookOpen,

@@ -1,194 +1,729 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Calendar, Eye, Download, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react';
+import type { ReviewerAssignment } from '@/features/reviewer/data';
+import { withAuth } from '@/lib/auth-client';
 
-import { withAuth } from '@/lib/auth-client'
+type FilterType = 'all' | 'pending' | 'active' | 'completed';
 
 function ReviewerAssignments() {
+  const router = useRouter();
   const { user } = useAuth();
-  const [assignments] = useState([
-    {
-      id: 1,
-      title: 'The Impact of Social Media on Academic Performance: A Meta-Analysis',
-      authors: 'Smith, J., Johnson, M., Brown, A.',
-      journal: 'Journal of Educational Technology',
-      submission_date: '2024-01-15',
-      due_date: '2024-02-15',
-      status: 'Pending',
-      stage: 'External Review',
-      days_remaining: 12,
-      abstract: 'This study examines the relationship between social media usage and academic performance through a comprehensive meta-analysis of existing literature...'
-    },
-    {
-      id: 2,
-      title: 'Machine Learning Approaches in Educational Technology',
-      authors: 'Davis, R., Wilson, K.',
-      journal: 'International Journal of Learning Technologies',
-      submission_date: '2024-01-10',
-      due_date: '2024-02-10',
-      status: 'In Progress',
-      stage: 'External Review',
-      days_remaining: 7,
-      abstract: 'This paper explores various machine learning techniques applied to educational technology contexts...'
-    },
-    {
-      id: 3,
-      title: 'Digital Literacy in Higher Education: Challenges and Opportunities',
-      authors: 'Lee, S., Garcia, M.',
-      journal: 'Educational Research Review',
-      submission_date: '2024-01-05',
-      due_date: '2024-02-05',
-      status: 'Overdue',
-      stage: 'External Review',
-      days_remaining: -3,
-      abstract: 'An analysis of digital literacy challenges faced by higher education institutions...'
-    }
-  ]);
+  const [assignments, setAssignments] = useState<ReviewerAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>('all');
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'in progress': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'overdue': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  useEffect(() => {
+    async function loadAssignments() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`/api/reviewer/assignments?filter=${filter}`, {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Failed to load assignments');
+        }
+        setAssignments(data.assignments || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load assignments');
+        setAssignments([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAssignments();
+  }, [filter]);
+
+  const calculateDaysRemaining = (dueDate: string | null): number | null => {
+    if (!dueDate) return null;
+    const due = new Date(dueDate);
+    const now = new Date();
+    const diffTime = due.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const getStatusColor = (status: ReviewerAssignment['status']) => {
+    switch (status) {
+      case 'pending': return { bg: '#fff3cd', color: '#856404' };
+      case 'accepted': return { bg: '#d1ecf1', color: '#0c5460' };
+      case 'completed': return { bg: '#d4edda', color: '#155724' };
+      case 'declined': return { bg: '#e2e3e5', color: '#383d41' };
+      case 'cancelled': return { bg: '#e2e3e5', color: '#383d41' };
+      default: return { bg: '#e2e3e5', color: '#383d41' };
     }
   };
 
-  const getDaysColor = (days: number) => {
-    if (days < 0) return 'text-red-600';
-    if (days <= 7) return 'text-orange-600';
-    return 'text-green-600';
+  const getStatusLabel = (status: ReviewerAssignment['status']) => {
+    switch (status) {
+      case 'pending': return 'Pending';
+      case 'accepted': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'declined': return 'Declined';
+      case 'cancelled': return 'Cancelled';
+      default: return status;
+    }
   };
+
+  const getDaysColor = (days: number | null) => {
+    if (days === null) return { color: '#666' };
+    if (days < 0) return { color: '#dc3545' };
+    if (days <= 7) return { color: '#ff9800' };
+    return { color: '#00B24E' };
+  };
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const pendingCount = assignments.filter(a => a.status === 'pending').length;
+  const activeCount = assignments.filter(a => a.status === 'accepted' && !a.submittedAt).length;
+  const completedCount = assignments.filter(a => a.status === 'completed' || a.submittedAt !== null).length;
+  const overdueCount = assignments.filter(a => {
+    const days = calculateDaysRemaining(a.dueDate);
+    return days !== null && days < 0 && (a.status === 'pending' || a.status === 'accepted');
+  }).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Review Assignments</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '0.25rem'
+          }}>
+            Review Assignments
+          </h1>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Manage your review assignments
+          </p>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{assignments.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{assignments.filter(a => a.status === 'Pending').length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-            <CheckCircle className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{assignments.filter(a => a.status === 'In Progress').length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{assignments.filter(a => a.status === 'Overdue').length}</div>
-          </CardContent>
-        </Card>
+      {/* Filter Tabs - OJS PKP 3.3 Style */}
+      <div style={{
+        borderBottom: '2px solid #e5e5e5',
+        backgroundColor: '#fff',
+        padding: '0 0',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        gap: '0.5rem'
+      }}>
+        <button
+          onClick={() => setFilter('all')}
+          style={{
+            padding: '0.75rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: filter === 'all' ? 600 : 400,
+            color: filter === 'all' ? '#002C40' : '#006798',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: filter === 'all' ? '2px solid #006798' : '2px solid transparent',
+            cursor: 'pointer',
+            marginBottom: filter === 'all' ? '-2px' : '0'
+          }}
+          onMouseEnter={(e) => {
+            if (filter !== 'all') {
+              e.currentTarget.style.color = '#002C40';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'all') {
+              e.currentTarget.style.color = '#006798';
+            }
+          }}
+        >
+          All ({assignments.length})
+        </button>
+        <button
+          onClick={() => setFilter('pending')}
+          style={{
+            padding: '0.75rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: filter === 'pending' ? 600 : 400,
+            color: filter === 'pending' ? '#002C40' : '#006798',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: filter === 'pending' ? '2px solid #006798' : '2px solid transparent',
+            cursor: 'pointer',
+            marginBottom: filter === 'pending' ? '-2px' : '0'
+          }}
+          onMouseEnter={(e) => {
+            if (filter !== 'pending') {
+              e.currentTarget.style.color = '#002C40';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'pending') {
+              e.currentTarget.style.color = '#006798';
+            }
+          }}
+        >
+          Pending ({pendingCount})
+        </button>
+        <button
+          onClick={() => setFilter('active')}
+          style={{
+            padding: '0.75rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: filter === 'active' ? 600 : 400,
+            color: filter === 'active' ? '#002C40' : '#006798',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: filter === 'active' ? '2px solid #006798' : '2px solid transparent',
+            cursor: 'pointer',
+            marginBottom: filter === 'active' ? '-2px' : '0'
+          }}
+          onMouseEnter={(e) => {
+            if (filter !== 'active') {
+              e.currentTarget.style.color = '#002C40';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'active') {
+              e.currentTarget.style.color = '#006798';
+            }
+          }}
+        >
+          Active ({activeCount})
+        </button>
+        <button
+          onClick={() => setFilter('completed')}
+          style={{
+            padding: '0.75rem 1rem',
+            fontSize: '0.875rem',
+            fontWeight: filter === 'completed' ? 600 : 400,
+            color: filter === 'completed' ? '#002C40' : '#006798',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: filter === 'completed' ? '2px solid #006798' : '2px solid transparent',
+            cursor: 'pointer',
+            marginBottom: filter === 'completed' ? '-2px' : '0'
+          }}
+          onMouseEnter={(e) => {
+            if (filter !== 'completed') {
+              e.currentTarget.style.color = '#002C40';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'completed') {
+              e.currentTarget.style.color = '#006798';
+            }
+          }}
+        >
+          Completed ({completedCount})
+        </button>
       </div>
 
-      {/* Assignments Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Review Assignments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {assignments.map((assignment) => (
-              <div key={assignment.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">{assignment.title}</h3>
-                    <p className="text-sm text-gray-600 mb-2">Authors: {assignment.authors}</p>
-                    <p className="text-sm text-gray-600">Journal: {assignment.journal}</p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <Badge className={getStatusColor(assignment.status)}>
-                      {assignment.status}
-                    </Badge>
-                    <Badge variant="outline">{assignment.stage}</Badge>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 text-sm">
-                  <div>
-                    <span className="text-gray-500">Submission Date:</span>
-                    <p className="font-medium">{assignment.submission_date}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Due Date:</span>
-                    <p className="font-medium">{assignment.due_date}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Days Remaining:</span>
-                    <p className={`font-medium ${getDaysColor(assignment.days_remaining)}`}>
-                      {assignment.days_remaining > 0 ? `${assignment.days_remaining} days` : `${Math.abs(assignment.days_remaining)} days overdue`}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Assignment ID:</span>
-                    <p className="font-medium">#{assignment.id}</p>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <span className="text-gray-500 text-sm">Abstract:</span>
-                  <p className="text-sm text-gray-700 mt-1">{assignment.abstract}</p>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div className="flex space-x-2">
-                    <Button size="sm">
-                      <Eye className="h-4 w-4 mr-1" />
-                      View Manuscript
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
-                      Download Files
-                    </Button>
-                  </div>
-                  <div className="flex space-x-2">
-                    {assignment.status !== 'Completed' && (
-                      <Button variant="primary" size="sm">
-                        Start Review
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="sm">
-                      Decline
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Summary Cards - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Assignments
+            </h3>
+            <FileText style={{ width: '1rem', height: '1rem', color: '#666' }} />
           </div>
-        </CardContent>
-      </Card>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#002C40',
+            marginBottom: '0.25rem'
+          }}>
+            {assignments.length}
+          </div>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Pending
+            </h3>
+            <Clock style={{ width: '1rem', height: '1rem', color: '#ff9800' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#ff9800',
+            marginBottom: '0.25rem'
+          }}>
+            {pendingCount}
+          </div>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Active
+            </h3>
+            <CheckCircle style={{ width: '1rem', height: '1rem', color: '#006798' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#006798',
+            marginBottom: '0.25rem'
+          }}>
+            {activeCount}
+          </div>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Overdue
+            </h3>
+            <XCircle style={{ width: '1rem', height: '1rem', color: '#dc3545' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#dc3545',
+            marginBottom: '0.25rem'
+          }}>
+            {overdueCount}
+          </div>
+        </div>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dc3545',
+          borderRadius: '4px',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <AlertCircle style={{ width: '1.25rem', height: '1.25rem', color: '#dc3545' }} />
+          <p style={{ margin: 0, color: '#dc3545', fontSize: '0.875rem' }}>{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '2rem',
+          textAlign: 'center',
+          color: '#666',
+          fontSize: '0.875rem'
+        }}>
+          Loading assignments...
+        </div>
+      )}
+
+      {/* Assignments List - OJS PKP 3.3 Style */}
+      {!loading && !error && (
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid #e5e5e5',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <h2 style={{
+              fontSize: '1.125rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Review Assignments
+            </h2>
+          </div>
+          <div style={{ padding: '1.5rem' }}>
+            {assignments.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                fontSize: '0.875rem',
+                color: '#666',
+                fontStyle: 'italic'
+              }}>
+                No review assignments found.
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}>
+                {assignments.map((assignment) => {
+                  const daysRemaining = calculateDaysRemaining(assignment.dueDate);
+                  const isOverdue = daysRemaining !== null && daysRemaining < 0 && (assignment.status === 'pending' || assignment.status === 'accepted');
+                  const statusColors = getStatusColor(assignment.status);
+                  const daysColors = getDaysColor(daysRemaining);
+                  
+                  return (
+                    <div 
+                      key={assignment.id} 
+                      style={{
+                        border: '1px solid #dee2e6',
+                        borderRadius: '4px',
+                        padding: '1.25rem',
+                        backgroundColor: '#fff',
+                        transition: 'box-shadow 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '1rem'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <h3 style={{
+                            fontWeight: 600,
+                            fontSize: '1.125rem',
+                            color: '#002C40',
+                            margin: 0,
+                            marginBottom: '0.5rem'
+                          }}>
+                            {assignment.submissionTitle}
+                          </h3>
+                          {assignment.authorNames && (
+                            <p style={{
+                              fontSize: '0.875rem',
+                              color: '#666',
+                              margin: 0,
+                              marginBottom: '0.25rem'
+                            }}>
+                              Authors: {assignment.authorNames}
+                            </p>
+                          )}
+                          {assignment.journalTitle && (
+                            <p style={{
+                              fontSize: '0.875rem',
+                              color: '#666',
+                              margin: 0
+                            }}>
+                              Journal: {assignment.journalTitle}
+                            </p>
+                          )}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-end',
+                          gap: '0.5rem'
+                        }}>
+                          <span style={{
+                            backgroundColor: statusColors.bg,
+                            color: statusColors.color,
+                            fontSize: '0.75rem',
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            display: 'inline-block'
+                          }}>
+                            {getStatusLabel(assignment.status)}
+                          </span>
+                          {isOverdue && (
+                            <span style={{
+                              backgroundColor: '#f8d7da',
+                              color: '#721c24',
+                              fontSize: '0.75rem',
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '4px',
+                              fontWeight: 600,
+                              display: 'inline-block'
+                            }}>
+                              Overdue
+                            </span>
+                          )}
+                          <span style={{
+                            backgroundColor: 'transparent',
+                            border: '1px solid #dee2e6',
+                            color: '#666',
+                            fontSize: '0.75rem',
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            display: 'inline-block'
+                          }}>
+                            Round {assignment.round}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                        gap: '1rem',
+                        marginBottom: '1rem',
+                        paddingBottom: '1rem',
+                        borderBottom: '1px solid #e5e5e5'
+                      }}>
+                        <div>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            color: '#666',
+                            display: 'block',
+                            marginBottom: '0.25rem'
+                          }}>
+                            Submission Date:
+                          </span>
+                          <p style={{
+                            fontWeight: 500,
+                            fontSize: '0.875rem',
+                            color: '#333',
+                            margin: 0
+                          }}>
+                            {formatDate(assignment.submittedAtSubmission)}
+                          </p>
+                        </div>
+                        <div>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            color: '#666',
+                            display: 'block',
+                            marginBottom: '0.25rem'
+                          }}>
+                            Due Date:
+                          </span>
+                          <p style={{
+                            fontWeight: 500,
+                            fontSize: '0.875rem',
+                            color: '#333',
+                            margin: 0
+                          }}>
+                            {formatDate(assignment.dueDate)}
+                          </p>
+                        </div>
+                        <div>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            color: '#666',
+                            display: 'block',
+                            marginBottom: '0.25rem'
+                          }}>
+                            Days Remaining:
+                          </span>
+                          <p style={{
+                            fontWeight: 500,
+                            fontSize: '0.875rem',
+                            color: daysColors.color,
+                            margin: 0
+                          }}>
+                            {daysRemaining === null
+                              ? 'N/A'
+                              : daysRemaining > 0
+                              ? `${daysRemaining} days`
+                              : `${Math.abs(daysRemaining)} days overdue`}
+                          </p>
+                        </div>
+                        <div>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            color: '#666',
+                            display: 'block',
+                            marginBottom: '0.25rem'
+                          }}>
+                            Assignment ID:
+                          </span>
+                          <p style={{
+                            fontWeight: 500,
+                            fontSize: '0.875rem',
+                            color: '#333',
+                            margin: 0
+                          }}>
+                            #{assignment.id.slice(0, 8)}...
+                          </p>
+                        </div>
+                      </div>
+
+                      {assignment.abstract && (
+                        <div style={{
+                          marginBottom: '1rem',
+                          paddingBottom: '1rem',
+                          borderBottom: '1px solid #e5e5e5'
+                        }}>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            color: '#666',
+                            display: 'block',
+                            marginBottom: '0.25rem'
+                          }}>
+                            Abstract:
+                          </span>
+                          <p style={{
+                            fontSize: '0.875rem',
+                            color: '#333',
+                            margin: 0,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                            {assignment.abstract}
+                          </p>
+                        </div>
+                      )}
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingTop: '0.75rem'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem'
+                        }}>
+                          <button
+                            onClick={() => router.push(`/reviewer/assignments/${assignment.id}`)}
+                            style={{
+                              fontSize: '0.875rem',
+                              padding: '0.5rem 1rem',
+                              backgroundColor: 'transparent',
+                              border: '1px solid #d5d5d5',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              color: '#006798',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
+                            }}
+                          >
+                            <Eye style={{ width: '1rem', height: '1rem' }} />
+                            View Details
+                          </button>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem'
+                        }}>
+                          {(assignment.status === 'pending' || assignment.status === 'accepted') && !assignment.submittedAt && (
+                            <button
+                              onClick={() => router.push(`/reviewer/assignments/${assignment.id}`)}
+                              style={{
+                                backgroundColor: '#006798',
+                                color: '#fff',
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                                padding: '0.5rem 1rem',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {assignment.status === 'pending' ? 'Start Review' : 'Continue Review'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

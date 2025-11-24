@@ -1,34 +1,98 @@
 "use client";
 
-import { useState } from "react";
-import type { SubmissionDetail } from "../../../types";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { SubmissionDetail, SubmissionVersion } from "../../../types";
+import { FormMessage } from "@/components/ui/form-message";
 
 type Props = {
   submissionId: string;
   detail: SubmissionDetail;
+  version?: SubmissionVersion;
   isPublished: boolean;
 };
 
-export function IdentifiersTab({ submissionId, detail, isPublished }: Props) {
-  const metadata = detail.metadata as Record<string, unknown>;
-  const identifiers = (metadata.identifiers as Record<string, string | null>) || {};
+type IdentifierState = {
+  doi: string;
+  isbn: string;
+  issn: string;
+};
 
-  const [doi, setDoi] = useState<string>(identifiers.doi || "");
-  const [isbn, setIsbn] = useState<string>(identifiers.isbn || "");
-  const [issn, setIssn] = useState<string>(identifiers.issn || "");
+function extractIdentifiers(source?: Record<string, unknown>): IdentifierState {
+  if (!source) {
+    return { doi: "", isbn: "", issn: "" };
+  }
+  const identifiersRaw = (source as { identifiers?: Record<string, unknown> }).identifiers;
+  if (!identifiersRaw) {
+    return { doi: "", isbn: "", issn: "" };
+  }
+  return {
+    doi: typeof identifiersRaw.doi === "string" ? identifiersRaw.doi : "",
+    isbn: typeof identifiersRaw.isbn === "string" ? identifiersRaw.isbn : "",
+    issn: typeof identifiersRaw.issn === "string" ? identifiersRaw.issn : "",
+  };
+}
+
+export function IdentifiersTab({ submissionId, detail, version, isPublished }: Props) {
+  const router = useRouter();
+  const initialIdentifiers = useMemo(() => {
+    if (version) {
+      const versionIdentifiers = extractIdentifiers(version.metadata);
+      if (versionIdentifiers.doi || versionIdentifiers.isbn || versionIdentifiers.issn) {
+        return versionIdentifiers;
+      }
+    }
+    return extractIdentifiers(detail.metadata);
+  }, [detail.metadata, version]);
+
+  const [doi, setDoi] = useState<string>(initialIdentifiers.doi);
+  const [isbn, setIsbn] = useState<string>(initialIdentifiers.isbn);
+  const [issn, setIssn] = useState<string>(initialIdentifiers.issn);
   const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    setDoi(initialIdentifiers.doi);
+    setIsbn(initialIdentifiers.isbn);
+    setIssn(initialIdentifiers.issn);
+  }, [initialIdentifiers]);
+
+  if (!version) {
+    return (
+      <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-muted)] px-4 py-6 text-sm text-[var(--muted)]">
+        Belum ada versi publikasi yang dapat diedit. Silakan buat versi baru terlebih dahulu.
+      </div>
+    );
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setFeedback(null);
     try {
-      // TODO: Save identifiers via API
-      console.log("Save identifiers:", { doi, isbn, issn });
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setIsSaving(false);
+      const res = await fetch(`/api/editor/submissions/${submissionId}/publications/${version.id}/metadata`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifiers: {
+            doi: doi.trim() || "",
+            isbn: isbn.trim() || "",
+            issn: issn.trim() || "",
+          },
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error ?? "Gagal menyimpan identifier publikasi.");
+      }
+      setFeedback({ tone: "success", message: "Identifier publikasi berhasil diperbarui." });
+      router.refresh();
     } catch (error) {
-      console.error("Error saving identifiers:", error);
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan identifier.",
+      });
+    } finally {
       setIsSaving(false);
     }
   };
@@ -51,6 +115,8 @@ export function IdentifiersTab({ submissionId, detail, isPublished }: Props) {
       >
         Identifiers
       </h2>
+
+      {feedback && <FormMessage tone={feedback.tone}>{feedback.message}</FormMessage>}
 
       <form
         onSubmit={handleSave}

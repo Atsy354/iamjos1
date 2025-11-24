@@ -15,11 +15,14 @@ import type {
   SubmissionVersion,
   SubmissionReviewRound,
   Query,
+  SubmissionTask,
+  PublicationGalley,
 } from "./types";
 import {
   calculateDashboardStats as calculateDummyStats,
   getFilteredSubmissions,
 } from "./dummy-helpers";
+import { ensureDummyEditorData } from "./dummy-sync";
 
 type ListSubmissionsParams = {
   queue?: "my" | "unassigned" | "all" | "archived";
@@ -56,6 +59,7 @@ export const getSessionUserId = cache(async () => {
 
 export async function getEditorDashboardStats(editorId?: string | null): Promise<EditorDashboardStats> {
   try {
+    await ensureDummyEditorData();
     const supabase = getSupabaseAdminClient();
 
     const [myQueue, unassigned, submission, inReview, copyediting, production, allActive, archived, tasks] = await Promise.all([
@@ -91,6 +95,7 @@ export async function getEditorDashboardStats(editorId?: string | null): Promise
 export async function listSubmissions(params: ListSubmissionsParams = {}): Promise<SubmissionSummary[]> {
   const { queue = "all", stage, search, limit = 20, offset = 0, editorId } = params;
   try {
+    await ensureDummyEditorData();
     const supabase = getSupabaseAdminClient();
     let query = supabase
       .from("submissions")
@@ -104,6 +109,7 @@ export async function listSubmissions(params: ListSubmissionsParams = {}): Promi
         submitted_at,
         updated_at,
         journal_id,
+        metadata,
         journals:journal_id (title)`
       )
       .order("updated_at", { ascending: false })
@@ -126,9 +132,15 @@ export async function listSubmissions(params: ListSubmissionsParams = {}): Promi
     if (queue === "my" && editorId) {
       const assignedIds = await getAssignedSubmissionIds(editorId);
       if (assignedIds.length === 0) {
-        return [];
+        // If user has no assigned submissions, show unassigned ones as fallback
+        const unassignedIds = await getAssignedSubmissionIdsForRoles();
+        if (unassignedIds.length > 0) {
+          query = query.not("id", "in", unassignedIds);
+        }
+        // If no unassigned either, return empty (no submissions available)
+      } else {
+        query = query.in("id", assignedIds);
       }
-      query = query.in("id", assignedIds);
     }
 
     if (queue === "unassigned") {
@@ -156,6 +168,7 @@ export async function listSubmissions(params: ListSubmissionsParams = {}): Promi
       isArchived: row.is_archived,
       submittedAt: row.submitted_at,
       updatedAt: row.updated_at,
+      author_name: (row.metadata as { author_name?: string } | null)?.author_name,
       assignees: [],
     }));
   } catch {
@@ -187,9 +200,19 @@ export async function listSubmissions(params: ListSubmissionsParams = {}): Promi
 
 export async function getSubmissionDetail(id: string): Promise<SubmissionDetail | null> {
   try {
+    await ensureDummyEditorData();
     const supabase = getSupabaseAdminClient();
-    const [{ data: submission }, { data: versions }, { data: participants }, { data: files }, { data: activity }, { data: reviewRoundsData }, { data: queriesData }] =
-      await Promise.all([
+    
+    // Fetch all data in parallel, but handle errors gracefully
+    const [
+      { data: submission, error: submissionError },
+      { data: versions, error: versionsError },
+      { data: participants, error: participantsError },
+      { data: files, error: filesError },
+      { data: activity, error: activityError },
+      { data: reviewRoundsData, error: reviewRoundsError },
+      { data: queriesData, error: queriesError },
+    ] = await Promise.all([
         supabase
           .from("submissions")
           .select(
@@ -206,10 +229,10 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
             journals:journal_id (title)`
           )
           .eq("id", id)
-          .single(),
+          .maybeSingle(),
         supabase
           .from("submission_versions")
-          .select("id, version, status, published_at, created_at, issue_id, issues:issue_id (title, year, volume)")
+          .select("id, version, status, metadata, published_at, created_at, issue_id, issues:issue_id (title, year, volume)")
           .eq("submission_id", id)
           .order("version", { ascending: false }),
         supabase
@@ -274,12 +297,48 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
             )
           `
           )
-          .eq("assoc_type", 517) // ASSOC_TYPE_SUBMISSION
-          .eq("assoc_id", id)
+          .eq("submission_id", id)
           .order("seq", { ascending: true }),
       ]);
 
+    // Log errors for debugging (but don't fail if non-critical queries fail)
+    if (versionsError) {
+      console.warn("Error fetching versions:", versionsError);
+    }
+    if (participantsError) {
+      console.warn("Error fetching participants:", participantsError);
+    }
+    if (filesError) {
+      console.warn("Error fetching files:", filesError);
+    }
+    if (activityError) {
+      console.warn("Error fetching activity:", activityError);
+    }
+    if (reviewRoundsError) {
+      console.warn("Error fetching review rounds:", reviewRoundsError);
+    }
+    if (queriesError) {
+      console.warn("Error fetching queries:", queriesError);
+    }
+
+    if (submissionError) {
+      console.error("Error fetching submission:", submissionError);
+      return null;
+    }
+
     if (!submission) {
+      console.warn(`Submission with ID ${id} not found`);
+      // Try to check if any submissions exist at all
+      const { data: anySubmission } = await supabase
+        .from("submissions")
+        .select("id, title")
+        .limit(1);
+      if (anySubmission && anySubmission.length > 0) {
+        console.warn(`Found ${anySubmission.length} submission(s) in database, but not with ID ${id}`);
+        console.warn(`Example submission ID: ${anySubmission[0]?.id}`);
+      } else {
+        console.warn("No submissions found in database at all. Dummy data may not have been seeded.");
+      }
       return null;
     }
 
@@ -297,11 +356,12 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
       assignees: [],
     };
 
-    const mappedVersions: SubmissionVersion[] =
+  const mappedVersionsBase =
       versions?.map((item) => ({
         id: item.id,
         version: item.version,
         status: item.status,
+        metadata: (item.metadata as Record<string, unknown>) ?? {},
         issue: item.issues
           ? {
               id: item.issue_id,
@@ -312,7 +372,81 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
           : undefined,
         publishedAt: item.published_at,
         createdAt: item.created_at,
+        galleys: [] as PublicationGalley[],
       })) ?? [];
+
+    const versionIds = mappedVersionsBase.map((version) => version.id);
+    let galleysByVersion = new Map<string, PublicationGalley[]>();
+    if (versionIds.length > 0) {
+      const { data: galleysData } = await supabase
+        .from("galleys")
+        .select(
+          `
+          id,
+          submission_version_id,
+          label,
+          locale,
+          file_storage_path,
+          file_size,
+          is_public,
+          is_primary,
+          sequence,
+          remote_url,
+          submission_file_id,
+          created_at,
+          updated_at,
+          submission_files:submission_file_id (
+            id,
+            label,
+            storage_path,
+            file_size
+          )
+        `,
+        )
+        .in("submission_version_id", versionIds);
+
+      galleysByVersion = (galleysData ?? []).reduce<Map<string, PublicationGalley[]>>((acc, galley) => {
+        const versionId = galley.submission_version_id as string;
+        const entry: PublicationGalley = {
+          id: galley.id,
+          submissionVersionId: versionId,
+          label: galley.label,
+          locale: galley.locale,
+          isApproved: Boolean(galley.is_public),
+          isPublic: Boolean(galley.is_public),
+          isPrimary: Boolean(galley.is_primary),
+          sequence: galley.sequence ?? 0,
+          submissionFileId: galley.submission_file_id ?? undefined,
+          fileStoragePath:
+            galley.file_storage_path ??
+            ((galley.submission_files as { storage_path?: string } | null)?.storage_path ?? null),
+          fileSize:
+            galley.file_size ??
+            ((galley.submission_files as { file_size?: number } | null)?.file_size ?? 0),
+          remoteUrl: galley.remote_url ?? null,
+          createdAt: galley.created_at,
+          updatedAt: galley.updated_at,
+        };
+        const list = acc.get(versionId) ?? [];
+        list.push(entry);
+        acc.set(versionId, list.sort((a, b) => a.sequence - b.sequence));
+        return acc;
+      }, new Map());
+    }
+
+    const mappedVersions: SubmissionVersion[] = mappedVersionsBase.map((version) => ({
+      ...version,
+      galleys: galleysByVersion.get(version.id) ?? [],
+    }));
+
+    const userIds = new Set<string>();
+    participants?.forEach((p) => userIds.add(p.user_id));
+    queriesData?.forEach((query) => {
+      (query.query_participants as { user_id: string }[] | null)?.forEach((participant) => userIds.add(participant.user_id));
+      (query.notes as { user_id: string }[] | null)?.forEach((note) => userIds.add(note.user_id));
+    });
+
+    const userMap = await getUserDisplayMap(supabase, Array.from(userIds));
 
     const mappedParticipants: SubmissionParticipant[] =
       participants?.map((p) => ({
@@ -320,6 +454,8 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
         role: p.role,
         stage: p.stage,
         assignedAt: p.assigned_at,
+        name: userMap[p.user_id]?.name ?? `User ${p.user_id}`,
+        email: userMap[p.user_id]?.email,
       })) ?? [];
 
     const mappedFiles: SubmissionFile[] =
@@ -380,13 +516,13 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
     const mappedQueries = queriesData?.map((query) => ({
       id: query.id,
       submissionId: id,
-      stage: submission.current_stage as SubmissionStage,
+      stage: (query.stage_id as SubmissionStage) ?? (submission.current_stage as SubmissionStage),
       stageId: query.stage_id,
       seq: query.seq,
       datePosted: query.date_posted,
       dateModified: query.date_modified ?? null,
       closed: Boolean(query.closed),
-      participants: (query.query_participants as { user_id: string }[]).map((p) => p.user_id) ?? [],
+      participants: (query.query_participants as { user_id: string }[] | null)?.map((p) => p.user_id) ?? [],
       notes: (query.notes as {
         id: string;
         user_id: string;
@@ -398,7 +534,7 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
         id: note.id,
         queryId: query.id,
         userId: note.user_id,
-        userName: `User ${note.user_id}`, // TODO: Get actual user name
+        userName: userMap[note.user_id]?.name ?? `User ${note.user_id}`,
         title: note.title ?? null,
         contents: note.contents,
         dateCreated: note.date_created,
@@ -416,9 +552,106 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
       reviewRounds,
       queries: mappedQueries,
     };
-  } catch {
+  } catch (error) {
+    console.error("Error in getSubmissionDetail:", error);
     return null;
   }
+}
+
+type ListTasksParams = {
+  assigneeId?: string | null;
+  status?: string;
+  limit?: number;
+};
+
+export async function listSubmissionTasks(params: ListTasksParams = {}): Promise<SubmissionTask[]> {
+  const { assigneeId, status, limit = 20 } = params;
+  await ensureDummyEditorData();
+  const supabase = getSupabaseAdminClient();
+
+  let query = supabase
+    .from("submission_tasks")
+    .select(
+      `
+        id,
+        submission_id,
+        stage,
+        title,
+        status,
+        assignee_id,
+        due_date,
+        created_at,
+        submissions:submission_id (title)
+      `
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (assigneeId) {
+    // First try to get tasks assigned to this user
+    query = query.eq("assignee_id", assigneeId);
+  }
+
+  if (status && status !== "all") {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query;
+  
+  // If no tasks found for this user and we're looking for open tasks, also show unassigned ones
+  if (assigneeId && (!data || data.length === 0) && (!status || status === "open")) {
+    const unassignedQuery = supabase
+      .from("submission_tasks")
+      .select(
+        `
+          id,
+          submission_id,
+          stage,
+          title,
+          status,
+          assignee_id,
+          due_date,
+          created_at,
+          submissions:submission_id (title)
+        `
+      )
+      .is("assignee_id", null)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    
+    const { data: unassignedData, error: unassignedError } = await unassignedQuery;
+    if (!unassignedError && unassignedData) {
+      const mapped = unassignedData.map((row) => ({
+        id: row.id,
+        submissionId: row.submission_id,
+        submissionTitle: (row.submissions as { title?: string } | null)?.title ?? null,
+        stage: row.stage as SubmissionStage,
+        title: row.title,
+        status: row.status,
+        assigneeId: row.assignee_id ?? null,
+        dueDate: row.due_date ?? null,
+        createdAt: row.created_at,
+      }));
+      return mapped;
+    }
+  }
+  
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((row) => ({
+    id: row.id,
+    submissionId: row.submission_id,
+    submissionTitle: (row.submissions as { title?: string } | null)?.title ?? null,
+    stage: row.stage as SubmissionStage,
+    title: row.title,
+    status: row.status,
+    assigneeId: row.assignee_id ?? null,
+    dueDate: row.due_date ?? null,
+    createdAt: row.created_at,
+  }));
 }
 
 async function countSubmissions({
@@ -428,6 +661,7 @@ async function countSubmissions({
   supabase: ReturnType<typeof getSupabaseAdminClient>;
   filter: { queue?: "my" | "unassigned" | "archived"; stage?: SubmissionStage; editorId?: string | null };
 }) {
+  await ensureDummyEditorData();
   let query = supabase.from("submissions").select("*", { head: true, count: "exact" });
 
   if (filter.queue === "archived") {
@@ -474,6 +708,7 @@ async function countTasks({
 
 async function getAssignedSubmissionIds(userId: string) {
   try {
+    await ensureDummyEditorData();
     const supabase = getSupabaseAdminClient();
     const { data, error } = await supabase
       .from("submission_participants")
@@ -491,6 +726,7 @@ async function getAssignedSubmissionIds(userId: string) {
 
 async function getAssignedSubmissionIdsForRoles() {
   try {
+    await ensureDummyEditorData();
     const supabase = getSupabaseAdminClient();
     const { data, error } = await supabase
       .from("submission_participants")
@@ -507,4 +743,37 @@ async function getAssignedSubmissionIdsForRoles() {
 
 // Function removed - now using dummy-helpers.ts functions
 // getDummySubmissions is now replaced by getFilteredSubmissions from dummy-helpers.ts
+
+type UserDisplay = {
+  name: string;
+  email?: string;
+};
+
+async function getUserDisplayMap(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  userIds: string[],
+): Promise<Record<string, UserDisplay>> {
+  const uniqueIds = Array.from(new Set(userIds.filter(Boolean)));
+  if (uniqueIds.length === 0) {
+    return {};
+  }
+
+  const entries = await Promise.all(
+    uniqueIds.map(async (userId) => {
+      try {
+        const { data, error } = await supabase.auth.admin.getUserById(userId);
+        if (error || !data.user) {
+          return [userId, { name: `User ${userId}` }] as const;
+        }
+        const metadata = (data.user.user_metadata as { name?: string } | null) ?? {};
+        const name = metadata.name ?? data.user.email ?? `User ${userId}`;
+        return [userId, { name, email: data.user.email ?? undefined }] as const;
+      } catch {
+        return [userId, { name: `User ${userId}` }] as const;
+      }
+    }),
+  );
+
+  return Object.fromEntries(entries);
+}
 

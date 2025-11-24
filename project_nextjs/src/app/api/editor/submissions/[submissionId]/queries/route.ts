@@ -126,6 +126,8 @@ export async function POST(request: NextRequest, context: RouteParams) {
       .from("queries")
       .insert({
         submission_id: submissionId,
+        assoc_type: 517,
+        assoc_id: submissionId,
         stage_id: body.stage,
         seq: nextSeq,
         date_posted: new Date().toISOString(),

@@ -2,26 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import type { SubmissionStage } from "../../types";
-
-export type Galley = {
-  id: string;
-  label: string;
-  locale: string;
-  fileId?: string;
-  remoteUrl?: string;
-  submissionFileId?: string;
-  sequence: number;
-  isApproved: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+import type { PublicationGalley, SubmissionStage } from "../../types";
+import {
+  PkpTable,
+  PkpTableHeader,
+  PkpTableRow,
+  PkpTableHead,
+  PkpTableCell,
+} from "@/components/ui/pkp-table";
+import { PkpButton } from "@/components/ui/pkp-button";
 
 type Props = {
   submissionId: string;
   stage: SubmissionStage;
-  galleys: Galley[];
+  galleys: PublicationGalley[];
   onEdit?: (galleyId: string) => void;
   onDelete?: (galleyId: string) => Promise<void>;
 };
@@ -32,8 +26,8 @@ type Props = {
  * Based on OJS PKP 3.3 galley grid
  */
 export function GalleyGrid({
-  submissionId,
-  stage,
+  submissionId: _submissionId,
+  stage: _stage,
   galleys,
   onEdit,
   onDelete,
@@ -43,7 +37,7 @@ export function GalleyGrid({
 
   const handleDelete = async (galleyId: string) => {
     if (!onDelete) return;
-    
+
     setDeletingId(galleyId);
     try {
       await onDelete(galleyId);
@@ -65,81 +59,91 @@ export function GalleyGrid({
 
   return (
     <div className="overflow-hidden rounded-md border border-[var(--border)] bg-white">
-      <table className="min-w-full divide-y divide-[var(--border)] text-sm">
-        <thead className="bg-[var(--surface-muted)] text-[var(--muted)]">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold">Label</th>
-            <th className="px-4 py-3 text-left font-semibold">Locale</th>
-            <th className="px-4 py-3 text-left font-semibold">Type</th>
-            <th className="px-4 py-3 text-left font-semibold">Status</th>
-            <th className="px-4 py-3 text-left font-semibold">Created</th>
-            <th className="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[var(--border)]">
+      <PkpTable>
+        <PkpTableHeader>
+          <PkpTableRow isHeader>
+            <PkpTableHead>Label</PkpTableHead>
+            <PkpTableHead>Locale</PkpTableHead>
+            <PkpTableHead>Source</PkpTableHead>
+            <PkpTableHead>Status</PkpTableHead>
+            <PkpTableHead>Dibuat</PkpTableHead>
+            <PkpTableHead style={{ textAlign: "right" }}>Aksi</PkpTableHead>
+          </PkpTableRow>
+        </PkpTableHeader>
+        <tbody>
           {galleys.map((galley) => (
-            <tr key={galley.id}>
-              <td className="px-4 py-3 font-semibold text-[var(--foreground)]">
-                {galley.label}
-              </td>
-              <td className="px-4 py-3 text-[var(--muted)]">
-                {galley.locale}
-              </td>
-              <td className="px-4 py-3 text-[var(--muted)]">
-                {galley.remoteUrl ? "Remote URL" : galley.fileId ? "File" : "—"}
-              </td>
-              <td className="px-4 py-3">
+            <PkpTableRow key={galley.id}>
+              <PkpTableCell>
+                <div className="font-semibold text-[var(--foreground)]">{galley.label}</div>
+                {galley.remoteUrl && (
+                  <a
+                    href={galley.remoteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-[var(--primary)] underline"
+                  >
+                    {galley.remoteUrl}
+                  </a>
+                )}
+              </PkpTableCell>
+              <PkpTableCell>{galley.locale?.toUpperCase()}</PkpTableCell>
+              <PkpTableCell>
+                {galley.remoteUrl
+                  ? "Remote URL"
+                  : galley.submissionFileId
+                  ? "Submission File"
+                  : "—"}
+              </PkpTableCell>
+              <PkpTableCell>
                 <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${
-                    galley.isApproved
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                  style={{
+                    backgroundColor: galley.isApproved ? "rgba(0, 105, 152, 0.12)" : "rgba(0, 0, 0, 0.08)",
+                    color: galley.isApproved ? "#006798" : "rgba(0, 0, 0, 0.7)",
+                  }}
                 >
                   {galley.isApproved ? "Approved" : "Draft"}
                 </span>
-              </td>
-              <td className="px-4 py-3 text-[var(--muted)]">
-                {formatDate(galley.createdAt)}
-              </td>
-              <td className="px-4 py-3 text-right">
+              </PkpTableCell>
+              <PkpTableCell>
+                <div className="text-sm text-[var(--foreground)]">{formatDate(galley.createdAt)}</div>
+                <div className="text-xs text-[var(--muted)]">Updated {formatDate(galley.updatedAt)}</div>
+              </PkpTableCell>
+              <PkpTableCell style={{ textAlign: "right" }}>
                 <div className="flex justify-end gap-2">
                   {onEdit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onEdit(galley.id)}
-                    >
+                    <PkpButton variant="text" size="sm" onClick={() => onEdit(galley.id)}>
                       Edit
-                    </Button>
+                    </PkpButton>
                   )}
                   {onDelete && (
-                    <Button
+                    <PkpButton
+                      variant="onclick"
                       size="sm"
-                      variant="ghost"
                       onClick={() => handleDelete(galley.id)}
                       disabled={deletingId === galley.id}
+                      loading={deletingId === galley.id}
                     >
                       Delete
-                    </Button>
+                    </PkpButton>
                   )}
                 </div>
-              </td>
-            </tr>
+              </PkpTableCell>
+            </PkpTableRow>
           ))}
         </tbody>
-      </table>
+      </PkpTable>
     </div>
   );
 }
 
-function formatDate(value: string) {
+function formatDate(value?: string | null) {
+  if (!value) return "—";
   try {
-    return new Intl.DateTimeFormat("en", {
+    return new Intl.DateTimeFormat("id", {
       dateStyle: "medium",
-      timeStyle: "short",
     }).format(new Date(value));
   } catch {
-    return value;
+    return value ?? "";
   }
 }

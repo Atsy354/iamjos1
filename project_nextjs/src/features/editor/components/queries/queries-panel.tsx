@@ -1,16 +1,23 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Query, SubmissionStage } from "../../types";
 import { QueryCard } from "./query-card";
 import { CreateQueryModal } from "./create-query-modal";
 
+type ParticipantSummary = {
+  userId: string;
+  name: string;
+  role: string;
+  stage?: SubmissionStage;
+};
+
 type Props = {
   submissionId: string;
   stage: SubmissionStage;
   queries: Query[];
-  participants: Array<{ userId: string; name: string; role: string }>;
+  participants: ParticipantSummary[];
 };
 
 /**
@@ -22,9 +29,41 @@ export function QueriesPanel({ submissionId, stage, queries, participants }: Pro
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [participantFilter, setParticipantFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
 
-  const openQueries = queries.filter((q) => !q.closed);
-  const closedQueries = queries.filter((q) => q.closed);
+  const participantColorMap = useMemo(() => {
+    const palette = ["#006798", "#00836a", "#9c27b0", "#f57c00", "#c62828", "#5d4037"];
+    const map: Record<string, string> = {};
+    participants.forEach((participant, index) => {
+      map[participant.userId] = palette[index % palette.length];
+    });
+    return map;
+  }, [participants]);
+
+  const filteredQueries = useMemo(() => {
+    const keyword = searchTerm.toLowerCase().trim();
+    return queries.filter((query) => {
+      const matchesStage = stageFilter === "all" || query.stage === stageFilter;
+      const matchesParticipant =
+        participantFilter === "all" || query.participants.includes(participantFilter);
+
+      const matchesKeyword =
+        !keyword ||
+        query.notes.some((note) => note.contents.toLowerCase().includes(keyword) || note.title?.toLowerCase().includes(keyword)) ||
+        (query.stage ?? "").toLowerCase().includes(keyword);
+
+      return matchesStage && matchesParticipant && matchesKeyword;
+    });
+  }, [queries, searchTerm, stageFilter, participantFilter]);
+
+  const openQueries = filteredQueries.filter((q) => !q.closed);
+  const closedQueries = filteredQueries.filter((q) => q.closed);
+  const stageOptions = useMemo(() => {
+    const uniqueStages = Array.from(new Set(queries.map((query) => query.stage).filter(Boolean)));
+    return uniqueStages as SubmissionStage[];
+  }, [queries]);
 
   const handleCreateQuery = () => {
     setIsCreating(true);
@@ -66,7 +105,7 @@ export function QueriesPanel({ submissionId, stage, queries, participants }: Pro
             color: "#002C40",
           }}
         >
-          Queries ({queries.length})
+          Queries ({filteredQueries.length}/{queries.length})
         </h2>
         <button
           type="button"
@@ -103,6 +142,65 @@ export function QueriesPanel({ submissionId, stage, queries, participants }: Pro
         >
           Create Query
         </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.75rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Cari pesan, judul, atau stage…"
+          style={{
+            flex: "1 1 12rem",
+            border: "1px solid #d5d5d5",
+            borderRadius: "0.25rem",
+            padding: "0.5rem 0.75rem",
+            fontSize: "0.85rem",
+          }}
+        />
+        <select
+          value={participantFilter}
+          onChange={(event) => setParticipantFilter(event.target.value)}
+          style={{
+            minWidth: "12rem",
+            border: "1px solid #d5d5d5",
+            borderRadius: "0.25rem",
+            padding: "0.5rem 0.75rem",
+            fontSize: "0.85rem",
+          }}
+        >
+          <option value="all">Semua Peserta</option>
+          {participants.map((participant) => (
+            <option key={participant.userId} value={participant.userId}>
+              {participant.name} ({participant.role})
+            </option>
+          ))}
+        </select>
+        <select
+          value={stageFilter}
+          onChange={(event) => setStageFilter(event.target.value)}
+          style={{
+            minWidth: "10rem",
+            border: "1px solid #d5d5d5",
+            borderRadius: "0.25rem",
+            padding: "0.5rem 0.75rem",
+            fontSize: "0.85rem",
+          }}
+        >
+          <option value="all">Semua Stage</option>
+          {stageOptions.map((stageValue) => (
+            <option key={stageValue} value={stageValue}>
+              {stageValue}
+            </option>
+          ))}
+        </select>
       </div>
 
       {queries.length === 0 ? (
@@ -153,6 +251,8 @@ export function QueriesPanel({ submissionId, stage, queries, participants }: Pro
                     submissionId={submissionId}
                     query={query}
                     participants={participants}
+                    participantColors={participantColorMap}
+                    highlightedParticipant={participantFilter === "all" ? undefined : participantFilter}
                   />
                 ))}
               </div>
@@ -185,6 +285,8 @@ export function QueriesPanel({ submissionId, stage, queries, participants }: Pro
                     submissionId={submissionId}
                     query={query}
                     participants={participants}
+                    participantColors={participantColorMap}
+                    highlightedParticipant={participantFilter === "all" ? undefined : participantFilter}
                   />
                 ))}
               </div>

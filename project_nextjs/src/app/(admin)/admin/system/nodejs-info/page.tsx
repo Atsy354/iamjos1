@@ -1,5 +1,4 @@
 import os from "os";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function NodeJSInfoPage() {
@@ -191,9 +190,25 @@ export default function NodeJSInfoPage() {
           </section>
 
           {/* Back Button */}
-          <div className="flex justify-end">
-            <Link href="/admin/system/system-information">
-              <Button variant="outline">Back to System Information</Button>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end'
+          }}>
+            <Link
+              href="/admin/system/system-information"
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                padding: '0.5rem 1rem',
+                backgroundColor: '#fff',
+                color: '#006798',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                display: 'inline-block'
+              }}
+            >
+              Back to System Information
             </Link>
           </div>
         </div>

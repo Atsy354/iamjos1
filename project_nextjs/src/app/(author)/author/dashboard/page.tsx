@@ -1,132 +1,66 @@
 'use client'
 
-import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  FileText, 
-  Plus, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle,
-  Eye,
-  Edit,
-  MessageSquare,
-  Upload,
-  Calendar
-} from "lucide-react";
+import Link from 'next/link'
+import { FileText, Plus, Eye, Calendar } from "lucide-react";
 import { withAuth } from '@/lib/auth-client'
 import { USE_DUMMY } from '@/lib/dummy'
 import { useSupabase } from '@/providers/supabase-provider'
 import { useEffect, useState } from 'react'
 
-const mockStats = {
-  totalSubmissions: 8,
-  inReview: 3,
-  accepted: 2,
-  rejected: 1,
-  published: 2,
-  drafts: 2
-};
-
-const mockMySubmissions = [
+const mockSubmissions = [
   {
-    id: "1",
-    title: "Pemanfaatan Machine Learning untuk Prediksi Cuaca di Daerah Tropis",
-    journal: "Journal of Computer Science",
-    stage: "review",
-    status: "in-review",
-    submittedDate: "2024-01-15",
-    lastUpdated: "2024-01-20",
-    daysInStage: 15,
-    hasUnreadComments: true
+    id: '1',
+    title: 'The Impact of Social Media on Academic Performance: A Meta-Analysis',
+    journal: 'Journal of Educational Technology',
+    journal_id: '1',
+    stage: 'Review',
+    status: 'Under Review',
+    date_submitted: '2024-01-15',
+    days_in_stage: 12,
+    decision: null,
+    can_delete: false
   },
   {
-    id: "2",
-    title: "Analisis Sentimen Terhadap Kebijakan Pemerintah Menggunakan Deep Learning",
-    journal: "Journal of Artificial Intelligence",
-    stage: "copyediting",
-    status: "accepted",
-    submittedDate: "2024-01-10",
-    lastUpdated: "2024-01-18",
-    daysInStage: 8,
-    hasUnreadComments: false
+    id: '2',
+    title: 'Machine Learning Approaches in Educational Technology',
+    journal: 'Journal of Computer Science',
+    journal_id: '2',
+    stage: 'Copyediting',
+    status: 'Revision Required',
+    date_submitted: '2024-01-10',
+    days_in_stage: 5,
+    decision: 'Minor Revision',
+    can_delete: false
   },
   {
-    id: "3",
-    title: "Perancangan Sistem Informasi Manajemen Perpustakaan Berbasis Web",
-    journal: "Journal of Information Systems",
-    stage: "production",
-    status: "published",
-    submittedDate: "2023-12-05",
-    lastUpdated: "2024-01-22",
-    daysInStage: 0,
-    hasUnreadComments: false
-  }
-];
-
-const mockDrafts = [
-  {
-    id: "draft1",
-    title: "Implementasi Blockchain untuk Keamanan Data Kesehatan",
-    journal: "Journal of Cybersecurity",
-    createdDate: "2024-01-20",
-    lastModified: "2024-01-22",
-    sectionsCompleted: 4,
-    totalSections: 7
+    id: '3',
+    title: 'Digital Literacy in Higher Education: Challenges and Opportunities',
+    journal: 'Journal of Educational Technology',
+    journal_id: '1',
+    stage: 'Production',
+    status: 'Accepted',
+    date_submitted: '2023-12-20',
+    days_in_stage: 8,
+    decision: 'Accept',
+    can_delete: false
   },
   {
-    id: "draft2",
-    title: "Optimasi Algoritma Genetika untuk Permasalahan Routing",
-    journal: "Journal of Computer Science",
-    createdDate: "2024-01-18",
-    lastModified: "2024-01-19",
-    sectionsCompleted: 2,
-    totalSections: 6
-  }
-];
-
-const mockRecentActivity = [
-  {
-    id: "1",
-    type: "review_comment",
-    title: "New review comment received",
-    description: "Dr. Smith has provided feedback on your submission",
-    date: "2024-01-22T10:30:00Z",
-    submissionId: "1"
-  },
-  {
-    id: "2",
-    type: "status_change",
-    title: "Submission status updated",
-    description: "Your submission has moved to copyediting stage",
-    date: "2024-01-18T14:20:00Z",
-    submissionId: "2"
-  },
-  {
-    id: "3",
-    type: "submission_accepted",
-    title: "Submission accepted",
-    description: "Your paper has been accepted for publication",
-    date: "2024-01-15T09:15:00Z",
-    submissionId: "3"
+    id: '4',
+    title: 'Online Learning Effectiveness During Pandemic',
+    journal: 'Journal of Computer Science',
+    journal_id: '2',
+    stage: 'Submission',
+    status: 'Submitted',
+    date_submitted: '2024-01-20',
+    days_in_stage: 2,
+    decision: null,
+    can_delete: false
   }
 ];
 
 function AuthorDashboardPage() {
   const supabase = useSupabase()
-  const [stats, setStats] = useState({
-    totalSubmissions: USE_DUMMY ? 8 : 0,
-    inReview: USE_DUMMY ? 3 : 0,
-    accepted: USE_DUMMY ? 2 : 0,
-    rejected: USE_DUMMY ? 1 : 0,
-    published: USE_DUMMY ? 2 : 0,
-    drafts: USE_DUMMY ? 2 : 0
-  })
-  const [submissions, setSubmissions] = useState(USE_DUMMY ? mockMySubmissions : [])
-  const [drafts, setDrafts] = useState(USE_DUMMY ? mockDrafts : [])
-  const [activities, setActivities] = useState(USE_DUMMY ? mockRecentActivity : [])
+  const [submissions, setSubmissions] = useState(USE_DUMMY ? mockSubmissions : [])
 
   useEffect(() => {
     if (USE_DUMMY) return
@@ -141,340 +75,411 @@ function AuthorDashboardPage() {
         .eq('author_id', user.id)
         .order('updated_at', { ascending: false })
 
-      if (!submissionsData?.length) return
-
-      const journalIds = Array.from(new Set(submissionsData.map(s => s.journal_id)))
-      
-      // Get journal names
-      const { data: journals } = await supabase
-        .from('journals')
-        .select('id, title')
-        .in('id', journalIds)
-
-      const journalMap = new Map((journals ?? []).map(j => [j.id, j.title]))
-
-      // Calculate stats
-      const stats = {
-        totalSubmissions: submissionsData.length,
-        inReview: submissionsData.filter(s => s.current_stage === 'review').length,
-        accepted: submissionsData.filter(s => s.status === 'accepted').length,
-        rejected: submissionsData.filter(s => s.status === 'rejected').length,
-        published: submissionsData.filter(s => s.status === 'published').length,
-        drafts: submissionsData.filter(s => s.status === 'draft').length
+      if (!submissionsData?.length) {
+        setSubmissions([])
+        return
       }
-      setStats(stats)
+
+      // Get journal names
+      const journalIds = Array.from(new Set(submissionsData.map(s => s.journal_id).filter(Boolean)))
+      let journalMap = new Map()
+      
+      if (journalIds.length > 0) {
+        const { data: journals } = await supabase
+          .from('journals')
+          .select('id, title, name')
+          .in('id', journalIds)
+        
+        journalMap = new Map((journals ?? []).map(j => [j.id, j.title || j.name || 'Unknown Journal']))
+      }
 
       // Format submissions data
       const formattedSubmissions = submissionsData.map(s => ({
         id: String(s.id),
         title: String(s.title ?? 'Untitled'),
-        journal: String(journalMap.get(s.journal_id) ?? 'Unknown Journal'),
-        stage: String(s.current_stage ?? 'submission'),
-        status: String(s.status ?? 'submitted'),
-        submittedDate: String(s.created_at ?? '').split('T')[0] ?? '',
-        lastUpdated: String(s.updated_at ?? '').split('T')[0] ?? '',
-        daysInStage: Math.floor((Date.now() - new Date(s.updated_at ?? s.created_at).getTime()) / (1000 * 60 * 60 * 24)),
-        hasUnreadComments: false // TODO: Implement comment tracking
+        journal: String(journalMap.get(s.journal_id) || 'Unknown Journal'),
+        journal_id: s.journal_id,
+        stage: String(s.current_stage ?? 'Submission'),
+        status: String(s.status ?? 'Submitted'),
+        date_submitted: String(s.created_at ?? '').split('T')[0] ?? '',
+        days_in_stage: Math.floor((Date.now() - new Date(s.updated_at ?? s.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+        decision: s.status === 'accepted' ? 'Accept' : null,
+        can_delete: s.current_stage === 'Submission' && s.status !== 'submitted' // Can delete if still in draft
       }))
       setSubmissions(formattedSubmissions)
-
-      // TODO: Implement drafts and activities loading
-      setDrafts([])
-      setActivities([])
     }
     load()
   }, [supabase])
 
-  const getStageBadgeVariant = (stage: string) => {
-    switch (stage) {
-      case 'submission':
-        return 'secondary';
-      case 'review':
-        return 'warning';
-      case 'copyediting':
-        return 'info';
-      case 'production':
-        return 'success';
-      case 'published':
-        return 'success';
-      default:
-        return 'secondary';
+  const getStageColor = (stage: string) => {
+    switch (stage.toLowerCase()) {
+      case 'submission': return { bg: '#fee', color: '#721c24' };
+      case 'review': return { bg: '#fff3cd', color: '#856404' };
+      case 'copyediting': return { bg: '#d1ecf1', color: '#0c5460' };
+      case 'production': return { bg: '#d4edda', color: '#155724' };
+      default: return { bg: '#e2e3e5', color: '#383d41' };
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'submitted':
-        return 'secondary';
-      case 'in-review':
-        return 'warning';
-      case 'accepted':
-        return 'success';
-      case 'rejected':
-        return 'destructive';
-      case 'published':
-        return 'success';
-      default:
-        return 'secondary';
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'submitted': return { bg: '#e2e3e5', color: '#383d41' };
+      case 'under review': return { bg: '#fff3cd', color: '#856404' };
+      case 'revision required': return { bg: '#fff3cd', color: '#856404' };
+      case 'accepted': return { bg: '#d4edda', color: '#155724' };
+      case 'rejected': return { bg: '#f8d7da', color: '#721c24' };
+      default: return { bg: '#e2e3e5', color: '#383d41' };
     }
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'review_comment':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'status_change':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'submission_accepted':
-        return <CheckCircle className="h-4 w-4" />;
-      default:
-        return <AlertCircle className="h-4 w-4" />;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
   };
 
   return (
-    <section className="space-y-6">
-      <PageHeader
-        title="Author Dashboard"
-        subtitle="Submit and track your manuscripts"
-        showBreadcrumbs={false}
-      />
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
-              Total Submissions
-              <FileText className="h-4 w-4 text-gray-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{mockStats.totalSubmissions}</div>
-            <p className="text-xs text-gray-500 mt-1">All time submissions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
-              In Review
-              <Clock className="h-4 w-4 text-gray-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{mockStats.inReview}</div>
-            <p className="text-xs text-gray-500 mt-1">Currently under review</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
-              Published
-              <CheckCircle className="h-4 w-4 text-gray-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{mockStats.published}</div>
-            <p className="text-xs text-gray-500 mt-1">Successfully published</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
-              Drafts
-              <Edit className="h-4 w-4 text-gray-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{mockStats.drafts}</div>
-            <p className="text-xs text-gray-500 mt-1">In progress</p>
-          </CardContent>
-        </Card>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header - Author Dashboard langsung menampilkan submissions */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '0.25rem'
+          }}>
+            My Submissions
+          </h1>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Submit and track your manuscript submissions
+          </p>
+        </div>
+        <Link
+          href="/author/submission/new"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#006798',
+            color: '#fff',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            textDecoration: 'none'
+          }}
+        >
+          <Plus style={{ width: '1rem', height: '1rem' }} />
+          New Submission
+        </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border border-gray-200">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  My Submissions
-                </CardTitle>
-                <CardDescription>
-                  Track your manuscript submissions
-                </CardDescription>
-              </div>
-              <Button className="bg-[#006798] hover:bg-[#005687]">
-                <Plus className="h-4 w-4 mr-2" />
-                New Submission
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockMySubmissions.map((submission) => (
-                <div key={submission.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium text-gray-900 text-sm leading-tight">
-                      {submission.title}
-                    </h4>
-                    {submission.hasUnreadComments && (
-                      <Badge variant="destructive" className="text-xs animate-pulse">
-                        New
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-600 mb-2">{submission.journal}</p>
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={getStageBadgeVariant(submission.stage)} className="text-xs">
-                        {submission.stage}
-                      </Badge>
-                      <Badge variant={getStatusBadgeVariant(submission.status)} className="text-xs">
-                        {submission.status}
-                      </Badge>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {submission.daysInStage} days
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      Submitted: {formatDate(submission.submittedDate)}
-                    </span>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm" className="h-6 px-2">
-                        <Eye className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-6 px-2">
-                        <MessageSquare className="h-3 w-3 mr-1" />
-                        Comments
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  Draft Submissions
-                </CardTitle>
-                <CardDescription>
-                  Continue working on your drafts
-                </CardDescription>
-              </div>
-              <Button variant="secondary" size="sm">
-                View All
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockDrafts.map((draft) => (
-                <div key={draft.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="mb-2">
-                    <h4 className="font-medium text-gray-900 text-sm leading-tight">
-                      {draft.title}
-                    </h4>
-                    <p className="text-xs text-gray-600 mt-1">{draft.journal}</p>
-                  </div>
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>Progress</span>
-                      <span>{draft.sectionsCompleted}/{draft.totalSections} sections</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-[#006798] h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(draft.sectionsCompleted / draft.totalSections) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      Modified: {formatDate(draft.lastModified)}
-                    </span>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm" className="h-6 px-2">
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-6 px-2">
-                        <Upload className="h-3 w-3 mr-1" />
-                        Submit
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Submissions Table - OJS PKP 3.3 Style */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderBottom: '1px solid #e5e5e5',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0
+          }}>
+            Submission History
+          </h2>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <thead>
+              <tr style={{
+                backgroundColor: '#f8f9fa',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  ID
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Title
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Journal
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Stage
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Status
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Date Submitted
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Days in Stage
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Decision
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40'
+                }}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {submissions.length === 0 ? (
+                <tr>
+                  <td colSpan={9} style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    fontSize: '0.875rem',
+                    color: '#666',
+                    fontStyle: 'italic'
+                  }}>
+                    No submissions found. Click "New Submission" to get started.
+                  </td>
+                </tr>
+              ) : (
+                submissions.map((submission) => {
+                  const stageColors = getStageColor(submission.stage)
+                  const statusColors = getStatusColor(submission.status)
+                  return (
+                    <tr 
+                      key={submission.id}
+                      style={{
+                        borderBottom: '1px solid #e5e5e5',
+                        backgroundColor: '#fff'
+                      }}
+                    >
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                        borderRight: '1px solid #e5e5e5',
+                        fontWeight: 600
+                      }}>
+                        {submission.id}
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                        borderRight: '1px solid #e5e5e5',
+                        maxWidth: '300px'
+                      }}>
+                        <Link
+                          href={`/author/submissions/${submission.id}`}
+                          style={{
+                            fontWeight: 500,
+                            color: '#006798',
+                            textDecoration: 'none',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          {submission.title}
+                        </Link>
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                        borderRight: '1px solid #e5e5e5'
+                      }}>
+                        {submission.journal}
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        borderRight: '1px solid #e5e5e5'
+                      }}>
+                        <span style={{
+                          backgroundColor: stageColors.bg,
+                          color: stageColors.color,
+                          fontSize: '0.75rem',
+                          padding: '0.125rem 0.5rem',
+                          borderRadius: '4px',
+                          fontWeight: 600,
+                          display: 'inline-block'
+                        }}>
+                          {submission.stage}
+                        </span>
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        borderRight: '1px solid #e5e5e5'
+                      }}>
+                        <span style={{
+                          backgroundColor: statusColors.bg,
+                          color: statusColors.color,
+                          fontSize: '0.75rem',
+                          padding: '0.125rem 0.5rem',
+                          borderRadius: '4px',
+                          fontWeight: 600,
+                          display: 'inline-block'
+                        }}>
+                          {submission.status}
+                        </span>
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                        borderRight: '1px solid #e5e5e5'
+                      }}>
+                        {submission.date_submitted}
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                        borderRight: '1px solid #e5e5e5'
+                      }}>
+                        {submission.days_in_stage} days
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        borderRight: '1px solid #e5e5e5'
+                      }}>
+                        {submission.decision ? (
+                          <span style={{
+                            backgroundColor: submission.decision === 'Accept' ? '#d4edda' : '#fff3cd',
+                            color: submission.decision === 'Accept' ? '#155724' : '#856404',
+                            fontSize: '0.75rem',
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            display: 'inline-block'
+                          }}>
+                            {submission.decision}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#666' }}>-</span>
+                        )}
+                      </td>
+                      <td style={{
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem'
+                        }}>
+                          <Link
+                            href={`/author/submissions/${submission.id}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'transparent',
+                              border: '1px solid #d5d5d5',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              color: '#006798',
+                              textDecoration: 'none'
+                            }}
+                            title="View Submission"
+                          >
+                            <Eye style={{ width: '1rem', height: '1rem' }} />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      <Card className="border border-gray-200">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">
-                Recent Activity
-              </CardTitle>
-              <CardDescription>
-                Latest updates on your submissions
-              </CardDescription>
-            </div>
-            <Button variant="secondary" size="sm">
-              View All
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {mockRecentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                  {getActivityIcon(activity.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
-                    {activity.title}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {activity.description}
-                  </p>
-                  <div className="flex items-center mt-2">
-                    <Calendar className="h-3 w-3 text-gray-400 mr-1" />
-                    <span className="text-xs text-gray-500">
-                      {formatDate(activity.date)}
-                    </span>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" className="h-6 px-2">
-                  <Eye className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </section>
+    </div>
   );
 }
 

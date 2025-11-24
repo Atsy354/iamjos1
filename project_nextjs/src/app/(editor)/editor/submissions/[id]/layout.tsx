@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { TopBar } from "@/components/admin/top-bar";
@@ -16,34 +16,28 @@ type Props = {
 export default function SubmissionDetailLayout({ children }: Props) {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const canEdit = useMemo(
+    () => user?.roles?.some(r => r.role_path === "editor" || r.role_path === "admin") ?? false,
+    [user]
+  );
 
   useEffect(() => {
-    if (loading) {
-      setAuthorized(null);
-      return;
-    }
+    if (loading) return;
     if (!user) {
-      setAuthorized(false);
       router.replace("/login?source=/editor");
       return;
     }
-    const canEdit = user.roles?.some(r => r.role_path === "editor" || r.role_path === "admin");
     if (!canEdit) {
-      setAuthorized(false);
-      // Redirect to role-appropriate route
       const redirectPath = getRedirectPathByRole(user);
       router.replace(redirectPath);
-      return;
     }
-    setAuthorized(true);
-  }, [user, loading, router]);
+  }, [user, canEdit, loading, router]);
 
-  if (authorized === null) {
+  if (loading) {
     return <div className="min-h-screen bg-[var(--surface-muted)]" />;
   }
 
-  if (!authorized) {
+  if (!user || !canEdit) {
     return null;
   }
 

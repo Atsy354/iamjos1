@@ -1,10 +1,6 @@
-"use client";
+'use client';
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
 
 // Dummy plugin gallery data
 const GALLERY_PLUGINS = [
@@ -85,7 +81,7 @@ export default function PluginGalleryPage() {
     setPlugins((prev) =>
       prev.map((p) => (p.id === plugin.id ? { ...p, installed: true } : p))
     );
-    toast.success(`Plugin "${plugin.name}" installed successfully`);
+    alert(`Plugin "${plugin.name}" installed successfully`);
   };
 
   const handleUninstall = (plugin: Plugin) => {
@@ -93,45 +89,68 @@ export default function PluginGalleryPage() {
       setPlugins((prev) =>
         prev.map((p) => (p.id === plugin.id ? { ...p, installed: false } : p))
       );
-      toast.success(`Plugin "${plugin.name}" uninstalled successfully`);
+      alert(`Plugin "${plugin.name}" uninstalled successfully`);
     }
   };
 
   return (
-    <div className="space-y-6" style={{ padding: "1.5rem 0" }}>
-      <header
-        className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4"
-        style={{
-          padding: "1rem 1.5rem",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        <h2
-          className="text-base font-semibold text-gray-900"
-          style={{
-            fontSize: "1rem",
-            fontWeight: "600",
-          }}
-        >
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      <header style={{
+        padding: "1rem 1.5rem",
+        backgroundColor: "#f9fafb",
+        borderBottom: '1px solid #e5e5e5',
+        marginBottom: '1.5rem'
+      }}>
+        <h2 style={{
+          fontSize: "1rem",
+          fontWeight: "600",
+          color: '#002C40',
+          margin: 0
+        }}>
           Plugin Gallery
         </h2>
       </header>
 
       {/* Search and Filter */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 gap-4">
-          <div className="flex-1 max-w-md">
-            <Input
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ flex: '1 1 0', minWidth: '200px', maxWidth: '28rem' }}>
+            <input
+              type="text"
               placeholder="Search plugins..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
+              style={{
+                width: '100%',
+                fontSize: "0.875rem",
+                padding: "0.5rem 0.75rem",
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                fontFamily: 'inherit'
+              }}
             />
           </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="h-11 rounded-md border border-gray-300 bg-white px-3 text-gray-900 shadow-inner focus-visible:border-[#006798] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006798]/20"
+            style={{
+              height: '2.75rem',
+              borderRadius: '4px',
+              border: '1px solid #dee2e6',
+              backgroundColor: '#fff',
+              padding: '0 0.75rem',
+              fontSize: "0.875rem",
+              fontFamily: 'inherit'
+            }}
           >
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -143,62 +162,127 @@ export default function PluginGalleryPage() {
       </div>
 
       {/* Plugin Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '1rem'
+      }}>
         {filteredPlugins.map((plugin) => (
-          <Card
+          <div
             key={plugin.id}
-            className="p-4 flex flex-col justify-between"
             style={{
               padding: "1rem",
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              backgroundColor: '#fff',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
             }}
           >
             <div>
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-gray-900" style={{ fontSize: "1rem", fontWeight: "600" }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem'
+              }}>
+                <h3 style={{
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  color: '#002C40',
+                  margin: 0
+                }}>
                   {plugin.name}
                 </h3>
                 {plugin.installed && (
-                  <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded" style={{ fontSize: "0.75rem" }}>
+                  <span style={{
+                    fontSize: "0.75rem",
+                    color: '#155724',
+                    backgroundColor: '#d4edda',
+                    padding: '0.125rem 0.5rem',
+                    borderRadius: '4px',
+                    fontWeight: 600
+                  }}>
                     Installed
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-600 mb-3" style={{ fontSize: "0.875rem", marginBottom: "0.75rem" }}>
+              <p style={{
+                fontSize: "0.875rem",
+                color: '#666',
+                marginBottom: "0.75rem",
+                margin: '0 0 0.75rem 0'
+              }}>
                 {plugin.description}
               </p>
-              <div className="flex items-center gap-4 text-xs text-gray-500" style={{ fontSize: "0.75rem" }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                fontSize: "0.75rem",
+                color: '#666'
+              }}>
                 <span>v{plugin.version}</span>
                 <span>By {plugin.author}</span>
               </div>
             </div>
-            <div className="mt-4 flex gap-2">
+            <div style={{
+              marginTop: '1rem',
+              display: 'flex',
+              gap: '0.5rem'
+            }}>
               {plugin.installed ? (
-                <Button
-                  size="sm"
-                  variant="danger"
+                <button
                   onClick={() => handleUninstall(plugin)}
-                  className="flex-1"
+                  style={{
+                    flex: 1,
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#d32f2f',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
                   Uninstall
-                </Button>
+                </button>
               ) : (
-                <Button
-                  size="sm"
-                  variant="primary"
+                <button
                   onClick={() => handleInstall(plugin)}
-                  className="flex-1"
+                  style={{
+                    flex: 1,
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#006798',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
                   Install
-                </Button>
+                </button>
               )}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
       {filteredPlugins.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No plugins found matching your search.</p>
+        <div style={{
+          textAlign: 'center',
+          padding: '3rem 1rem'
+        }}>
+          <p style={{
+            color: '#666',
+            fontSize: '0.875rem'
+          }}>
+            No plugins found matching your search.
+          </p>
         </div>
       )}
     </div>
@@ -215,9 +299,3 @@ function getCategoryLabel(category: string) {
   };
   return labels[category] ?? category;
 }
-
-
-
-
-
-

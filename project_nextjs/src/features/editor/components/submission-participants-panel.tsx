@@ -7,6 +7,13 @@ import { PkpButton } from "@/components/ui/pkp-button";
 import { FormMessage } from "@/components/ui/form-message";
 import { PkpInput } from "@/components/ui/pkp-input";
 import { PkpSelect } from "@/components/ui/pkp-select";
+import {
+  PkpTable,
+  PkpTableHeader,
+  PkpTableRow,
+  PkpTableHead,
+  PkpTableCell,
+} from "@/components/ui/pkp-table";
 import { AddEditorModal } from "./participant-assignment/add-editor-modal";
 import { AddCopyeditorModal } from "./participant-assignment/add-copyeditor-modal";
 import { AddLayoutEditorModal } from "./participant-assignment/add-layout-editor-modal";
@@ -41,6 +48,8 @@ export function SubmissionParticipantsPanel({ submissionId, journalId, currentSt
   const [journalUsers, setJournalUsers] = useState<JournalUser[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<SubmissionStage | "all">("all");
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState<string>(JOURNAL_ROLE_OPTIONS[0].value);
   const [stage, setStage] = useState<SubmissionStage>(currentStage || SUBMISSION_STAGES[0]);
@@ -55,6 +64,17 @@ export function SubmissionParticipantsPanel({ submissionId, journalId, currentSt
   const [openLayoutEditorModal, setOpenLayoutEditorModal] = useState(false);
   const [openProofreaderModal, setOpenProofreaderModal] = useState(false);
   const [modalStage, setModalStage] = useState<SubmissionStage>(currentStage || SUBMISSION_STAGES[0]);
+
+  const formatDate = (value: string) => {
+    try {
+      return new Intl.DateTimeFormat("id", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(value));
+    } catch {
+      return value;
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -89,17 +109,30 @@ export function SubmissionParticipantsPanel({ submissionId, journalId, currentSt
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journalId, submissionId]);
 
+  const roleOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          participants.map((participant) => participant.role),
+        ),
+      ),
+    [participants],
+  );
+
   const filteredParticipants = useMemo(() => {
     const keyword = search.toLowerCase().trim();
-    if (!keyword) return participants;
-    return participants.filter(
-      (participant) =>
+    return participants.filter((participant) => {
+      const matchesKeyword =
+        !keyword ||
         participant.name.toLowerCase().includes(keyword) ||
         participant.email.toLowerCase().includes(keyword) ||
         participant.role.toLowerCase().includes(keyword) ||
-        participant.stage.toLowerCase().includes(keyword),
-    );
-  }, [participants, search]);
+        participant.stage.toLowerCase().includes(keyword);
+      const matchesRole = roleFilter === "all" || participant.role === roleFilter;
+      const matchesStage = stageFilter === "all" || participant.stage === stageFilter;
+      return matchesKeyword && matchesRole && matchesStage;
+    });
+  }, [participants, search, roleFilter, stageFilter]);
 
   const handleAssign = (event: React.FormEvent) => {
     event.preventDefault();
@@ -450,8 +483,9 @@ export function SubmissionParticipantsPanel({ submissionId, journalId, currentSt
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
+            flexWrap: "wrap",
             gap: "0.75rem",
+            alignItems: "center",
             marginBottom: "1rem",
           }}
         >
@@ -461,18 +495,48 @@ export function SubmissionParticipantsPanel({ submissionId, journalId, currentSt
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             style={{
-              width: "100%",
-              maxWidth: "18rem",
+              flex: "1 1 14rem",
+              minWidth: "12rem",
             }}
           />
-          <p
+          <PkpSelect
+            value={roleFilter}
+            onChange={(event) => setRoleFilter(event.target.value)}
+            style={{ minWidth: "12rem" }}
+            title="Filter berdasarkan role"
+          >
+            <option value="all">Semua role</option>
+            {roleOptions.map((roleOption) => {
+              const label = JOURNAL_ROLE_OPTIONS.find((option) => option.value === roleOption)?.label ?? roleOption;
+              return (
+                <option key={roleOption} value={roleOption}>
+                  {label}
+                </option>
+              );
+            })}
+          </PkpSelect>
+          <PkpSelect
+            value={stageFilter}
+            onChange={(event) => setStageFilter(event.target.value as SubmissionStage | "all")}
+            style={{ minWidth: "12rem" }}
+            title="Filter berdasarkan tahap workflow"
+          >
+            <option value="all">Semua tahap</option>
+            {SUBMISSION_STAGES.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </PkpSelect>
+          <span
             style={{
               fontSize: "0.75rem",
               color: "rgba(0, 0, 0, 0.54)",
+              marginLeft: "auto",
             }}
           >
-            Total peserta: {participants.length}
-          </p>
+            Menampilkan {filteredParticipants.length}/{participants.length} peserta
+          </span>
         </div>
 
         <div
@@ -506,150 +570,53 @@ export function SubmissionParticipantsPanel({ submissionId, journalId, currentSt
               Belum ada peserta pada workflow.
             </div>
           ) : (
-            <table
-              className="pkpTable"
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.875rem",
-              }}
-            >
-              <thead>
-                <tr
-                  style={{
-                    backgroundColor: "#f8f9fa",
-                  }}
-                >
-                  <th
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "left",
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                      color: "rgba(0, 0, 0, 0.54)",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  >
-                    Nama
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "left",
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                      color: "rgba(0, 0, 0, 0.54)",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  >
-                    Email
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "left",
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                      color: "rgba(0, 0, 0, 0.54)",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  >
-                    Peran
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "left",
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                      color: "rgba(0, 0, 0, 0.54)",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  >
-                    Tahap
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "right",
-                      fontSize: "0.75rem",
-                      fontWeight: 400,
-                      color: "rgba(0, 0, 0, 0.54)",
-                      borderBottom: "1px solid #e5e5e5",
-                    }}
-                  />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredParticipants.map((participant, index) => {
-                  const key = `${participant.userId}-${participant.role}-${participant.stage}`;
-                  const roleLabel = JOURNAL_ROLE_OPTIONS.find((option) => option.value === participant.role)?.label ?? participant.role;
-                  return (
-                    <tr
-                      key={key}
-                      style={{
-                        borderTop: index > 0 ? "1px solid #e5e5e5" : "none",
-                        backgroundColor: "transparent",
-                      }}
-                    >
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          fontSize: "0.875rem",
-                          fontWeight: 500,
-                          color: "#002C40",
-                        }}
-                      >
-                        {participant.name}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          fontSize: "0.875rem",
-                          color: "rgba(0, 0, 0, 0.84)",
-                        }}
-                      >
-                        {participant.email}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          fontSize: "0.875rem",
-                          color: "rgba(0, 0, 0, 0.84)",
-                        }}
-                      >
-                        {roleLabel}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          fontSize: "0.875rem",
-                          color: "rgba(0, 0, 0, 0.84)",
-                        }}
-                      >
-                        {participant.stage}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          textAlign: "right",
-                        }}
-                      >
-                        <PkpButton
-                          variant="onclick"
-                          size="sm"
-                          onClick={() => handleRemove(participant)}
-                          disabled={removingKey === key}
-                          loading={removingKey === key}
-                        >
-                          Hapus
-                        </PkpButton>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div style={{ overflowX: "auto" }}>
+              <PkpTable>
+                <PkpTableHeader>
+                  <PkpTableRow isHeader>
+                    <PkpTableHead>Nama & Email</PkpTableHead>
+                    <PkpTableHead>Peran</PkpTableHead>
+                    <PkpTableHead>Tahap</PkpTableHead>
+                    <PkpTableHead>Ditugaskan</PkpTableHead>
+                    <PkpTableHead style={{ textAlign: "right" }}>Aksi</PkpTableHead>
+                  </PkpTableRow>
+                </PkpTableHeader>
+                <tbody>
+                  {filteredParticipants.map((participant) => {
+                    const key = `${participant.userId}-${participant.role}-${participant.stage}`;
+                    const roleLabel =
+                      JOURNAL_ROLE_OPTIONS.find((option) => option.value === participant.role)?.label ??
+                      participant.role;
+                    return (
+                      <PkpTableRow key={key}>
+                        <PkpTableCell>
+                          <div style={{ fontWeight: 600, color: "#002C40" }}>{participant.name}</div>
+                          <div style={{ fontSize: "0.75rem", color: "rgba(0,0,0,0.54)" }}>{participant.email}</div>
+                        </PkpTableCell>
+                        <PkpTableCell>{roleLabel}</PkpTableCell>
+                        <PkpTableCell>{participant.stage}</PkpTableCell>
+                        <PkpTableCell>
+                          <span style={{ fontSize: "0.75rem", color: "rgba(0,0,0,0.54)" }}>
+                            {formatDate(participant.assignedAt)}
+                          </span>
+                        </PkpTableCell>
+                        <PkpTableCell style={{ textAlign: "right" }}>
+                          <PkpButton
+                            variant="onclick"
+                            size="sm"
+                            onClick={() => handleRemove(participant)}
+                            disabled={removingKey === key}
+                            loading={removingKey === key}
+                          >
+                            Hapus
+                          </PkpButton>
+                        </PkpTableCell>
+                      </PkpTableRow>
+                    );
+                  })}
+                </tbody>
+              </PkpTable>
+            </div>
           )}
         </div>
       </div>

@@ -1,36 +1,128 @@
-import { Button } from "@/components/ui/button";
 import { getSiteNavigation, updateSiteNavigationAction } from "../../actions";
 
 export default async function SiteSetupNavigationPage() {
   const initial = await getSiteNavigation();
+  
   return (
-    <div className="space-y-6">
-      <header className="border-b border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3">
-        <h2 className="text-sm font-semibold text-[var(--foreground)]">Navigation</h2>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      <header style={{
+        padding: "1rem 1.5rem",
+        backgroundColor: "#f9fafb",
+        borderBottom: '1px solid #e5e5e5',
+        marginBottom: '1.5rem'
+      }}>
+        <h2 style={{
+          fontSize: "1rem",
+          fontWeight: "600",
+          color: '#002C40',
+          margin: 0
+        }}>
+          Navigation
+        </h2>
       </header>
-      <form action={updateSiteNavigationAction} className="space-y-6">
-        <div>
-          <label htmlFor="primary" className="mb-2 block text-sm font-medium">Primary Navigation</label>
+      
+      <form action={updateSiteNavigationAction} style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem'
+        }}>
+          <label
+            htmlFor="primary"
+            style={{
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              color: '#002C40'
+            }}
+          >
+            Primary Navigation
+          </label>
           <textarea
             id="primary"
             name="primary"
             rows={3}
             defaultValue={initial.primary.join(", ")}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
+            style={{
+              width: '100%',
+              fontSize: "0.875rem",
+              padding: "0.5rem 0.75rem",
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontFamily: 'inherit',
+              resize: 'vertical'
+            }}
           />
+          <p style={{
+            fontSize: "0.75rem",
+            color: '#666',
+            margin: 0
+          }}>
+            Comma-separated list of primary navigation menu items.
+          </p>
         </div>
-        <div>
-          <label htmlFor="user" className="mb-2 block text-sm font-medium">User Navigation</label>
+        
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem'
+        }}>
+          <label
+            htmlFor="user"
+            style={{
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              color: '#002C40'
+            }}
+          >
+            User Navigation
+          </label>
           <textarea
             id="user"
             name="user"
             rows={3}
             defaultValue={initial.user.join(", ")}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-inner focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-muted)]"
+            style={{
+              width: '100%',
+              fontSize: "0.875rem",
+              padding: "0.5rem 0.75rem",
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontFamily: 'inherit',
+              resize: 'vertical'
+            }}
           />
+          <p style={{
+            fontSize: "0.75rem",
+            color: '#666',
+            margin: 0
+          }}>
+            Comma-separated list of user navigation menu items.
+          </p>
         </div>
-        <div className="flex justify-end">
-          <Button type="submit">Save</Button>
+        
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}>
+          <button
+            type="submit"
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.5rem 1rem',
+              backgroundColor: '#006798',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Save
+          </button>
         </div>
       </form>
     </div>

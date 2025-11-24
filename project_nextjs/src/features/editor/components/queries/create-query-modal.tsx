@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SubmissionStage } from "../../types";
 import { PkpModal } from "@/components/ui/pkp-modal";
@@ -10,12 +10,19 @@ import { PkpTextarea } from "@/components/ui/pkp-textarea";
 import { PkpCheckbox } from "@/components/ui/pkp-checkbox";
 import { FormMessage } from "@/components/ui/form-message";
 
+type ParticipantSummary = {
+  userId: string;
+  name: string;
+  role: string;
+  stage?: SubmissionStage;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
   submissionId: string;
   stage: SubmissionStage;
-  participants: Array<{ userId: string; name: string; role: string }>;
+  participants: ParticipantSummary[];
   onQueryCreated: () => void;
 };
 
@@ -38,6 +45,41 @@ export function CreateQueryModal({
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [participantSearch, setParticipantSearch] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const defaults = participants
+      .filter((participant) => participant.stage === stage || ["manager", "editor"].includes(participant.role))
+      .map((participant) => participant.userId);
+    setSelectedParticipants(Array.from(new Set(defaults)));
+    setTitle("");
+    setMessage("");
+    setParticipantSearch("");
+    setError(null);
+  }, [open, participants, stage]);
+
+  const filteredParticipants = useMemo(() => {
+    const keyword = participantSearch.toLowerCase().trim();
+    if (!keyword) {
+      return participants;
+    }
+    return participants.filter((participant) => {
+      const haystack = `${participant.name} ${participant.role}`.toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [participants, participantSearch]);
+
+  const handleSelectAll = () => {
+    const ids = filteredParticipants.map((participant) => participant.userId);
+    setSelectedParticipants((prev) => Array.from(new Set([...prev, ...ids])));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedParticipants([]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,6 +245,29 @@ export function CreateQueryModal({
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                alignItems: "center",
+              }}
+            >
+              <PkpInput
+                value={participantSearch}
+                onChange={(e) => setParticipantSearch(e.target.value)}
+                placeholder="Search by name or role..."
+                style={{ flex: "1 1 200px" }}
+              />
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <PkpButton type="button" variant="onclick" size="sm" onClick={handleSelectAll}>
+                  Select All
+                </PkpButton>
+                <PkpButton type="button" variant="ghost" size="sm" onClick={handleClearSelection}>
+                  Clear
+                </PkpButton>
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
                 flexDirection: "column",
                 gap: "0.75rem",
                 maxHeight: "12rem",
@@ -213,7 +278,10 @@ export function CreateQueryModal({
                 backgroundColor: "#f8f9fa",
               }}
             >
-              {participants.map((participant) => (
+              {filteredParticipants.length === 0 && (
+                <span className="text-xs text-[var(--muted)]">No participants match your search.</span>
+              )}
+              {filteredParticipants.map((participant) => (
                 <label
                   key={participant.userId}
                   style={{
@@ -228,8 +296,12 @@ export function CreateQueryModal({
                     checked={selectedParticipants.includes(participant.userId)}
                     onChange={() => handleToggleParticipant(participant.userId)}
                   />
-                  <span style={{ color: "#002C40" }}>
-                    {participant.name} ({participant.role})
+                  <span style={{ color: "#002C40", display: "flex", flexDirection: "column" }}>
+                    <span>{participant.name}</span>
+                    <span style={{ fontSize: "0.75rem", color: "rgba(0,0,0,0.6)" }}>
+                      {participant.role}
+                      {participant.stage ? ` • ${participant.stage}` : ""}
+                    </span>
                   </span>
                 </label>
               ))}

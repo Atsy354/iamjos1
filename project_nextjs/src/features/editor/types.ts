@@ -37,10 +37,28 @@ export type EditorDashboardStats = {
   tasks: number;
 };
 
+export type PublicationGalley = {
+  id: string;
+  submissionVersionId: string;
+  label: string;
+  locale: string;
+  isApproved: boolean;
+  isPublic: boolean;
+  isPrimary: boolean;
+  sequence: number;
+  submissionFileId?: string | null;
+  fileStoragePath?: string | null;
+  fileSize: number;
+  remoteUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type SubmissionVersion = {
   id: string;
   version: number;
   status: string;
+  metadata: Record<string, unknown>;
   issue?: {
     id: string;
     title?: string | null;
@@ -49,6 +67,7 @@ export type SubmissionVersion = {
   };
   publishedAt?: string | null;
   createdAt: string;
+  galleys: PublicationGalley[];
 };
 
 export type SubmissionParticipant = {
@@ -56,6 +75,8 @@ export type SubmissionParticipant = {
   role: string;
   stage: SubmissionStage;
   assignedAt: string;
+  name?: string;
+  email?: string;
 };
 
 export type SubmissionFile = {
@@ -199,5 +220,43 @@ export type Query = {
 
 export type SubmissionDetailWithQueries = SubmissionDetail & {
   queries: Query[];
+};
+
+export type SubmissionTask = {
+  id: string;
+  submissionId: string;
+  submissionTitle?: string | null;
+  stage: SubmissionStage;
+  title: string;
+  status: string;
+  assigneeId?: string | null;
+  dueDate?: string | null;
+  createdAt: string;
+};
+
+export type LibraryFile = {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  displaySize: string;
+  stage: string;
+  description?: string | null;
+  remoteUrl?: string | null;
+  storagePath?: string | null;
+  source?: "upload" | "remote";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReviewForm = {
+  id: string;
+  title: string;
+  description?: string | null;
+  seq: number;
+  isActive: boolean;
+  questions?: number | null;
+  createdAt: string;
+  updatedAt: string;
 };
 

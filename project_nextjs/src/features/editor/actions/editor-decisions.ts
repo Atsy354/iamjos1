@@ -24,6 +24,14 @@ import {
   SUBMISSION_EDITOR_DECISION_REVERT_DECLINE,
   SUBMISSION_EDITOR_DECISION_NEW_ROUND,
 } from "../types";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  assertEditorAccess,
+  getSubmissionRow,
+  logActivity,
+  createReviewRound,
+  SubmissionRow,
+} from "./workflow-helpers";
 
 type DecisionData = {
   submissionId: string;
@@ -45,6 +53,80 @@ type ActionResult = {
   error?: string;
 };
 
+const STAGE_TRANSITIONS: Record<
+  EditorDecisionType,
+  { nextStage?: SubmissionStage; status?: string; archive?: boolean }
+> = {
+  [SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW]: {
+    nextStage: "review",
+    status: "queued",
+  },
+  [SUBMISSION_EDITOR_DECISION_ACCEPT]: {
+    nextStage: "copyediting",
+    status: "accepted",
+  },
+  [SUBMISSION_EDITOR_DECISION_DECLINE]: {
+    status: "declined",
+    archive: true,
+  },
+  [SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE]: {
+    status: "declined",
+    archive: true,
+  },
+  [SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS]: {},
+  [SUBMISSION_EDITOR_DECISION_RESUBMIT]: {
+    nextStage: "review",
+    status: "queued",
+  },
+  [SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION]: {
+    nextStage: "production",
+    status: "in_production",
+  },
+  [SUBMISSION_EDITOR_DECISION_REVERT_DECLINE]: {
+    status: "queued",
+    archive: false,
+  },
+  [SUBMISSION_EDITOR_DECISION_NEW_ROUND]: {},
+};
+
+async function updateSubmission(
+  submissionId: string,
+  payload: Partial<Pick<SubmissionRow, "current_stage" | "status" | "is_archived">>
+) {
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase.from("submissions").update(payload).eq("id", submissionId);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function applyDecisionTransition({
+  decision,
+  submissionId,
+}: {
+  decision: EditorDecisionType;
+  submissionId: string;
+}) {
+  const transition = STAGE_TRANSITIONS[decision];
+  if (!transition) {
+    return;
+  }
+
+  const payload: Partial<SubmissionRow> = {};
+  if (transition.nextStage) {
+    payload.current_stage = transition.nextStage;
+  }
+  if (transition.status) {
+    payload.status = transition.status;
+  }
+  if (typeof transition.archive === "boolean") {
+    payload.is_archived = transition.archive;
+  }
+
+  if (Object.keys(payload).length > 0) {
+    await updateSubmission(submissionId, payload);
+  }
+}
 /**
  * Send to External Review
  * Based on OJS PKP 3.3 saveExternalReview
@@ -53,10 +135,22 @@ export async function sendToExternalReview(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    // For now, simulate success with dummy data
-    console.log("[DUMMY] Send to External Review:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await createReviewRound(submissionId, "review");
+    await applyDecisionTransition({
+      decision: SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW,
+      submissionId,
+    });
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Submission promoted to external review.",
+    });
+
     return {
       ok: true,
       message: "Submission sent to external review successfully",
@@ -77,9 +171,21 @@ export async function acceptSubmission(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    console.log("[DUMMY] Accept Submission:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await applyDecisionTransition({
+      decision: SUBMISSION_EDITOR_DECISION_ACCEPT,
+      submissionId,
+    });
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Submission accepted.",
+    });
+
     return {
       ok: true,
       message: "Submission accepted successfully",
@@ -100,9 +206,26 @@ export async function declineSubmission(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    console.log("[DUMMY] Decline Submission:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    const decisionType =
+      data.decision === SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE
+        ? SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE
+        : SUBMISSION_EDITOR_DECISION_DECLINE;
+
+    await applyDecisionTransition({
+      decision: decisionType,
+      submissionId,
+    });
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Submission declined.",
+    });
+
     return {
       ok: true,
       message: "Submission declined successfully",
@@ -123,9 +246,17 @@ export async function requestRevisions(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    console.log("[DUMMY] Request Revisions:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Revisions requested from author.",
+    });
+
     return {
       ok: true,
       message: "Revisions requested successfully",
@@ -146,9 +277,22 @@ export async function resubmitForReview(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save (create new review round)
-    console.log("[DUMMY] Resubmit for Review:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await createReviewRound(submissionId, "review");
+    await applyDecisionTransition({
+      decision: SUBMISSION_EDITOR_DECISION_RESUBMIT,
+      submissionId,
+    });
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Submission resubmitted for review.",
+    });
+
     return {
       ok: true,
       message: "Submission resubmitted for review successfully",
@@ -169,9 +313,21 @@ export async function sendToProduction(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    console.log("[DUMMY] Send to Production:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await applyDecisionTransition({
+      decision: SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION,
+      submissionId,
+    });
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Submission sent to production.",
+    });
+
     return {
       ok: true,
       message: "Submission sent to production successfully",
@@ -192,9 +348,21 @@ export async function revertDecline(
   data: DecisionData
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    console.log("[DUMMY] Revert Decline:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await applyDecisionTransition({
+      decision: SUBMISSION_EDITOR_DECISION_REVERT_DECLINE,
+      submissionId,
+    });
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "decision",
+      message: "Decline decision reverted.",
+    });
+
     return {
       ok: true,
       message: "Decline decision reverted successfully",
@@ -215,9 +383,17 @@ export async function sendRecommendation(
   data: DecisionData & { recommendation: EditorRecommendationType }
 ): Promise<ActionResult> {
   try {
-    // TODO: Implement actual database save
-    console.log("[DUMMY] Send Recommendation:", data);
-    
+    const { submissionId } = data;
+    const { userId } = await assertEditorAccess(submissionId);
+    await getSubmission(submissionId);
+
+    await logActivity({
+      submissionId,
+      actorId: userId,
+      category: "recommendation",
+      message: `Recommendation recorded: ${data.recommendation}`,
+    });
+
     return {
       ok: true,
       message: "Recommendation recorded successfully",
@@ -261,6 +437,23 @@ export async function saveEditorDecision(
 
       case SUBMISSION_EDITOR_DECISION_REVERT_DECLINE:
         return await revertDecline(data);
+
+      case SUBMISSION_EDITOR_DECISION_NEW_ROUND: {
+        const { submissionId, stage } = data;
+        const { userId } = await assertEditorAccess(submissionId);
+        await getSubmissionRow(submissionId);
+        await createReviewRound(submissionId, stage);
+        await logActivity({
+          submissionId,
+          actorId: userId,
+          category: "decision",
+          message: "New review round created.",
+        });
+        return {
+          ok: true,
+          message: "Review round created successfully",
+        };
+      }
 
       default:
         // Handle recommendations

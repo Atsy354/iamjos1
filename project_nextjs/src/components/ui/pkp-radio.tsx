@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import { cn } from "@/lib/utils";
 
 type PkpRadioProps = React.InputHTMLAttributes<HTMLInputElement> & {
@@ -13,7 +13,8 @@ type PkpRadioProps = React.InputHTMLAttributes<HTMLInputElement> & {
  */
 export const PkpRadio = forwardRef<HTMLInputElement, PkpRadioProps>(
   ({ className, label, id, ...props }, ref) => {
-    const uniqueId = id ?? `pkp-radio-${Math.random().toString(36).substr(2, 9)}`;
+    const autoId = useId();
+    const uniqueId = id ?? autoId;
     return (
       <div className="flex items-center gap-2">
         <input

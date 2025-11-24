@@ -1,16 +1,11 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PkpButton } from "@/components/ui/pkp-button";
 import { FormMessage } from "@/components/ui/form-message";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  hasStageAssignment,
-  canMakeDecision,
-} from "../dummy-helpers";
-import { STAGE_NAME_TO_ID } from "../dummy-data";
 import { getStageDecisions } from "./editor-decisions/decision-constants";
 import { SendReviewsForm } from "./editor-decision-forms/send-reviews-form";
 import { PromoteForm } from "./editor-decision-forms/promote-form";
@@ -24,6 +19,7 @@ import type {
   EditorDecisionType,
   SubmissionFile,
   SubmissionReviewRound,
+  SubmissionParticipant,
 } from "../types";
 import {
   SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW,
@@ -45,6 +41,7 @@ type Props = {
   reviewRoundId?: string;
   files?: SubmissionFile[];
   reviewRounds?: SubmissionReviewRound[];
+  participants?: SubmissionParticipant[];
 };
 
 export function WorkflowStageActions({
@@ -55,6 +52,7 @@ export function WorkflowStageActions({
   reviewRoundId,
   files = [],
   reviewRounds = [],
+  participants = [],
 }: Props) {
   const router = useRouter();
   const { user } = useAuth();
@@ -64,22 +62,32 @@ export function WorkflowStageActions({
     decision: EditorDecisionType;
   } | null>(null);
 
-  // Get current user ID or fallback to dummy user ID
-  const currentUserId = user?.id || "current-user-id";
-  
-  // Get stage ID for permission checking
-  const stageId = STAGE_NAME_TO_ID[currentStage] || 1;
+  const currentUserId = user?.id ?? "";
 
-  // Check if user has assignment and can make decisions
-  const hasAssignment = useMemo(
-    () => hasStageAssignment(submissionId, currentUserId, stageId),
-    [submissionId, currentUserId, stageId]
-  );
+  const relevantAssignments = useMemo(() => {
+    return participants.filter(
+      (participant) =>
+        participant.stage === currentStage || participant.stage === "submission"
+    );
+  }, [participants, currentStage]);
 
-  const canDecide = useMemo(
-    () => canMakeDecision(submissionId, currentUserId, stageId),
-    [submissionId, currentUserId, stageId]
-  );
+  const hasAssignment = useMemo(() => {
+    if (!currentUserId) {
+      return false;
+    }
+    return relevantAssignments.some((assignment) => assignment.userId === currentUserId);
+  }, [relevantAssignments, currentUserId]);
+
+  const canDecide = useMemo(() => {
+    if (!currentUserId) {
+      return false;
+    }
+    return relevantAssignments.some(
+      (assignment) =>
+        assignment.userId === currentUserId &&
+        ["editor", "section_editor", "manager"].includes(assignment.role)
+    );
+  }, [relevantAssignments, currentUserId]);
 
   // Get available decisions for this stage
   const availableDecisions = useMemo(() => {
@@ -107,7 +115,17 @@ export function WorkflowStageActions({
     setOpenModal({ type: getDecisionFormName(decision), decision });
   };
 
-  const handleModalSubmit = async (data: any) => {
+  type DecisionFormData = {
+    decision: EditorDecisionType;
+    reviewRoundId?: string;
+    skipEmail?: boolean;
+    personalMessage?: string;
+    selectedFiles?: string[];
+    reviewAttachments?: string[];
+    decisionType?: "pendingRevisions" | "resubmit" | "decline";
+  };
+
+  const handleModalSubmit = async (data: DecisionFormData) => {
     setFeedback(null);
     try {
       const result = await saveEditorDecision({

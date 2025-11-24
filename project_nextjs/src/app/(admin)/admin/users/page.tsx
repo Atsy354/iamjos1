@@ -1,15 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UserPlus, Mail, UserCheck, UserX, Search, Filter, Download } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserPlus, Mail, UserCheck, UserX, Search, Filter } from 'lucide-react';
 import { withAuth } from '@/lib/auth-client';
 
 function AdminUsers() {
@@ -81,24 +75,6 @@ function AdminUsers() {
     }
   ]);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-yellow-100 text-yellow-800';
-    }
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role.toLowerCase()) {
-      case 'editor': return 'bg-purple-100 text-purple-800';
-      case 'author': return 'bg-blue-100 text-blue-800';
-      case 'reviewer': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,221 +87,721 @@ function AdminUsers() {
   });
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header Bar - Light Gray */}
-      <div className="bg-gray-200 px-6 py-4" style={{
-        backgroundColor: '#e5e5e5',
-        padding: '1rem 1.5rem'
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
       }}>
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-900" style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            color: '#111827'
+        <div>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '0.25rem'
           }}>
             User Management
           </h1>
-          <Button>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add New User
-          </Button>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Manage all users across the site
+          </p>
+        </div>
+        <Link
+          href="/admin/users/create"
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            backgroundColor: '#006798',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <UserPlus style={{ width: '1rem', height: '1rem' }} />
+          Add New User
+        </Link>
+      </div>
+
+      {/* Filters */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          paddingBottom: '1rem',
+          marginBottom: '1rem',
+          borderBottom: '1px solid #e5e5e5'
+        }}>
+          <h2 style={{
+            fontSize: '1rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0
+          }}>
+            Filter Users
+          </h2>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}>
+            <label htmlFor="search" style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: '#002C40'
+            }}>
+              Search
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '1rem',
+                height: '1rem',
+                color: '#666'
+              }} />
+              <input
+                id="search"
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.5rem 0.5rem 2.5rem',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}>
+            <label htmlFor="role" style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: '#002C40'
+            }}>
+              Role
+            </label>
+            <select
+              id="role"
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="all">All Roles</option>
+              <option value="editor">Editor</option>
+              <option value="author">Author</option>
+              <option value="reviewer">Reviewer</option>
+            </select>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}>
+            <label htmlFor="status" style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: '#002C40'
+            }}>
+              Status
+            </label>
+            <select
+              id="status"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-end'
+          }}>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setFilterRole('all');
+                setFilterStatus('all');
+              }}
+              style={{
+                width: '100%',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                padding: '0.5rem 1rem',
+                backgroundColor: '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#006798',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Filter style={{ width: '1rem', height: '1rem' }} />
+              Reset Filters
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-6 py-6" style={{
-        padding: '2rem 1.5rem'
-      }}>
-        <div className="space-y-6">
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="role">Role</Label>
-              <Select value={filterRole} onValueChange={setFilterRole}>
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="All roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="author">Author</SelectItem>
-                  <SelectItem value="reviewer">Reviewer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button variant="secondary" className="w-full">
-                <Filter className="h-4 w-4 mr-2" />
-                Reset Filters
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{users.length}</div>
-            <p className="text-xs text-muted-foreground">{users.filter(u => u.status === 'Active').length} active</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Editors</CardTitle>
-            <Badge className="bg-purple-100 text-purple-800">ED</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {users.filter(u => u.roles.includes('Editor')).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Active editors</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Authors</CardTitle>
-            <Badge className="bg-blue-100 text-blue-800">AU</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {users.filter(u => u.roles.includes('Author')).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Active authors</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reviewers</CardTitle>
-            <Badge className="bg-orange-100 text-orange-800">RV</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {users.filter(u => u.roles.includes('Reviewer')).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Active reviewers</p>
-          </CardContent>
-        </Card>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Users
+            </h3>
+            <UserCheck style={{ width: '1rem', height: '1rem', color: '#666' }} />
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#002C40',
+            marginBottom: '0.25rem'
+          }}>
+            {users.length}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            {users.filter(u => u.status === 'Active').length} active
+          </p>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Editors
+            </h3>
+            <span style={{
+              fontSize: '0.75rem',
+              padding: '0.125rem 0.5rem',
+              borderRadius: '4px',
+              backgroundColor: '#e9d5ff',
+              color: '#6b21a8',
+              fontWeight: 600
+            }}>
+              ED
+            </span>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#7c3aed',
+            marginBottom: '0.25rem'
+          }}>
+            {users.filter(u => u.roles.includes('Editor')).length}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Active editors
+          </p>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Authors
+            </h3>
+            <span style={{
+              fontSize: '0.75rem',
+              padding: '0.125rem 0.5rem',
+              borderRadius: '4px',
+              backgroundColor: '#dbeafe',
+              color: '#1e40af',
+              fontWeight: 600
+            }}>
+              AU
+            </span>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#3b82f6',
+            marginBottom: '0.25rem'
+          }}>
+            {users.filter(u => u.roles.includes('Author')).length}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Active authors
+          </p>
+        </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Reviewers
+            </h3>
+            <span style={{
+              fontSize: '0.75rem',
+              padding: '0.125rem 0.5rem',
+              borderRadius: '4px',
+              backgroundColor: '#fed7aa',
+              color: '#9a3412',
+              fontWeight: 600
+            }}>
+              RV
+            </span>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#ea580c',
+            marginBottom: '0.25rem'
+          }}>
+            {users.filter(u => u.roles.includes('Reviewer')).length}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Active reviewers
+          </p>
+        </div>
       </div>
 
       {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User List ({filteredUsers.length} users)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Roles</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead>Registered</TableHead>
-                <TableHead>Activity</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{user.full_name}</div>
-                      <div className="text-sm text-gray-600">@{user.username}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">{user.email}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.roles.map((role, index) => (
-                        <Badge key={index} className={getRoleColor(role)}>
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(user.status)}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{user.last_login}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{user.date_registered}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-xs text-gray-600">
-                      <div>Submissions: {user.submissions}</div>
-                      <div>Reviews: {user.reviews}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Mail className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <UserCheck className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <UserX className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No users found matching your criteria.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #dee2e6',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.5rem',
+          borderBottom: '1px solid #e5e5e5',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0
+          }}>
+            User List ({filteredUsers.length} users)
+          </h2>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <thead>
+              <tr style={{
+                backgroundColor: '#f8f9fa',
+                borderBottom: '1px solid #e5e5e5'
+              }}>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  User
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Email
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Roles
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Status
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Last Login
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Registered
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40',
+                  borderRight: '1px solid #e5e5e5'
+                }}>
+                  Activity
+                </th>
+                <th style={{
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#002C40'
+                }}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    fontSize: '0.875rem',
+                    color: '#666',
+                    fontStyle: 'italic'
+                  }}>
+                    No users found matching your criteria.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => (
+                  <tr key={user.id} style={{
+                    borderBottom: '1px solid #e5e5e5',
+                    backgroundColor: '#fff'
+                  }}>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      borderRight: '1px solid #e5e5e5'
+                    }}>
+                      <div>
+                        <div style={{
+                          fontWeight: 500,
+                          color: '#002C40',
+                          marginBottom: '0.25rem'
+                        }}>
+                          {user.full_name}
+                        </div>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          color: '#666'
+                        }}>
+                          @{user.username}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      color: '#333',
+                      borderRight: '1px solid #e5e5e5',
+                      maxWidth: '250px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {user.email}
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      borderRight: '1px solid #e5e5e5'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '0.25rem'
+                      }}>
+                        {user.roles.map((role, index) => {
+                          const roleColors: Record<string, { bg: string; text: string }> = {
+                            'Editor': { bg: '#e9d5ff', text: '#6b21a8' },
+                            'Author': { bg: '#dbeafe', text: '#1e40af' },
+                            'Reviewer': { bg: '#fed7aa', text: '#9a3412' }
+                          };
+                          const colors = roleColors[role] || { bg: '#e2e3e5', text: '#383d41' };
+                          return (
+                            <span
+                              key={index}
+                              style={{
+                                fontSize: '0.75rem',
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '4px',
+                                backgroundColor: colors.bg,
+                                color: colors.text,
+                                fontWeight: 600
+                              }}
+                            >
+                              {role}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      borderRight: '1px solid #e5e5e5'
+                    }}>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '4px',
+                        backgroundColor: user.status === 'Active' ? '#d4edda' : user.status === 'Inactive' ? '#e2e3e5' : '#f8d7da',
+                        color: user.status === 'Active' ? '#155724' : user.status === 'Inactive' ? '#383d41' : '#721c24',
+                        fontWeight: 600
+                      }}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      color: '#333',
+                      borderRight: '1px solid #e5e5e5'
+                    }}>
+                      {user.last_login}
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      color: '#333',
+                      borderRight: '1px solid #e5e5e5'
+                    }}>
+                      {user.date_registered}
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem',
+                      borderRight: '1px solid #e5e5e5'
+                    }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#666',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.125rem'
+                      }}>
+                        <div>Submissions: {user.submissions}</div>
+                        <div>Reviews: {user.reviews}</div>
+                      </div>
+                    </td>
+                    <td style={{
+                      padding: '0.75rem 1rem',
+                      fontSize: '0.875rem'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        gap: '0.5rem'
+                      }}>
+                        <button
+                          type="button"
+                          title="Send Email"
+                          style={{
+                            padding: '0.25rem',
+                            backgroundColor: 'transparent',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#006798',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Mail style={{ width: '1rem', height: '1rem' }} />
+                        </button>
+                        <button
+                          type="button"
+                          title="Enable User"
+                          style={{
+                            padding: '0.25rem',
+                            backgroundColor: 'transparent',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#00B24E',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <UserCheck style={{ width: '1rem', height: '1rem' }} />
+                        </button>
+                        <button
+                          type="button"
+                          title="Disable User"
+                          style={{
+                            padding: '0.25rem',
+                            backgroundColor: 'transparent',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#d32f2f',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <UserX style={{ width: '1rem', height: '1rem' }} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

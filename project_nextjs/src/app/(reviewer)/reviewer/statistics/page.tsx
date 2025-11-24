@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { FileText, TrendingUp, Clock, Award, BarChart3, Calendar, Star } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { FileText, TrendingUp, Clock, Award, Calendar, Star } from 'lucide-react';
+import { withAuth } from '@/lib/auth-client'
 
 const monthlyReviews = [
   { month: 'Jan', reviews: 3, accept: 1, reject: 1, revision: 1 },
@@ -31,8 +30,6 @@ const reviewTimeData = [
   { range: '30+ days', count: 2 },
 ];
 
-import { withAuth } from '@/lib/auth-client'
-
 function ReviewerStatistics() {
   const { user } = useAuth();
 
@@ -46,176 +43,523 @@ function ReviewerStatistics() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Reviewer Statistics</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* OJS PKP 3.3 Style Header */}
+      <div style={{ 
+        borderBottom: '2px solid #e5e5e5',
+        paddingBottom: '1rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '0.25rem'
+          }}>
+            Reviewer Statistics
+          </h1>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#666',
+            margin: 0
+          }}>
+            View your review performance and statistics
+          </p>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalReviews}</div>
-            <p className="text-xs text-muted-foreground">+5 this month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accept Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.acceptRate}%</div>
-            <p className="text-xs text-muted-foreground">Above average</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Review Time</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.avgReviewTime} days</div>
-            <p className="text-xs text-muted-foreground">On time</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">On-Time Rate</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.onTimeRate}%</div>
-            <p className="text-xs text-muted-foreground">Excellent</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Rating</CardTitle>
-            <Star className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.avgRating}</div>
-            <p className="text-xs text-muted-foreground">Out of 5</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Citations</CardTitle>
-            <Award className="h-4 w-4 text-indigo-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-indigo-600">{stats.totalCitations}</div>
-            <p className="text-xs text-muted-foreground">+23 this month</p>
-          </CardContent>
-        </Card>
+      {/* Summary Cards - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Reviews
+            </h3>
+            <FileText style={{ width: '1rem', height: '1rem', color: '#666' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#002C40',
+            marginBottom: '0.25rem'
+          }}>
+            {stats.totalReviews}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            +5 this month
+          </p>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Accept Rate
+            </h3>
+            <TrendingUp style={{ width: '1rem', height: '1rem', color: '#10b981' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#10b981',
+            marginBottom: '0.25rem'
+          }}>
+            {stats.acceptRate}%
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Above average
+          </p>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Avg. Review Time
+            </h3>
+            <Clock style={{ width: '1rem', height: '1rem', color: '#006798' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#006798',
+            marginBottom: '0.25rem'
+          }}>
+            {stats.avgReviewTime} days
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            On time
+          </p>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              On-Time Rate
+            </h3>
+            <Calendar style={{ width: '1rem', height: '1rem', color: '#9c27b0' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#9c27b0',
+            marginBottom: '0.25rem'
+          }}>
+            {stats.onTimeRate}%
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Excellent
+          </p>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Avg. Rating
+            </h3>
+            <Star style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#f59e0b',
+            marginBottom: '0.25rem'
+          }}>
+            {stats.avgRating}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            Out of 5
+          </p>
+        </div>
+
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              color: '#002C40',
+              margin: 0
+            }}>
+              Total Citations
+            </h3>
+            <Award style={{ width: '1rem', height: '1rem', color: '#6366f1' }} />
+          </div>
+          <div style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#6366f1',
+            marginBottom: '0.25rem'
+          }}>
+            {stats.totalCitations}
+          </div>
+          <p style={{
+            fontSize: '0.75rem',
+            color: '#666',
+            margin: 0
+          }}>
+            +23 this month
+          </p>
+        </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Review Activity (6 Months)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyReviews}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="reviews" fill="#3b82f6" name="Total Reviews" />
-                <Bar dataKey="accept" fill="#10b981" name="Accept" />
-                <Bar dataKey="revision" fill="#f59e0b" name="Revision" />
-                <Bar dataKey="reject" fill="#ef4444" name="Reject" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Charts - OJS PKP 3.3 Style */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '1rem'
+          }}>
+            Monthly Review Activity (6 Months)
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={monthlyReviews}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="reviews" fill="#006798" name="Total Reviews" />
+              <Bar dataKey="accept" fill="#10b981" name="Accept" />
+              <Bar dataKey="revision" fill="#f59e0b" name="Revision" />
+              <Bar dataKey="reject" fill="#ef4444" name="Reject" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Decision Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={decisionDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {decisionDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '1rem'
+          }}>
+            Decision Distribution
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={decisionDistribution}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {decisionDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Review Time Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={reviewTimeData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="range" type="category" width={80} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8b5cf6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '1rem'
+          }}>
+            Review Time Distribution
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={reviewTimeData} layout="horizontal">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="range" type="category" width={80} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#8b5cf6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Reviewer Performance Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Review Quality Score</span>
-                <Badge className="bg-green-100 text-green-800">Excellent (4.2/5)</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Timeliness Score</span>
-                <Badge className="bg-blue-100 text-blue-800">Very Good (89.7%)</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Constructiveness Score</span>
-                <Badge className="bg-purple-100 text-purple-800">Good (4.1/5)</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Expertise Match</span>
-                <Badge className="bg-indigo-100 text-indigo-800">Excellent (95%)</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Review Depth</span>
-                <Badge className="bg-orange-100 text-orange-800">Good (3.8/5)</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Overall Ranking</span>
-                <Badge className="bg-yellow-100 text-yellow-800">Top 15%</Badge>
-              </div>
+        <div style={{
+          backgroundColor: '#fff',
+          border: '1px solid #dee2e6',
+          borderRadius: '4px',
+          padding: '1.5rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.125rem',
+            fontWeight: 700,
+            color: '#002C40',
+            margin: 0,
+            marginBottom: '1rem'
+          }}>
+            Reviewer Performance Metrics
+          </h2>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#333' }}>Review Quality Score</span>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.125rem 0.5rem',
+                fontSize: '0.75rem',
+                borderRadius: '4px',
+                backgroundColor: '#d4edda',
+                color: '#155724',
+                fontWeight: 600
+              }}>
+                Excellent (4.2/5)
+              </span>
             </div>
-          </CardContent>
-        </Card>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#333' }}>Timeliness Score</span>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.125rem 0.5rem',
+                fontSize: '0.75rem',
+                borderRadius: '4px',
+                backgroundColor: '#d1ecf1',
+                color: '#0c5460',
+                fontWeight: 600
+              }}>
+                Very Good (89.7%)
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#333' }}>Constructiveness Score</span>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.125rem 0.5rem',
+                fontSize: '0.75rem',
+                borderRadius: '4px',
+                backgroundColor: '#e7d4f5',
+                color: '#6f42c1',
+                fontWeight: 600
+              }}>
+                Good (4.1/5)
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#333' }}>Expertise Match</span>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.125rem 0.5rem',
+                fontSize: '0.75rem',
+                borderRadius: '4px',
+                backgroundColor: '#d1ecf1',
+                color: '#0c5460',
+                fontWeight: 600
+              }}>
+                Excellent (95%)
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid #e5e5e5'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#333' }}>Review Depth</span>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.125rem 0.5rem',
+                fontSize: '0.75rem',
+                borderRadius: '4px',
+                backgroundColor: '#ffeaa7',
+                color: '#856404',
+                fontWeight: 600
+              }}>
+                Good (3.8/5)
+              </span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#333' }}>Overall Ranking</span>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.125rem 0.5rem',
+                fontSize: '0.75rem',
+                borderRadius: '4px',
+                backgroundColor: '#fff3cd',
+                color: '#856404',
+                fontWeight: 600
+              }}>
+                Top 15%
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import { USE_DUMMY } from "@/lib/dummy";
 import { useJournalSettings, useMigrateLocalStorageToDatabase } from "@/features/editor/hooks/useJournalSettings";
 import { locales, localeNames } from "@/lib/i18n/config";
 import { getLocaleInfo } from "@/lib/locales";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function WebsiteSettingsPage() {
   const { t } = useI18n();

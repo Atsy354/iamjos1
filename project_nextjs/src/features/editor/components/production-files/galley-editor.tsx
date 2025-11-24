@@ -6,17 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FormMessage } from "@/components/ui/form-message";
 import { Modal } from "@/components/ui/modal";
-import type { SubmissionStage } from "../../types";
-import type { Galley } from "./galley-grid";
+import type { SubmissionFile, SubmissionStage } from "../../types";
+import type { PublicationGalley } from "../../types";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   submissionId: string;
   stage: SubmissionStage;
-  galley: Galley;
+  submissionVersionId: string;
+  galley: PublicationGalley;
+  availableFiles?: SubmissionFile[];
   onSubmit: (data: {
     galleyId: string;
+    submissionVersionId: string;
     label: string;
     locale: string;
     isApproved: boolean;
@@ -35,16 +38,20 @@ export function GalleyEditor({
   onClose,
   submissionId,
   stage,
+  submissionVersionId,
   galley,
+  availableFiles = [],
   onSubmit,
 }: Props) {
   const [label, setLabel] = useState(galley.label);
   const [locale, setLocale] = useState(galley.locale);
   const [isApproved, setIsApproved] = useState(galley.isApproved);
-  const [fileId, setFileId] = useState(galley.fileId || "");
+  const [type, setType] = useState<"file" | "remote">(galley.remoteUrl ? "remote" : "file");
+  const [fileId, setFileId] = useState(galley.submissionFileId || "");
   const [remoteUrl, setRemoteUrl] = useState(galley.remoteUrl || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileOptions = availableFiles.filter((file) => file.stage === "production");
 
   // Update form when galley changes
   useEffect(() => {
@@ -52,8 +59,9 @@ export function GalleyEditor({
       setLabel(galley.label);
       setLocale(galley.locale);
       setIsApproved(galley.isApproved);
-      setFileId(galley.fileId || "");
+      setFileId(galley.submissionFileId || "");
       setRemoteUrl(galley.remoteUrl || "");
+      setType(galley.remoteUrl ? "remote" : "file");
     }
   }, [open, galley]);
 
@@ -63,17 +71,28 @@ export function GalleyEditor({
       return;
     }
 
+    if (type === "file" && !fileId) {
+      setError("Please select a production file");
+      return;
+    }
+
+    if (type === "remote" && !remoteUrl.trim()) {
+      setError("Remote URL is required");
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
 
     try {
       await onSubmit({
         galleyId: galley.id,
+        submissionVersionId,
         label: label.trim(),
         locale,
         isApproved,
-        fileId: fileId || undefined,
-        remoteUrl: remoteUrl.trim() || undefined,
+        fileId: type === "file" ? fileId : undefined,
+        remoteUrl: type === "remote" ? remoteUrl.trim() : undefined,
       });
       onClose();
     } catch (err) {
@@ -141,37 +160,67 @@ export function GalleyEditor({
           </label>
         </div>
 
-        {/* File or Remote URL */}
-        {galley.remoteUrl ? (
+        {/* Galley Source Type */}
+        <div className="space-y-2">
+          <Label>Galley Source</Label>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="galley-source"
+                value="file"
+                checked={type === "file"}
+                onChange={() => setType("file")}
+              />
+              Existing Production File
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="galley-source"
+                value="remote"
+                checked={type === "remote"}
+                onChange={() => setType("remote")}
+              />
+              Remote URL
+            </label>
+          </div>
+        </div>
+
+        {type === "file" ? (
           <div className="space-y-2">
-            <Label htmlFor="remoteUrl">Remote URL</Label>
+            <Label htmlFor="file">Production File *</Label>
+            <select
+              id="file"
+              value={fileId}
+              onChange={(e) => setFileId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm"
+            >
+              <option value="">Select production file…</option>
+              {fileOptions.map((file) => (
+                <option key={file.id} value={file.id}>
+                  {file.label} ({(file.size / 1024).toFixed(0)} KB)
+                </option>
+              ))}
+            </select>
+            {fileOptions.length === 0 && (
+              <p className="text-xs text-[var(--muted)]">
+                Tidak ada file production yang tersedia untuk galley ini.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="remoteUrl">Remote URL *</Label>
             <Input
               id="remoteUrl"
               name="remoteUrl"
               type="url"
               value={remoteUrl}
               onChange={(e) => setRemoteUrl(e.target.value)}
+              placeholder="https://example.com/article.pdf"
               className="w-full"
             />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <Label>File</Label>
-            <div className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-              <p className="text-sm text-[var(--muted)]">
-                File: {fileId || "No file assigned"}
-              </p>
-              <Input
-                type="file"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setFileId(`file-${Date.now()}`);
-                  }
-                }}
-                className="mt-2"
-              />
-            </div>
           </div>
         )}
 

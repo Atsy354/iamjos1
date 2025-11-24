@@ -1,22 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FormMessage } from "@/components/ui/form-message";
 import { Modal } from "@/components/ui/modal";
-import type { SubmissionStage } from "../../types";
-import type { Galley } from "./galley-grid";
+import type { SubmissionFile, SubmissionStage } from "../../types";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   submissionId: string;
   stage: SubmissionStage;
+  submissionVersionId: string;
+  availableFiles?: SubmissionFile[];
   onSubmit: (data: {
     submissionId: string;
     stage: SubmissionStage;
+    submissionVersionId: string;
     label: string;
     locale: string;
     fileId?: string;
@@ -35,6 +37,8 @@ export function GalleyCreationModal({
   onClose,
   submissionId,
   stage,
+  submissionVersionId,
+  availableFiles = [],
   onSubmit,
 }: Props) {
   const [label, setLabel] = useState("");
@@ -45,6 +49,8 @@ export function GalleyCreationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fileOptions = useMemo(() => availableFiles.filter((file) => file.stage === "production"), [availableFiles]);
+
   const handleSubmit = async () => {
     if (!label.trim()) {
       setError("Label is required");
@@ -52,7 +58,7 @@ export function GalleyCreationModal({
     }
 
     if (type === "file" && !fileId) {
-      setError("Please select a file");
+      setError("Please select a production file");
       return;
     }
 
@@ -68,6 +74,7 @@ export function GalleyCreationModal({
       await onSubmit({
         submissionId,
         stage,
+        submissionVersionId,
         label: label.trim(),
         locale,
         fileId: type === "file" ? fileId : undefined,
@@ -173,25 +180,25 @@ export function GalleyCreationModal({
         {/* File Upload or Remote URL */}
         {type === "file" ? (
           <div className="space-y-2">
-            <Label htmlFor="file">File *</Label>
-            <div className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-              <p className="text-sm text-[var(--muted)]">
-                File selection will be implemented here
+            <Label htmlFor="file">Production File *</Label>
+            <select
+              id="file"
+              value={fileId}
+              onChange={(e) => setFileId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm"
+            >
+              <option value="">Select production file…</option>
+              {fileOptions.map((file) => (
+                <option key={file.id} value={file.id}>
+                  {file.label} ({(file.size / 1024).toFixed(0)} KB)
+                </option>
+              ))}
+            </select>
+            {fileOptions.length === 0 && (
+              <p className="text-xs text-[var(--muted)]">
+                Belum ada file production yang siap digunakan.
               </p>
-              {/* TODO: Add file selection grid */}
-              <Input
-                type="file"
-                id="file"
-                onChange={(e) => {
-                  // TODO: Handle file upload
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setFileId(`file-${Date.now()}`);
-                  }
-                }}
-                className="mt-2"
-              />
-            </div>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
@@ -207,7 +214,7 @@ export function GalleyCreationModal({
               className="w-full"
             />
             <p className="text-xs text-[var(--muted)]">
-              Enter the full URL to the remote file.
+              Masukkan URL lengkap menuju berkas galley.
             </p>
           </div>
         )}

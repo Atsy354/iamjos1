@@ -1,9 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { FormMessage } from "@/components/ui/form-message";
 import { clearScheduledTaskLogsAction } from "./actions";
 
 const MOCK_LOGS = [
@@ -42,12 +39,30 @@ export default function ClearScheduledTaskLogsPage() {
       </header>
 
       {state?.ok && (
-        <FormMessage tone="success">
+        <div style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: '#d4edda',
+          border: '1px solid #c3e6cb',
+          borderRadius: '4px',
+          color: '#155724',
+          fontSize: '0.875rem',
+          marginBottom: '1rem'
+        }}>
           Log tugas terjadwal berhasil dihapus{typeof state.deleted === "number" ? ` (${state.deleted})` : ""}.
-        </FormMessage>
+        </div>
       )}
       {state && !state.ok && (
-        <FormMessage tone="error">{state.message}</FormMessage>
+        <div style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: '#f8d7da',
+          border: '1px solid #f5c6cb',
+          borderRadius: '4px',
+          color: '#721c24',
+          fontSize: '0.875rem',
+          marginBottom: '1rem'
+        }}>
+          {state.message}
+        </div>
       )}
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -89,20 +104,47 @@ export default function ClearScheduledTaskLogsPage() {
         </table>
       </div>
 
-      <div className="flex gap-3">
-        <form action={formAction} className="contents">
-          <Button variant="danger" type="submit" loading={pending}>
-            Clear Logs
-          </Button>
+      <div style={{
+        display: 'flex',
+        gap: '0.75rem'
+      }}>
+        <form action={formAction} style={{ display: 'contents' }}>
+          <button
+            type="submit"
+            disabled={pending}
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.5rem 1rem',
+              backgroundColor: pending ? '#ccc' : '#d32f2f',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: pending ? 'not-allowed' : 'pointer',
+              opacity: pending ? 0.6 : 1
+            }}
+          >
+            {pending ? 'Processing...' : 'Clear Logs'}
+          </button>
         </form>
-        <Button
-          variant="secondary"
+        <button
+          type="button"
           onClick={() => {
             window.location.href = "/api/admin/download-task-log";
           }}
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            backgroundColor: '#f8f9fa',
+            color: '#006798',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
         >
           Download Log File
-        </Button>
+        </button>
       </div>
     </div>
   );

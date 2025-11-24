@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,30 +67,21 @@ export function EditorSideNav() {
     );
   };
 
-  // Auto-expand submenus that have active items or when on any page in that section
-  useEffect(() => {
-    const initiallyOpen = new Set<string>();
+  const autoOpenLabels = useMemo(() => {
+    const detected = new Set<string>();
     NAV_ITEMS.forEach(item => {
       if (item.submenu && shouldExpandSubmenu(item)) {
-        initiallyOpen.add(item.label);
+        detected.add(item.labelKey);
       }
-      // Auto-expand Settings submenu when on any settings page
-      if (item.labelKey === 'editor.navigation.settings' && pathname?.startsWith("/editor/settings")) {
-        initiallyOpen.add(item.labelKey);
+      if (item.labelKey === "editor.navigation.settings" && pathname?.startsWith("/editor/settings")) {
+        detected.add(item.labelKey);
       }
-      // Auto-expand Statistics submenu when on any statistics page
-      if (item.labelKey === 'editor.navigation.statistics' && pathname?.startsWith("/editor/statistics")) {
-        initiallyOpen.add(item.labelKey);
+      if (item.labelKey === "editor.navigation.statistics" && pathname?.startsWith("/editor/statistics")) {
+        detected.add(item.labelKey);
       }
     });
-    if (initiallyOpen.size > 0) {
-      setOpenSubmenus(prev => {
-        const combined = new Set(prev);
-        initiallyOpen.forEach(label => combined.add(label));
-        return combined;
-      });
-    }
-  }, [pathname, searchParams]);
+    return detected;
+  }, [NAV_ITEMS, pathname, searchParams]);
 
   const toggleSubmenu = (labelKey: string) => {
     setOpenSubmenus(prev => {
@@ -106,7 +97,7 @@ export function EditorSideNav() {
 
   const renderNavItem = (item: NavItem) => {
     const active = isActive(pathname, searchParams?.toString() ?? "", item.href);
-    const isSubmenuOpen = item.submenu ? openSubmenus.has(item.labelKey) : false;
+    const isSubmenuOpen = item.submenu ? autoOpenLabels.has(item.labelKey) || openSubmenus.has(item.labelKey) : false;
     const hasActiveSubmenu = item.submenu ? shouldExpandSubmenu(item) : false;
 
     return (

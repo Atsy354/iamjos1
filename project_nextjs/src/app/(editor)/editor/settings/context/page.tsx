@@ -8,10 +8,23 @@ import { PkpTextarea } from "@/components/ui/pkp-textarea";
 import { PkpSelect } from "@/components/ui/pkp-select";
 import { PkpTable, PkpTableHeader, PkpTableRow, PkpTableHead, PkpTableCell } from "@/components/ui/pkp-table";
 import { PkpCheckbox } from "@/components/ui/pkp-checkbox";
-import { DUMMY_SECTIONS, DUMMY_CATEGORIES } from "@/features/editor/settings-dummy-data";
-import { USE_DUMMY } from "@/lib/dummy";
 import { useJournalSettings, useMigrateLocalStorageToDatabase } from "@/features/editor/hooks/useJournalSettings";
 import { useI18n } from "@/contexts/I18nContext";
+
+type SectionItem = {
+  id: string;
+  title: string;
+  abbreviation: string;
+  enabled: boolean;
+  policy?: string;
+};
+
+type CategoryItem = {
+  id: string;
+  title: string;
+  path: string;
+  description?: string;
+};
 
 export default function SettingsContextPage() {
   const { t } = useI18n();
@@ -45,6 +58,27 @@ export default function SettingsContextPage() {
     mailingAddress: '',
   });
 
+  // Sections state
+  const [sections, setSections] = useState<SectionItem[]>([]);
+  const [sectionsFeedback, setSectionsFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [sectionsSaving, setSectionsSaving] = useState(false);
+  const [newSection, setNewSection] = useState<Omit<SectionItem, 'id'>>({
+    title: '',
+    abbreviation: '',
+    enabled: true,
+    policy: '',
+  });
+
+  // Categories state
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [categoriesFeedback, setCategoriesFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [categoriesSaving, setCategoriesSaving] = useState(false);
+  const [newCategory, setNewCategory] = useState<Omit<CategoryItem, 'id'>>({
+    title: '',
+    path: '',
+    description: '',
+  });
+
   // Feedback states
   const [mastheadFeedback, setMastheadFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [contactFeedback, setContactFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -72,6 +106,26 @@ export default function SettingsContextPage() {
           mailingAddress: settings.contact_mailingAddress || '',
         });
       }
+      if (settings.context_sections) {
+        try {
+          const sectionsData = typeof settings.context_sections === 'string' ? JSON.parse(settings.context_sections) : settings.context_sections;
+          if (Array.isArray(sectionsData)) {
+            setSections(sectionsData);
+          }
+        } catch {
+          // ignore malformed data
+        }
+      }
+      if (settings.context_categories) {
+        try {
+          const categoriesData = typeof settings.context_categories === 'string' ? JSON.parse(settings.context_categories) : settings.context_categories;
+          if (Array.isArray(categoriesData)) {
+            setCategories(categoriesData);
+          }
+        } catch {
+          // ignore
+        }
+      }
     }
   }, [contextSettings.settings]);
 
@@ -89,6 +143,114 @@ export default function SettingsContextPage() {
       return () => clearTimeout(timer);
     }
   }, [contactFeedback]);
+
+  useEffect(() => {
+    if (sectionsFeedback) {
+      const timer = setTimeout(() => setSectionsFeedback(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [sectionsFeedback]);
+
+  useEffect(() => {
+    if (categoriesFeedback) {
+      const timer = setTimeout(() => setCategoriesFeedback(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [categoriesFeedback]);
+
+  const generateId = () =>
+    (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 10));
+
+  const persistSections = async (next: SectionItem[], successMessage: string) => {
+    setSectionsSaving(true);
+    const success = await contextSettings.saveSettings({
+      context_sections: next,
+    });
+    setSectionsSaving(false);
+    if (success) {
+      setSections(next);
+      setSectionsFeedback({ type: 'success', message: successMessage });
+    } else {
+      setSectionsFeedback({ type: 'error', message: contextSettings.error || 'Failed to save sections.' });
+    }
+  };
+
+  const persistCategories = async (next: CategoryItem[], successMessage: string) => {
+    setCategoriesSaving(true);
+    const success = await contextSettings.saveSettings({
+      context_categories: next,
+    });
+    setCategoriesSaving(false);
+    if (success) {
+      setCategories(next);
+      setCategoriesFeedback({ type: 'success', message: successMessage });
+    } else {
+      setCategoriesFeedback({ type: 'error', message: contextSettings.error || 'Failed to save categories.' });
+    }
+  };
+
+  const handleAddSection = async () => {
+    if (!newSection.title.trim()) {
+      setSectionsFeedback({ type: 'error', message: 'Section title is required.' });
+      return;
+    }
+    const next: SectionItem[] = [
+      ...sections,
+      {
+        id: generateId(),
+        title: newSection.title.trim(),
+        abbreviation: newSection.abbreviation.trim() || newSection.title.trim().slice(0, 3).toUpperCase(),
+        enabled: newSection.enabled,
+        policy: newSection.policy?.trim(),
+      },
+    ];
+    await persistSections(next, 'Section saved successfully.');
+    setNewSection({
+      title: '',
+      abbreviation: '',
+      enabled: true,
+      policy: '',
+    });
+  };
+
+  const handleDeleteSection = async (id: string) => {
+    const next = sections.filter((section) => section.id !== id);
+    await persistSections(next, 'Section removed.');
+  };
+
+  const handleToggleSection = async (id: string) => {
+    const next = sections.map((section) =>
+      section.id === id ? { ...section, enabled: !section.enabled } : section
+    );
+    await persistSections(next, 'Section updated.');
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategory.title.trim() || !newCategory.path.trim()) {
+      setCategoriesFeedback({ type: 'error', message: 'Category title and path are required.' });
+      return;
+    }
+    const next: CategoryItem[] = [
+      ...categories,
+      {
+        id: generateId(),
+        title: newCategory.title.trim(),
+        path: newCategory.path.trim(),
+        description: newCategory.description?.trim(),
+      },
+    ];
+    await persistCategories(next, 'Category saved successfully.');
+    setNewCategory({
+      title: '',
+      path: '',
+      description: '',
+    });
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const next = categories.filter((category) => category.id !== id);
+    await persistCategories(next, 'Category removed.');
+  };
 
   // Save handlers
   const handleSaveMasthead = async (e: React.FormEvent) => {
@@ -415,10 +577,53 @@ export default function SettingsContextPage() {
                 border: "1px solid #e5e5e5",
                 padding: "1.5rem",
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                        <PkpButton variant="primary">
-                          {t('editor.settings.context.addSection')}
-                        </PkpButton>
+                <div style={{ marginBottom: "1.5rem" }}>
+                  {sectionsFeedback && (
+                    <div
+                      style={{
+                        marginBottom: "1rem",
+                        padding: "0.75rem 1rem",
+                        borderRadius: "0.375rem",
+                        backgroundColor: sectionsFeedback.type === 'success' ? '#d4edda' : '#f8d7da',
+                        color: sectionsFeedback.type === 'success' ? '#155724' : '#721c24',
+                        border: `1px solid ${sectionsFeedback.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
+                      }}
+                    >
+                      {sectionsFeedback.message}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1rem" }}>
+                    <PkpInput
+                      placeholder="Section title"
+                      value={newSection.title}
+                      onChange={(e) => setNewSection((prev) => ({ ...prev, title: e.target.value }))}
+                    />
+                    <PkpInput
+                      placeholder="Abbreviation"
+                      value={newSection.abbreviation}
+                      onChange={(e) => setNewSection((prev) => ({ ...prev, abbreviation: e.target.value }))}
+                    />
+                    <PkpTextarea
+                      rows={3}
+                      placeholder="Policy / description"
+                      value={newSection.policy}
+                      onChange={(e) => setNewSection((prev) => ({ ...prev, policy: e.target.value }))}
+                    />
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <PkpCheckbox
+                        checked={newSection.enabled}
+                        onCheckedChange={(checked) =>
+                          setNewSection((prev) => ({ ...prev, enabled: Boolean(checked) }))
+                        }
+                      />
+                      <span>Enabled</span>
+                    </label>
+                    <div>
+                      <PkpButton variant="primary" onClick={handleAddSection} loading={sectionsSaving}>
+                        {t('editor.settings.context.addSection')}
+                      </PkpButton>
+                    </div>
+                  </div>
                 </div>
                 <PkpTable>
                   <PkpTableHeader>
@@ -431,8 +636,8 @@ export default function SettingsContextPage() {
                     </PkpTableRow>
                   </PkpTableHeader>
                   <tbody>
-                    {USE_DUMMY && DUMMY_SECTIONS.length > 0 ? (
-                      DUMMY_SECTIONS.map((section) => (
+                    {sections.length > 0 ? (
+                      sections.map((section) => (
                         <PkpTableRow key={section.id}>
                           <PkpTableCell style={{ width: "60px" }}>{section.id}</PkpTableCell>
                           <PkpTableCell>
@@ -445,18 +650,22 @@ export default function SettingsContextPage() {
                           </PkpTableCell>
                           <PkpTableCell style={{ width: "120px" }}>{section.abbreviation}</PkpTableCell>
                           <PkpTableCell style={{ width: "80px", textAlign: "center" }}>
-                            <PkpCheckbox checked={section.enabled} readOnly />
+                            <PkpCheckbox checked={section.enabled} onCheckedChange={() => handleToggleSection(section.id)} />
                           </PkpTableCell>
                           <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }}>{t('editor.settings.context.edit')}</PkpButton>
-                                  <PkpButton variant="onclick" size="sm">{t('editor.settings.context.delete')}</PkpButton>
+                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }} disabled>
+                                    {t('editor.settings.context.edit')}
+                                  </PkpButton>
+                                  <PkpButton variant="warnable" size="sm" onClick={() => handleDeleteSection(section.id)}>
+                                    {t('editor.settings.context.delete')}
+                                  </PkpButton>
                           </PkpTableCell>
                         </PkpTableRow>
                       ))
                     ) : (
                       <tr>
                         <td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: "rgba(0, 0, 0, 0.54)", fontSize: "0.875rem" }}>
-                          {USE_DUMMY ? "No sections found." : "Sections grid will be implemented here with add, edit, delete, enable/disable functionality."}
+                          No sections found. Use the form above to add a new section.
                         </td>
                       </tr>
                     )}
@@ -489,10 +698,44 @@ export default function SettingsContextPage() {
                 border: "1px solid #e5e5e5",
                 padding: "1.5rem",
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                        <PkpButton variant="primary">
-                          {t('editor.settings.context.addCategory')}
-                        </PkpButton>
+                <div style={{ marginBottom: "1.5rem" }}>
+                  {categoriesFeedback && (
+                    <div
+                      style={{
+                        marginBottom: "1rem",
+                        padding: "0.75rem 1rem",
+                        borderRadius: "0.375rem",
+                        backgroundColor: categoriesFeedback.type === 'success' ? '#d4edda' : '#f8d7da',
+                        color: categoriesFeedback.type === 'success' ? '#155724' : '#721c24',
+                        border: `1px solid ${categoriesFeedback.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
+                      }}
+                    >
+                      {categoriesFeedback.message}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gap: "0.75rem", marginBottom: "1rem" }}>
+                    <PkpInput
+                      placeholder="Category title"
+                      value={newCategory.title}
+                      onChange={(e) => setNewCategory((prev) => ({ ...prev, title: e.target.value }))}
+                    />
+                    <PkpInput
+                      placeholder="Path (e.g. computer-science)"
+                      value={newCategory.path}
+                      onChange={(e) => setNewCategory((prev) => ({ ...prev, path: e.target.value }))}
+                    />
+                    <PkpTextarea
+                      rows={3}
+                      placeholder="Description"
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory((prev) => ({ ...prev, description: e.target.value }))}
+                    />
+                    <div>
+                      <PkpButton variant="primary" onClick={handleAddCategory} loading={categoriesSaving}>
+                        {t('editor.settings.context.addCategory')}
+                      </PkpButton>
+                    </div>
+                  </div>
                 </div>
                 <PkpTable>
                   <PkpTableHeader>
@@ -504,8 +747,8 @@ export default function SettingsContextPage() {
                     </PkpTableRow>
                   </PkpTableHeader>
                   <tbody>
-                    {USE_DUMMY && DUMMY_CATEGORIES.length > 0 ? (
-                      DUMMY_CATEGORIES.map((category) => (
+                    {categories.length > 0 ? (
+                      categories.map((category) => (
                         <PkpTableRow key={category.id}>
                           <PkpTableCell style={{ width: "60px" }}>{category.id}</PkpTableCell>
                           <PkpTableCell>
@@ -518,15 +761,17 @@ export default function SettingsContextPage() {
                           </PkpTableCell>
                           <PkpTableCell>{category.path}</PkpTableCell>
                           <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }}>{t('editor.settings.context.edit')}</PkpButton>
-                                  <PkpButton variant="onclick" size="sm">{t('editor.settings.context.delete')}</PkpButton>
+                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }} disabled>{t('editor.settings.context.edit')}</PkpButton>
+                                  <PkpButton variant="warnable" size="sm" onClick={() => handleDeleteCategory(category.id)}>
+                                    {t('editor.settings.context.delete')}
+                                  </PkpButton>
                           </PkpTableCell>
                         </PkpTableRow>
                       ))
                     ) : (
                       <tr>
                         <td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "rgba(0, 0, 0, 0.54)", fontSize: "0.875rem" }}>
-                          {USE_DUMMY ? "No categories found." : "Categories grid will be implemented here with add, edit, delete functionality."}
+                          No categories found. Use the form above to add a category.
                         </td>
                       </tr>
                     )}

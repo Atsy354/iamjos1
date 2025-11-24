@@ -1,21 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import type { SubmissionDetail } from "../../../types";
+import { useRouter } from "next/navigation";
+
+import type { SubmissionDetail, SubmissionVersion } from "../../../types";
+import { FormMessage } from "@/components/ui/form-message";
 
 type Props = {
   submissionId: string;
   detail: SubmissionDetail;
+  version?: SubmissionVersion;
   isPublished: boolean;
 };
 
-export function CitationsTab({ submissionId, detail, isPublished }: Props) {
-  const metadata = detail.metadata as Record<string, unknown>;
-  const citations = Array.isArray(metadata.citations) ? (metadata.citations as string[]) : [];
+export function CitationsTab({ submissionId, detail, version, isPublished }: Props) {
+  const router = useRouter();
+  const versionMeta = (version?.metadata as Record<string, unknown> | undefined) ?? {};
+  const fallbackMeta = detail.metadata as Record<string, unknown>;
+  const citations = Array.isArray(versionMeta.citations)
+    ? (versionMeta.citations as string[])
+    : Array.isArray(fallbackMeta.citations)
+    ? (fallbackMeta.citations as string[])
+    : [];
 
   const [citationList, setCitationList] = useState<string[]>(citations);
   const [newCitation, setNewCitation] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
   const handleAddCitation = () => {
     if (newCitation.trim()) {
@@ -29,18 +40,45 @@ export function CitationsTab({ submissionId, detail, isPublished }: Props) {
   };
 
   const handleSave = async () => {
+    if (!version) {
+      setFeedback({ tone: "error", message: "Belum ada versi publikasi untuk diperbarui." });
+      return;
+    }
     setIsSaving(true);
+    setFeedback(null);
     try {
-      // TODO: Save citations via API
-      console.log("Save citations:", citationList);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setIsSaving(false);
+      const res = await fetch(
+        `/api/editor/submissions/${submissionId}/publications/${version.id}/metadata`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ citations: citationList }),
+        },
+      );
+      const json = await res.json();
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error ?? "Gagal menyimpan citations.");
+      }
+      setFeedback({ tone: "success", message: "Citations berhasil disimpan." });
+      router.refresh();
     } catch (error) {
       console.error("Error saving citations:", error);
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Gagal menyimpan citations.",
+      });
+    } finally {
       setIsSaving(false);
     }
   };
+
+  if (!version) {
+    return (
+      <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-muted)] px-4 py-6 text-sm text-[var(--muted)]">
+        Belum ada versi publikasi yang dapat diedit. Silakan buat versi baru terlebih dahulu.
+      </div>
+    );
+  }
 
   return (
     <div
@@ -60,6 +98,8 @@ export function CitationsTab({ submissionId, detail, isPublished }: Props) {
       >
         Citations
       </h2>
+
+      {feedback && <FormMessage tone={feedback.tone}>{feedback.message}</FormMessage>}
 
       <div
         style={{

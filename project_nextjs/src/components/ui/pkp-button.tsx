@@ -5,12 +5,34 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type PkpButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "onclick" | "warnable" | "link";
-  size?: "default" | "sm";
+type Variant = "primary" | "onclick" | "warnable" | "link";
+type Size = "default" | "sm";
+
+type BaseProps = {
+  variant?: Variant;
+  size?: Size;
   loading?: boolean;
   asChild?: boolean;
-  href?: string;
+  disabled?: boolean;
+};
+
+type ButtonProps = BaseProps &
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    href?: undefined;
+  };
+
+type AnchorProps = BaseProps &
+  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+  };
+
+type PkpButtonProps = ButtonProps | AnchorProps;
+
+type CloneableChildProps = {
+  className?: string;
+  style?: React.CSSProperties;
+  onMouseEnter?: React.MouseEventHandler<HTMLElement>;
+  onMouseLeave?: React.MouseEventHandler<HTMLElement>;
 };
 
 /**
@@ -22,7 +44,7 @@ type PkpButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
  * - warnable: pkpButton--isWarnable (Warning button)
  * - link: pkpButton--isLink (Link style button)
  */
-export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
+export const PkpButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, PkpButtonProps>(
   (
     {
       className,
@@ -37,7 +59,7 @@ export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
     },
     ref,
   ) => {
-    const baseStyles = {
+    const baseStyles: React.CSSProperties = {
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
@@ -53,7 +75,7 @@ export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
       textDecoration: "none",
     };
 
-    const variantStyles: Record<typeof variant, React.CSSProperties> = {
+    const variantStyles: Record<Variant, React.CSSProperties> = {
       primary: {
         borderColor: "#006798",
         backgroundColor: "#006798",
@@ -77,7 +99,7 @@ export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
       },
     };
 
-    const hoverStyles: Record<typeof variant, Partial<React.CSSProperties>> = {
+    const hoverStyles: Record<Variant, Partial<React.CSSProperties>> = {
       primary: {
         backgroundColor: "#005a82",
         borderColor: "#005a82",
@@ -96,7 +118,7 @@ export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
       },
     };
 
-    const buttonStyles = {
+    const buttonStyles: React.CSSProperties = {
       ...baseStyles,
       ...variantStyles[variant],
       ...(disabled || loading
@@ -107,62 +129,95 @@ export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
         : {}),
     };
 
-    const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    const handleMouseEnter: React.MouseEventHandler<HTMLElement> = (e) => {
       if (!disabled && !loading) {
         Object.assign(e.currentTarget.style, hoverStyles[variant]);
       }
     };
 
-    const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    const handleMouseLeave: React.MouseEventHandler<HTMLElement> = (e) => {
       if (!disabled && !loading) {
         Object.assign(e.currentTarget.style, variantStyles[variant]);
       }
     };
 
+    const spinner = (
+      <span
+        style={{
+          marginRight: "0.5rem",
+          width: "0.875rem",
+          height: "0.875rem",
+          border: "2px solid rgba(255, 255, 255, 0.6)",
+          borderTopColor: "currentColor",
+          borderRadius: "50%",
+          display: "inline-block",
+          animation: "spin 0.6s linear infinite",
+        }}
+      />
+    );
+
     if (asChild) {
-      // If asChild is true, render children directly (should be Link component)
-      if (typeof children === "object" && children && React.isValidElement(children)) {
-        return React.cloneElement(children as React.ReactElement<any>, {
-          className: cn("pkpButton", `pkpButton--is${variant === "primary" ? "Primary" : variant === "onclick" ? "Onclick" : variant === "warnable" ? "Warnable" : "Link"}`, className),
-          style: { ...buttonStyles, ...((children as React.ReactElement<any>).props?.style || {}) },
+      if (React.isValidElement(children)) {
+        const child = children as React.ReactElement<CloneableChildProps>;
+        return React.cloneElement(child, {
+          className: cn(
+            "pkpButton",
+            `pkpButton--is${
+              variant === "primary"
+                ? "Primary"
+                : variant === "onclick"
+                ? "Onclick"
+                : variant === "warnable"
+                ? "Warnable"
+                : "Link"
+            }`,
+            className,
+          ),
+          style: { ...buttonStyles, ...(child.props?.style || {}) },
           onMouseEnter: handleMouseEnter,
           onMouseLeave: handleMouseLeave,
         });
       }
-      return children;
+      return null;
     }
 
-    if (href) {
-      // Extract target and other link props
-      const { target, ...linkProps } = props as any;
+    if ("href" in props && props.href) {
+      const {
+        href,
+        className: _ignoredClassName,
+        children: _ignoredChildren,
+        variant: _ignoredVariant,
+        size: _ignoredSize,
+        loading: _ignoredLoading,
+        disabled: _ignoredDisabled,
+        asChild: _ignoredAsChild,
+        ...linkProps
+      } = props as AnchorProps;
       return (
         <Link
           href={href}
-          target={target}
           className={cn("pkpButton", `pkpButton--is${variant === "primary" ? "Primary" : variant === "onclick" ? "Onclick" : variant === "warnable" ? "Warnable" : "Link"}`, className)}
           style={buttonStyles}
-          onMouseEnter={handleMouseEnter as any}
-          onMouseLeave={handleMouseLeave as any}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           {...linkProps}
         >
-          {loading && (
-            <span
-              style={{
-                marginRight: "0.5rem",
-                width: "0.875rem",
-                height: "0.875rem",
-                border: "2px solid rgba(255, 255, 255, 0.6)",
-                borderTopColor: "currentColor",
-                borderRadius: "50%",
-                display: "inline-block",
-                animation: "spin 0.6s linear infinite",
-              }}
-            />
-          )}
+          {loading && spinner}
           {children}
         </Link>
       );
     }
+
+    const {
+      className: _ignoredClassName,
+      children: _ignoredChildren,
+      variant: _ignoredVariant,
+      size: _ignoredSize,
+      loading: _ignoredLoading,
+      disabled: _ignoredDisabled,
+      asChild: _ignoredAsChild,
+      ...buttonProps
+    } = props as ButtonProps;
 
     return (
       <button
@@ -172,22 +227,9 @@ export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
         disabled={disabled ?? loading}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        {...props}
+        {...buttonProps}
       >
-        {loading && (
-          <span
-            style={{
-              marginRight: "0.5rem",
-              width: "0.875rem",
-              height: "0.875rem",
-              border: "2px solid rgba(255, 255, 255, 0.6)",
-              borderTopColor: "currentColor",
-              borderRadius: "50%",
-              display: "inline-block",
-              animation: "spin 0.6s linear infinite",
-            }}
-          />
-        )}
+        {loading && spinner}
         {children}
       </button>
     );

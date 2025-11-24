@@ -15,13 +15,15 @@ export type SaveSettingsResult = {
   error?: string;
 };
 
+type SettingsRecord = Record<string, unknown>;
+
 /**
  * Load settings for a specific section
  */
 export async function loadSettings(
   section: string,
   journalId?: string
-): Promise<{ success: boolean; settings?: Record<string, any>; error?: string }> {
+): Promise<{ success: boolean; settings?: SettingsRecord; error?: string }> {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -80,7 +82,7 @@ export async function loadSettings(
  */
 export async function saveSettings(
   section: string,
-  settings: Record<string, any>,
+  settings: SettingsRecord,
   journalId?: string
 ): Promise<SaveSettingsResult> {
   try {
@@ -126,7 +128,7 @@ export async function saveSettings(
     }
 
     // Transform settings to the format expected by saveSectionSettings
-    const settingsToSave: Record<string, { value: any; type?: "string" | "bool" | "int" | "float" | "object" }> = {};
+    const settingsToSave: Record<string, { value: unknown; type?: "string" | "bool" | "int" | "float" | "object" }> = {};
     for (const [key, value] of Object.entries(settings)) {
       // Auto-detect type
       let type: "string" | "bool" | "int" | "float" | "object" = "string";
@@ -164,9 +166,9 @@ export async function saveSettings(
  */
 export async function loadSettingValue(
   settingName: string,
-  defaultValue: any = null,
+  defaultValue: unknown = null,
   journalId?: string
-): Promise<{ success: boolean; value?: any; error?: string }> {
+): Promise<{ success: boolean; value?: unknown; error?: string }> {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -208,7 +210,7 @@ export async function loadSettingValue(
  */
 export async function saveSettingValue(
   settingName: string,
-  value: any,
+  value: unknown,
   settingType: "string" | "bool" | "int" | "float" | "object" = "string",
   journalId?: string
 ): Promise<SaveSettingsResult> {

@@ -1,6 +1,9 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import type { SubmissionDetail } from "../../../types";
+import { GalleyGrid } from "@/features/editor/components/production-files/galley-grid";
 
 type Props = {
   submissionId: string;
@@ -9,8 +12,12 @@ type Props = {
 };
 
 export function GalleysTab({ submissionId, detail, isPublished }: Props) {
-  // Filter production files (galleys)
-  const galleys = detail.files.filter((file) => file.stage === "production");
+  const versions = detail.versions ?? [];
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(versions[0]?.id ?? null);
+  const selectedVersion = useMemo(
+    () => versions.find((version) => version.id === selectedVersionId) ?? versions[0],
+    [versions, selectedVersionId],
+  );
 
   return (
     <div
@@ -25,195 +32,53 @@ export function GalleysTab({ submissionId, detail, isPublished }: Props) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: "1rem",
         }}
       >
-        <h2
-          style={{
-            fontSize: "1.125rem",
-            fontWeight: 600,
-            color: "#002C40",
-          }}
-        >
-          Galleys
-        </h2>
-        {!isPublished && (
-          <button
-            type="button"
+        <div>
+          <h2
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "0.25rem",
-              border: "1px solid #006798",
-              backgroundColor: "#006798",
-              color: "#ffffff",
-              height: "2rem",
-              paddingLeft: "0.75rem",
-              paddingRight: "0.75rem",
-              fontSize: "0.875rem",
+              fontSize: "1.125rem",
               fontWeight: 600,
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#005a82";
-              e.currentTarget.style.borderColor = "#005a82";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#006798";
-              e.currentTarget.style.borderColor = "#006798";
+              color: "#002C40",
             }}
           >
-            Add Galley
-          </button>
+            Galleys
+          </h2>
+          <p className="text-xs text-[var(--muted)]">Kelola galley untuk setiap versi terbitan.</p>
+        </div>
+        {versions.length > 1 && (
+          <select
+            value={selectedVersion?.id}
+            onChange={(e) => setSelectedVersionId(e.target.value)}
+            className="flex h-10 rounded border border-[var(--border)] bg-white px-3 py-2 text-sm"
+          >
+            {versions.map((version) => (
+              <option key={version.id} value={version.id}>
+                Versi {version.version} · {version.status}
+              </option>
+            ))}
+          </select>
         )}
       </div>
 
-      <div
-        style={{
-          borderRadius: "0.25rem",
-          border: "1px solid #e5e5e5",
-          backgroundColor: "#ffffff",
-          overflow: "hidden",
-        }}
-      >
-        {galleys.length === 0 ? (
-          <div
-            style={{
-              padding: "2rem",
-              textAlign: "center",
-              fontSize: "0.875rem",
-              color: "rgba(0, 0, 0, 0.54)",
-            }}
-          >
-            No galleys yet.
-          </div>
-        ) : (
-          <table
-            className="pkpTable"
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "0.875rem",
-            }}
-          >
-            <thead>
-              <tr
-                style={{
-                  backgroundColor: "#f8f9fa",
-                }}
-              >
-                <th
-                  style={{
-                    padding: "0.75rem 1rem",
-                    textAlign: "left",
-                    fontSize: "0.75rem",
-                    fontWeight: 400,
-                    color: "rgba(0, 0, 0, 0.54)",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  Label
-                </th>
-                <th
-                  style={{
-                    padding: "0.75rem 1rem",
-                    textAlign: "left",
-                    fontSize: "0.75rem",
-                    fontWeight: 400,
-                    color: "rgba(0, 0, 0, 0.54)",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                >
-                  Type
-                </th>
-                <th
-                  style={{
-                    padding: "0.75rem 1rem",
-                    textAlign: "right",
-                    fontSize: "0.75rem",
-                    fontWeight: 400,
-                    color: "rgba(0, 0, 0, 0.54)",
-                    borderBottom: "1px solid #e5e5e5",
-                  }}
-                />
-              </tr>
-            </thead>
-            <tbody>
-              {galleys.map((galley, index) => (
-                <tr
-                  key={galley.id}
-                  style={{
-                    borderTop: index > 0 ? "1px solid #e5e5e5" : "none",
-                    backgroundColor: "transparent",
-                  }}
-                >
-                  <td
-                    style={{
-                      padding: "0.75rem 1rem",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      color: "#002C40",
-                    }}
-                  >
-                    {galley.label}
-                  </td>
-                  <td
-                    style={{
-                      padding: "0.75rem 1rem",
-                      fontSize: "0.875rem",
-                      color: "rgba(0, 0, 0, 0.84)",
-                    }}
-                  >
-                    {galley.kind}
-                  </td>
-                  <td
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "right",
-                    }}
-                  >
-                    {!isPublished && (
-                      <button
-                        type="button"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "0.25rem",
-                          border: "1px solid #e5e5e5",
-                          backgroundColor: "transparent",
-                          color: "#006798",
-                          height: "2rem",
-                          paddingLeft: "0.75rem",
-                          paddingRight: "0.75rem",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#f8f9fa";
-                          e.currentTarget.style.borderColor = "#d0d0d0";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                          e.currentTarget.style.borderColor = "#e5e5e5";
-                        }}
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {!selectedVersion || (selectedVersion.galleys?.length ?? 0) === 0 ? (
+        <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-muted)] px-4 py-6 text-center text-sm text-[var(--muted)]">
+          Belum ada galley untuk versi ini.
+        </div>
+      ) : (
+        <GalleyGrid
+          submissionId={submissionId}
+          stage="production"
+          galleys={selectedVersion.galleys}
+        />
+      )}
+
+      {!isPublished && (
+        <p className="text-xs text-[var(--muted)]">
+          Penambahan atau pengubahan galley dapat dilakukan dari tab Production ketika workflow berada di tahap produksi.
+        </p>
+      )}
     </div>
   );
 }
-
-
-

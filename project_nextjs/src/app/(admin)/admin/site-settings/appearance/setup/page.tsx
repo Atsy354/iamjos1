@@ -1,7 +1,3 @@
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { getSiteAppearanceSetup, updateSiteAppearanceSetupAction } from "../../actions";
 
 // Dummy sidebar options for now
@@ -16,115 +12,167 @@ export default async function AppearanceSetupPage() {
   const setup = await getSiteAppearanceSetup();
 
   return (
-    <div className="space-y-6" style={{ padding: "1.5rem 0" }}>
-      <header
-        className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4"
-        style={{
-          padding: "1rem 1.5rem",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        <h2
-          className="text-base font-semibold text-gray-900"
-          style={{
-            fontSize: "1rem",
-            fontWeight: "600",
-          }}
-        >
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      <header style={{
+        padding: "1rem 1.5rem",
+        backgroundColor: "#f9fafb",
+        borderBottom: '1px solid #e5e5e5',
+        marginBottom: '1.5rem'
+      }}>
+        <h2 style={{
+          fontSize: "1rem",
+          fontWeight: "600",
+          color: '#002C40',
+          margin: 0
+        }}>
           Setup
         </h2>
       </header>
 
-      <form action={updateSiteAppearanceSetupAction} className="space-y-6">
-        {/* Logo Upload - OJS 3.3: pageHeaderTitleImage (FieldUploadImage, multilingual) */}
-        <div className="space-y-3">
-          <Label
+      <form action={updateSiteAppearanceSetupAction} style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem'
+      }}>
+        {/* Logo Upload */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <label
             htmlFor="pageHeaderTitleImage"
             style={{
               fontSize: "0.875rem",
               fontWeight: "500",
+              color: '#002C40'
             }}
           >
             Logo
-          </Label>
-          <Input
+          </label>
+          <input
             id="pageHeaderTitleImage"
             name="pageHeaderTitleImage"
             type="text"
             defaultValue={setup.pageHeaderTitleImage || ""}
-            className="max-w-md"
+            placeholder="Enter logo URL or path (file upload will be implemented)"
             style={{
+              maxWidth: '28rem',
               fontSize: "0.875rem",
               padding: "0.5rem 0.75rem",
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontFamily: 'inherit'
             }}
-            placeholder="Enter logo URL or path (file upload will be implemented)"
           />
-          <p className="text-sm text-gray-600" style={{ fontSize: "0.875rem" }}>
+          <p style={{
+            fontSize: "0.875rem",
+            color: '#666',
+            margin: 0
+          }}>
             URL or path to the logo image to display in the page header. In OJS 3.3 this is a multilingual FieldUploadImage.
           </p>
           {setup.pageHeaderTitleImage && (
-            <div className="mt-2">
-              <img src={setup.pageHeaderTitleImage} alt="Logo preview" className="h-20 object-contain" style={{ height: "5rem" }} />
+            <div style={{ marginTop: '0.5rem' }}>
+              <img
+                src={setup.pageHeaderTitleImage}
+                alt="Logo preview"
+                style={{
+                  height: "5rem",
+                  objectFit: 'contain'
+                }}
+              />
             </div>
           )}
         </div>
 
-        {/* Page Footer - OJS 3.3: pageFooter (FieldRichTextarea, multilingual) */}
-        <div className="space-y-3">
-          <Label
+        {/* Page Footer */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <label
             htmlFor="pageFooter"
             style={{
               fontSize: "0.875rem",
               fontWeight: "500",
+              color: '#002C40'
             }}
           >
             Page footer
-          </Label>
-          <Textarea
+          </label>
+          <textarea
             id="pageFooter"
             name="pageFooter"
             defaultValue={setup.pageFooter || ""}
             rows={6}
-            className="max-w-2xl"
+            placeholder="Enter footer content (HTML allowed)"
             style={{
+              maxWidth: '42rem',
               fontSize: "0.875rem",
               padding: "0.5rem 0.75rem",
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontFamily: 'inherit',
+              resize: 'vertical'
             }}
-            placeholder="Enter footer content (HTML allowed)"
           />
-          <p className="text-sm text-gray-600" style={{ fontSize: "0.875rem" }}>
+          <p style={{
+            fontSize: "0.875rem",
+            color: '#666',
+            margin: 0
+          }}>
             Content to display in the page footer. HTML is allowed. In OJS 3.3 this is a multilingual FieldRichTextarea.
           </p>
         </div>
 
-        {/* Sidebar Blocks - OJS 3.3: sidebar (FieldOptions, isOrderable) */}
-        <div className="space-y-3">
-          <Label
-            style={{
-              fontSize: "0.875rem",
-              fontWeight: "500",
-            }}
-          >
+        {/* Sidebar Blocks */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <label style={{
+            fontSize: "0.875rem",
+            fontWeight: "500",
+            color: '#002C40'
+          }}>
             Sidebar
-          </Label>
-          <p className="text-sm text-gray-600 mb-3" style={{ fontSize: "0.875rem", marginBottom: "0.75rem" }}>
+          </label>
+          <p style={{
+            fontSize: "0.875rem",
+            color: '#666',
+            marginBottom: "0.75rem",
+            margin: 0
+          }}>
             Select which blocks to display in the sidebar. In OJS 3.3 this is orderable (drag & drop).
           </p>
-          <div
-            className="space-y-2 border border-gray-200 rounded-md p-4 max-w-md"
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "0.375rem",
-              padding: "1rem",
-            }}
-          >
+          <div style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: "0.375rem",
+            padding: "1rem",
+            maxWidth: '28rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}>
             {SIDEBAR_OPTIONS.map((option) => (
               <label
                 key={option.value}
-                className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
                 style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
                   padding: "0.5rem",
-                  borderRadius: "0.25rem",
+                  borderRadius: "0.25rem"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 <input
@@ -132,9 +180,15 @@ export default async function AppearanceSetupPage() {
                   name="sidebar"
                   value={option.value}
                   defaultChecked={setup.sidebar.includes(option.value)}
-                  className="rounded border-gray-300"
+                  style={{
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 />
-                <span className="text-sm" style={{ fontSize: "0.875rem" }}>
+                <span style={{
+                  fontSize: "0.875rem",
+                  color: '#002C40'
+                }}>
                   {option.label}
                 </span>
               </label>
@@ -142,36 +196,65 @@ export default async function AppearanceSetupPage() {
           </div>
         </div>
 
-        {/* Custom Stylesheet - OJS 3.3: styleSheet (FieldUpload, .css only) */}
-        <div className="space-y-3">
-          <Label
+        {/* Custom Stylesheet */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <label
             htmlFor="styleSheet"
             style={{
               fontSize: "0.875rem",
               fontWeight: "500",
+              color: '#002C40'
             }}
           >
             Custom stylesheet
-          </Label>
-          <Input
+          </label>
+          <input
             id="styleSheet"
             name="styleSheet"
             type="text"
             defaultValue={setup.styleSheet || ""}
-            className="max-w-md"
+            placeholder="Enter stylesheet URL or path (file upload will be implemented)"
             style={{
+              maxWidth: '28rem',
               fontSize: "0.875rem",
               padding: "0.5rem 0.75rem",
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontFamily: 'inherit'
             }}
-            placeholder="Enter stylesheet URL or path (file upload will be implemented)"
           />
-          <p className="text-sm text-gray-600" style={{ fontSize: "0.875rem" }}>
+          <p style={{
+            fontSize: "0.875rem",
+            color: '#666',
+            margin: 0
+          }}>
             URL or path to a custom CSS file to override default styles. In OJS 3.3 this is a FieldUpload that accepts .css files only.
           </p>
         </div>
 
-        <div className="flex justify-end">
-          <Button type="submit">Save</Button>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}>
+          <button
+            type="submit"
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              padding: '0.5rem 1rem',
+              backgroundColor: '#006798',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Save
+          </button>
         </div>
       </form>
     </div>

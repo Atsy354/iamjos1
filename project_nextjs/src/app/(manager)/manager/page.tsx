@@ -1,52 +1,89 @@
-'use client'
+import { redirect } from "next/navigation";
+import { getCurrentUserServer } from "@/lib/auth-server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { ManagerDashboardClient } from "./dashboard-client";
 
-import Link from "next/link";
-import { withAuth } from '@/lib/auth-client'
+async function getManagerStats(journalId?: string) {
+  const supabase = getSupabaseAdminClient();
 
-const MANAGER_LINKS = [
-  {
-    label: "Hosted Journals",
-    href: "/admin/site-management/hosted-journals",
-    description: "Manage hosted journals",
-  },
-];
+  try {
+    // Build base query
+    let submissionsQuery = supabase.from("submissions").select("id, status, current_stage, submitted_at");
 
-function ManagerLandingPage() {
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header Bar - Light Gray */}
-      <div className="bg-[#e5e5e5] px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Journal Manager
-        </h1>
-      </div>
+    if (journalId) {
+      submissionsQuery = submissionsQuery.eq("journal_id", journalId);
+    }
 
-      {/* Content Panel - OJS 3.3 Style */}
-      <div className="px-6 py-8">
-        {/* Journal Management Section */}
-        <h2 className="text-2xl font-bold mb-5 text-[#002C40]">
-          Journal Management
-        </h2>
-        <ul className="list-none p-0 m-0 mb-12">
-          {MANAGER_LINKS.map((link) => (
-            <li key={link.href} className="mb-3.5">
-              <Link 
-                href={link.href} 
-                className="text-[#006798] underline text-[0.9375rem] hover:no-underline"
-              >
-                {link.label}
-              </Link>
-              {link.description && (
-                <p className="text-sm text-gray-500 mt-1 ml-0">
-                  {link.description}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
+    const { data: submissions } = await submissionsQuery;
+
+    const stats = {
+      totalSubmissions: submissions?.length ?? 0,
+      inReview: submissions?.filter((s) => s.current_stage === "review").length ?? 0,
+      inCopyediting: submissions?.filter((s) => s.current_stage === "copyediting").length ?? 0,
+      inProduction: submissions?.filter((s) => s.current_stage === "production").length ?? 0,
+      published: submissions?.filter((s) => s.status === "published").length ?? 0,
+      declined: submissions?.filter((s) => s.status === "declined").length ?? 0,
+    };
+
+    // Get users count
+    let usersQuery = supabase.from("user_roles").select("user_id", { count: "exact", head: true });
+
+    if (journalId) {
+      usersQuery = usersQuery.eq("context_id", journalId);
+    }
+
+    const { count: totalUsers } = await usersQuery;
+
+    // Get recent submissions
+    let recentQuery = supabase
+      .from("submissions")
+      .select("id, title, status, current_stage, submitted_at, updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(10);
+
+    if (journalId) {
+      recentQuery = recentQuery.eq("journal_id", journalId);
+    }
+
+    const { data: recentSubmissions } = await recentQuery;
+
+    return {
+      ...stats,
+      totalUsers: totalUsers ?? 0,
+      recentSubmissions: recentSubmissions ?? [],
+    };
+  } catch (error) {
+    console.error("Error loading manager stats:", error);
+    return {
+      totalSubmissions: 0,
+      inReview: 0,
+      inCopyediting: 0,
+      inProduction: 0,
+      published: 0,
+      declined: 0,
+      totalUsers: 0,
+      recentSubmissions: [],
+    };
+  }
 }
 
-export default withAuth(ManagerLandingPage, 'manager')
+export default async function ManagerDashboardPage() {
+  const user = await getCurrentUserServer();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const hasManagerRole = user.roles?.some((r) => {
+    const rolePath = r.role_path?.toLowerCase();
+    return rolePath === "manager" || rolePath === "admin";
+  });
+
+  if (!hasManagerRole) {
+    redirect("/dashboard");
+  }
+
+  const stats = await getManagerStats();
+
+  return <ManagerDashboardClient stats={stats} />;
+}
