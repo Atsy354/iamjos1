@@ -1,7 +1,8 @@
 import { getSiteAppearanceSetup, updateSiteAppearanceSetupAction } from "../../actions";
 
-// Dummy sidebar options for now
+// Sidebar options mirip OJS 3.3 (termasuk blok Administration)
 const SIDEBAR_OPTIONS = [
+  { value: "administration", label: "Administration Block" },
   { value: "user", label: "User Block" },
   { value: "language", label: "Language Toggle Block" },
   { value: "navigation", label: "Navigation Block" },
@@ -167,12 +168,6 @@ export default async function AppearanceSetupPage() {
                   cursor: 'pointer',
                   padding: "0.5rem",
                   borderRadius: "0.25rem"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f8f9fa';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 <input

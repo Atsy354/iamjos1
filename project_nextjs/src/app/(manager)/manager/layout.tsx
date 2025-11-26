@@ -361,7 +361,7 @@ export default function ManagerLayout({ children }: Props) {
                 }}
               >
                 <User style={{ height: '1.25rem', width: '1.25rem' }} />
-                <span>{user?.name || user?.email}</span>
+                <span>{user?.full_name || user?.username || user?.email}</span>
                 <ChevronDown style={{ height: '1rem', width: '1rem' }} />
               </button>
               {userDropdownOpen && (

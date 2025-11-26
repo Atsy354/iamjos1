@@ -18,6 +18,7 @@ import {
   FileText
 } from "lucide-react";
 import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdown";
+import { SiteSidebar } from "@/components/site/site-sidebar";
 import { useSupabase } from "@/providers/supabase-provider";
 
 type JournalRow = {
@@ -257,7 +258,7 @@ export default function ReaderLayout({
       </header>
 
       <div className="flex flex-1">
-        {/* Sidebar - Blue OJS Theme - Sama seperti Editor */}
+        {/* Sidebar - Blue OJS Theme - Sama seperti Editor, plus OJS 3.3-style blocks */}
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block bg-[#002C40] text-white min-h-screen shadow-xl`} style={{
           backgroundColor: '#002C40',
           width: '22rem',
@@ -332,6 +333,9 @@ export default function ReaderLayout({
                 );
               })}
             </nav>
+
+            {/* OJS 3.3-style sidebar blocks (Administration, dll.) */}
+            <SiteSidebar />
           </div>
         </aside>
 

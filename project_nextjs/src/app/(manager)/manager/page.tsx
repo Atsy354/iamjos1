@@ -3,6 +3,8 @@ import { getCurrentUserServer } from "@/lib/auth-server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ManagerDashboardClient } from "./dashboard-client";
 
+export const dynamic = "force-dynamic";
+
 async function getManagerStats(journalId?: string) {
   const supabase = getSupabaseAdminClient();
 

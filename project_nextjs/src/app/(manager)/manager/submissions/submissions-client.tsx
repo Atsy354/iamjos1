@@ -14,21 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Submission = {
-  id: string;
-  title: string;
-  journalId: string;
-  journalTitle?: string;
-  stage: string;
-  status: string;
-  isArchived: boolean;
-  submittedAt: string | null;
-  updatedAt: string | null;
-  assignees: Array<{ id: string; name: string }>;
-};
+import type { SubmissionSummary } from "@/features/editor/types";
 
 type Props = {
-  submissions: Submission[];
+  submissions: SubmissionSummary[];
 };
 
 export function SubmissionsClient({ submissions: initialSubmissions }: Props) {
@@ -159,7 +148,7 @@ export function SubmissionsClient({ submissions: initialSubmissions }: Props) {
                       </span>
                       {submission.assignees.length > 0 && (
                         <span className="text-xs text-gray-500">
-                          Assigned to: {submission.assignees.map((a) => a.name).join(", ")}
+                          Assigned to: {submission.assignees.join(", ")}
                         </span>
                       )}
                     </div>

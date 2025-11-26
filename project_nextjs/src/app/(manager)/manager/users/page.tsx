@@ -3,6 +3,8 @@ import { getCurrentUserServer } from "@/lib/auth-server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { UsersManagementClient } from "./users-client";
 
+export const dynamic = "force-dynamic";
+
 async function getUsers(journalId?: string) {
   const supabase = getSupabaseAdminClient();
 
@@ -48,9 +50,9 @@ async function getUsers(journalId?: string) {
       }
     >();
 
-    userRoles?.forEach((ur) => {
+    (userRoles ?? []).forEach((ur: any) => {
       const userId = ur.user_id as string;
-      const userData = ur.users as { id: string; email: string; raw_user_meta_data: any } | null;
+      const userData = (ur.users?.[0] ?? null) as { id: string; email: string; raw_user_meta_data: any } | null;
 
       if (!userData) return;
 

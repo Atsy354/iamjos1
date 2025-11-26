@@ -803,6 +803,7 @@ export function ReviewRequestStep({ assignment, onComplete, onStatusChange }: Pr
           </button>
         )}
       </div>
+      </div>
     </form>
   );
 }

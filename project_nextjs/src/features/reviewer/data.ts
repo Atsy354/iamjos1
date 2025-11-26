@@ -78,8 +78,10 @@ export async function getReviewerAssignments(userId: string): Promise<ReviewerAs
 
     // Map to our format
     const assignments: ReviewerAssignment[] = reviews.map((review: any) => {
-      const round = review.submission_review_rounds;
-      const submission = round?.submissions;
+      const roundData: any = review.submission_review_rounds;
+      const round = Array.isArray(roundData) ? roundData[0] : roundData;
+      const submissionsList: any[] | undefined = round?.submissions;
+      const submission = Array.isArray(submissionsList) ? submissionsList[0] : submissionsList;
 
       // Extract author names from metadata
       const metadata = submission?.metadata as any;
@@ -93,7 +95,7 @@ export async function getReviewerAssignments(userId: string): Promise<ReviewerAs
         id: review.id,
         submissionId: submission?.id || "",
         submissionTitle: submission?.title || "Untitled",
-        journalTitle: round?.journals?.title || undefined,
+        journalTitle: submission?.journals?.[0]?.title || undefined,
         reviewRoundId: round?.id || "",
         round: round?.round || 1,
         stage: round?.stage || "review",
@@ -168,8 +170,10 @@ export async function getReviewerAssignment(
       return null;
     }
 
-    const round = review.submission_review_rounds;
-    const submission = round?.submissions;
+    const roundData: any = review.submission_review_rounds;
+    const round = Array.isArray(roundData) ? roundData[0] : roundData;
+    const submissionsList: any[] | undefined = round?.submissions;
+    const submission = Array.isArray(submissionsList) ? submissionsList[0] : submissionsList;
 
     // Extract author names from metadata
     const metadata = submission?.metadata as any;
@@ -183,7 +187,7 @@ export async function getReviewerAssignment(
       id: review.id,
       submissionId: submission?.id || "",
       submissionTitle: submission?.title || "Untitled",
-      journalTitle: round?.journals?.title || undefined,
+      journalTitle: submission?.journals?.[0]?.title || undefined,
       reviewRoundId: round?.id || "",
       round: round?.round || 1,
       stage: round?.stage || "review",

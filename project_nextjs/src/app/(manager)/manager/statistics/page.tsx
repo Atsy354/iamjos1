@@ -3,6 +3,8 @@ import { getCurrentUserServer } from "@/lib/auth-server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { StatisticsClient } from "./statistics-client";
 
+export const dynamic = "force-dynamic";
+
 async function getStatistics(journalId?: string) {
   const supabase = getSupabaseAdminClient();
 

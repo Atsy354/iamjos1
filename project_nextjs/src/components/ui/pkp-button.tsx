@@ -44,7 +44,7 @@ type CloneableChildProps = {
  * - warnable: pkpButton--isWarnable (Warning button)
  * - link: pkpButton--isLink (Link style button)
  */
-export const PkpButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, PkpButtonProps>(
+export const PkpButton = forwardRef<HTMLButtonElement, PkpButtonProps>(
   (
     {
       className,

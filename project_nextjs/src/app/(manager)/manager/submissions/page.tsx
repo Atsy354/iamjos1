@@ -3,6 +3,8 @@ import { getCurrentUserServer } from "@/lib/auth-server";
 import { listSubmissions } from "@/features/editor/data";
 import { SubmissionsClient } from "./submissions-client";
 
+export const dynamic = "force-dynamic";
+
 async function getSubmissions() {
   try {
     const submissions = await listSubmissions({

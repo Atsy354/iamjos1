@@ -6,6 +6,15 @@ export default async function SiteSetupLanguagesPage() {
   const initial = await getSiteLanguages();
   const installedLocales = initial.enabled_locales.map((code) => getLocaleInfo(code)).filter(Boolean);
 
+  // Server action wrapper yang menerima FormData (dipanggil dari Client Component)
+  async function installLocaleActionWrapper(formData: FormData) {
+    "use server";
+    const localeCode = formData.get("locale_code");
+    if (typeof localeCode === "string" && localeCode.trim()) {
+      await installLocaleAction(localeCode.trim());
+    }
+  }
+
   return (
     <div style={{ fontFamily: 'Arial, sans-serif' }}>
       <header style={{
@@ -28,7 +37,7 @@ export default async function SiteSetupLanguagesPage() {
         initial={initial} 
         installedLocales={installedLocales}
         updateAction={updateSiteLanguagesAction}
-        installAction={installLocaleAction}
+        installAction={installLocaleActionWrapper}
       />
     </div>
   );

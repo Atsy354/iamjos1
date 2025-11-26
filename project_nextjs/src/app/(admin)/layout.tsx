@@ -28,6 +28,7 @@ import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdow
 import { useSupabase } from "@/providers/supabase-provider";
 import { LanguageSwitcher } from "@/components/admin/language-switcher";
 import { useI18n } from "@/contexts/I18nContext";
+import { SiteSidebar } from "@/components/site/site-sidebar";
 
 export default function AdminLayout({
   children,
@@ -334,7 +335,7 @@ export default function AdminLayout({
                     className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       item.current
                         ? 'bg-white bg-opacity-15 text-white'
-                        : 'text-gray-300 hover:bg-white hover:bg-opacity-10 hover:text-white'
+                        : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-white'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -353,7 +354,7 @@ export default function AdminLayout({
                       className={`block px-3 py-2 rounded-md text-sm transition-colors ${
                         pathname === subItem.href
                           ? 'bg-white bg-opacity-15 text-white'
-                          : 'text-gray-300 hover:bg-white hover:bg-opacity-10 hover:text-white'
+                          : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-white'
                       }`}
                     >
                       {subItem.name}
@@ -372,7 +373,7 @@ export default function AdminLayout({
                       className={`block px-3 py-2 rounded-md text-sm transition-colors ${
                         pathname === subItem.href
                           ? 'bg-white bg-opacity-15 text-white'
-                          : 'text-gray-300 hover:bg-white hover:bg-opacity-10 hover:text-white'
+                          : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-white'
                       }`}
                     >
                       {subItem.name}
@@ -381,6 +382,9 @@ export default function AdminLayout({
                 </div>
               )}
             </nav>
+
+            {/* OJS 3.3-style Administration block controlled by Sidebar settings */}
+            <SiteSidebar />
           </div>
         </aside>
 

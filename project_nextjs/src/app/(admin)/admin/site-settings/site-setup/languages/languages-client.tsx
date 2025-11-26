@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { Awaited<ReturnType<typeof import('../../actions').getSiteLanguages>> } from '../../actions';
-import type { ReturnType<typeof import('@/lib/locales').getLocaleInfo> } from '@/lib/locales';
 
+// Gunakan tipe yang lebih sederhana agar kompatibel dengan parser Turbopack
 type Props = {
-  initial: Awaited<ReturnType<typeof import('../../actions').getSiteLanguages>>;
-  installedLocales: ReturnType<typeof import('@/lib/locales').getLocaleInfo>[];
+  initial: any;
+  installedLocales: any[];
   updateAction: (formData: FormData) => Promise<void>;
   installAction: (formData: FormData) => Promise<void>;
 };

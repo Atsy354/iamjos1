@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Settings as SettingsIcon, Workflow, Globe, Truck, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 const settingsCategories = [
   {
     id: "workflow",
