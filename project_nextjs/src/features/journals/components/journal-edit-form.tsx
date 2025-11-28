@@ -119,9 +119,9 @@ export function JournalEditForm({ journal, mode, onCancel, onSuccess, }: Props) 
   };
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-3" onSubmit={handleSubmit}>
       {mode === 'create' && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e5e7eb' }}>
             {availableLocales.map(locale => (
               <button key={locale.code} type="button" onClick={() => setActiveLocale(locale.code)}
@@ -133,131 +133,136 @@ export function JournalEditForm({ journal, mode, onCancel, onSuccess, }: Props) 
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="journal-title">{t('journalTitle')} <span className="text-[#b91c1c]">*</span></Label>
-        <Input id="journal-title" name="title" value={mode === 'create' ? (localeData[activeLocale]?.title || '') : undefined}
-          defaultValue={mode === 'edit' ? (journal?.name ?? '') : undefined}
-          onChange={mode === 'create' ? ((e) => updateLocaleData(activeLocale, 'title', e.target.value)) : undefined}
-          placeholder={t('titlePlaceholder')} required />
-      </div>
+      {/* Grid layout untuk Title dan field-field pendek */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="journal-title">{t('journalTitle')} <span className="text-[#b91c1c]">*</span></Label>
+          <Input id="journal-title" name="title" value={mode === 'create' ? (localeData[activeLocale]?.title || '') : undefined}
+            defaultValue={mode === 'edit' ? (journal?.name ?? '') : undefined}
+            onChange={mode === 'create' ? ((e) => updateLocaleData(activeLocale, 'title', e.target.value)) : undefined}
+            placeholder={t('titlePlaceholder')} required />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="journal-initials">{t('journalInitials')} <span className="text-[#b91c1c]">*</span></Label>
-        <Input id="journal-initials" name="initials" defaultValue={journal?.initials ?? ""} placeholder={t('initialsPlaceholder')} maxLength={16} required style={{ maxWidth: '200px' }} />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="journal-initials">{t('journalInitials')} <span className="text-[#b91c1c]">*</span></Label>
+          <Input id="journal-initials" name="initials" defaultValue={journal?.initials ?? ""} placeholder={t('initialsPlaceholder')} maxLength={16} required />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="journal-abbreviation">{t('journalAbbreviation')}</Label>
-        <Input id="journal-abbreviation" name="abbreviation" defaultValue={journal?.abbreviation ?? ""} placeholder={t('abbreviationPlaceholder')} maxLength={32} />
+        <div className="space-y-2">
+          <Label htmlFor="journal-abbreviation">{t('journalAbbreviation')}</Label>
+          <Input id="journal-abbreviation" name="abbreviation" defaultValue={journal?.abbreviation ?? ""} placeholder={t('abbreviationPlaceholder')} maxLength={32} />
+        </div>
       </div>
 
       {mode === 'create' && (
-        <div className="space-y-2">
-          <Label htmlFor="journal-publisher">Publisher</Label>
-          <Input id="journal-publisher" name="publisher" placeholder="Publisher name" maxLength={128} />
-        </div>
-      )}
-
-      {mode === 'create' && (
-        <div className="space-y-2">
-          <Label htmlFor="journal-issn-online">ISSN (Online)</Label>
-          <Input id="journal-issn-online" name="issnOnline" placeholder="e.g., 1234-5678" maxLength={32} style={{ maxWidth: '200px' }} />
-        </div>
-      )}
-
-      {mode === 'create' && (
-        <div className="space-y-2">
-          <Label htmlFor="journal-issn-print">ISSN (Print)</Label>
-          <Input id="journal-issn-print" name="issnPrint" placeholder="e.g., 1234-5678" maxLength={32} style={{ maxWidth: '200px' }} />
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="journal-description">{t('journalDescription')}</Label>
-        <div className="border border-[var(--border)] rounded-md bg-white overflow-hidden">
-          <div className="flex items-center gap-1 border-b border-[var(--border)] p-1 bg-gray-50">
-            <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm font-bold w-8 h-8 flex items-center justify-center">B</button>
-            <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm italic w-8 h-8 flex items-center justify-center">I</button>
-            <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm w-8 h-8 flex items-center justify-center">x²</button>
-            <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm w-8 h-8 flex items-center justify-center">x₂</button>
-            <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm w-8 h-8 flex items-center justify-center">🔗</button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="journal-publisher">Publisher</Label>
+            <Input id="journal-publisher" name="publisher" placeholder="Publisher name" maxLength={128} />
           </div>
-          <textarea
-            id="journal-description"
-            name="description"
-            rows={6}
-            value={mode === 'create' ? (localeData[activeLocale]?.description || '') : undefined}
-            defaultValue={mode === 'edit' ? (journal?.description ?? '') : undefined}
-            onChange={mode === 'create' ? ((e) => updateLocaleData(activeLocale, 'description', e.target.value)) : undefined}
-            className="w-full p-3 text-sm outline-none border-none resize-y min-h-[150px]"
-            placeholder={t('descriptionPlaceholder')}
-          />
-        </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="journal-path">{t('path')} <span className="text-[#b91c1c]">*</span></Label>
-        <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#006798]">
-          <span className="flex select-none items-center pl-3 text-gray-500 sm:text-sm bg-gray-50 border-r border-gray-300 px-3">
-            http://localhost/ojs/
-          </span>
-          <input
-            type="text"
-            id="journal-path"
-            name="path"
-            defaultValue={journal?.path ?? ""}
-            className="block flex-1 border-0 bg-transparent py-2 pl-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 outline-none"
-            placeholder={t('pathPlaceholder')}
-            required
-          />
-        </div>
-        <p className="text-sm text-[var(--muted)]">{t('pathHint')}</p>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="journal-issn-online">ISSN (Online)</Label>
+            <Input id="journal-issn-online" name="issnOnline" placeholder="e.g., 1234-5678" maxLength={32} />
+          </div>
 
-      {mode === 'create' && (
-        <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#f8f9fa' }}>
-          <Label style={{ display: 'block', marginBottom: '1rem' }}>{t('languages')} <span className="text-[#b91c1c]">*</span></Label>
-          {availableLocales.map(locale => (
-            <div key={locale.code} style={{ marginBottom: '0.75rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input type="checkbox" checked={selectedLanguages.includes(locale.code)}
-                  onChange={() => toggleLanguage(locale.code)}
-                  style={{ width: '1.125rem', height: '1.125rem', cursor: 'pointer' }} />
-                <span style={{ fontSize: '0.9375rem' }}>{locale.label}</span>
-              </label>
-            </div>
-          ))}
+          <div className="space-y-2">
+            <Label htmlFor="journal-issn-print">ISSN (Print)</Label>
+            <Input id="journal-issn-print" name="issnPrint" placeholder="e.g., 1234-5678" maxLength={32} />
+          </div>
         </div>
       )}
 
-      {mode === 'create' && (
-        <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#f8f9fa' }}>
-          <Label style={{ display: 'block', marginBottom: '1rem' }}>{t('primaryLocale')} <span className="text-[#b91c1c]">*</span></Label>
-          {availableLocales.map(locale => (
-            <div key={locale.code} style={{ marginBottom: '0.75rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input type="checkbox" checked={primaryLocales.includes(locale.code)}
-                  onChange={() => togglePrimaryLocale(locale.code)}
-                  style={{ width: '1.125rem', height: '1.125rem', cursor: 'pointer' }} />
-                <span style={{ fontSize: '0.9375rem' }}>{locale.label}</span>
-              </label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="journal-description">{t('journalDescription')}</Label>
+          <div className="border border-[var(--border)] rounded-md bg-white overflow-hidden">
+            <div className="flex items-center gap-1 border-b border-[var(--border)] p-1 bg-gray-50">
+              <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm font-bold w-8 h-8 flex items-center justify-center">B</button>
+              <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm italic w-8 h-8 flex items-center justify-center">I</button>
+              <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm w-8 h-8 flex items-center justify-center">x²</button>
+              <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm w-8 h-8 flex items-center justify-center">x₂</button>
+              <button type="button" className="p-1 hover:bg-gray-200 rounded text-sm w-8 h-8 flex items-center justify-center">🔗</button>
             </div>
-          ))}
+            <textarea
+              id="journal-description"
+              name="description"
+              rows={3}
+              value={mode === 'create' ? (localeData[activeLocale]?.description || '') : undefined}
+              defaultValue={mode === 'edit' ? (journal?.description ?? '') : undefined}
+              onChange={mode === 'create' ? ((e) => updateLocaleData(activeLocale, 'description', e.target.value)) : undefined}
+              className="w-full p-3 text-sm outline-none border-none resize-y min-h-[80px]"
+              placeholder={t('descriptionPlaceholder')}
+            />
+          </div>
         </div>
-      )}
 
-      <fieldset className="border border-[var(--border)] rounded-md p-4 bg-white">
-        <legend className="px-2 text-sm font-medium text-[var(--foreground)]">{t('enable')}</legend>
-        <label className="flex items-center gap-2 text-sm text-[var(--foreground)] cursor-pointer">
-          <input
-            type="checkbox"
-            name="is_public"
-            defaultChecked={journal?.isPublic ?? true}
-            className="h-4 w-4 rounded border border-[var(--border)] text-[#006798] focus:ring-[#006798]"
-          />
-          {t('enableHint')}
-        </label>
-      </fieldset>
+        <div className="space-y-2">
+          <Label htmlFor="journal-path">{t('path')} <span className="text-[#b91c1c]">*</span></Label>
+          <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#006798]">
+            <span className="flex select-none items-center pl-3 text-gray-500 sm:text-sm bg-gray-50 border-r border-gray-300 px-3">
+              http://localhost/ojs/
+            </span>
+            <input
+              type="text"
+              id="journal-path"
+              name="path"
+              defaultValue={journal?.path ?? ""}
+              className="block flex-1 border-0 bg-transparent py-2 pl-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 outline-none"
+              placeholder={t('pathPlaceholder')}
+              required
+            />
+          </div>
+          <p className="text-sm text-[var(--muted)]">{t('pathHint')}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {mode === 'create' && (
+          <>
+            <div style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#f8f9fa' }}>
+              <Label style={{ display: 'block', marginBottom: '0.75rem' }}>{t('languages')} <span className="text-[#b91c1c]">*</span></Label>
+              {availableLocales.map(locale => (
+                <div key={locale.code} style={{ marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={selectedLanguages.includes(locale.code)}
+                      onChange={() => toggleLanguage(locale.code)}
+                      style={{ width: '1.125rem', height: '1.125rem', cursor: 'pointer' }} />
+                    <span style={{ fontSize: '0.9375rem' }}>{locale.label}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#f8f9fa' }}>
+              <Label style={{ display: 'block', marginBottom: '0.75rem' }}>{t('primaryLocale')} <span className="text-[#b91c1c]">*</span></Label>
+              {availableLocales.map(locale => (
+                <div key={locale.code} style={{ marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={primaryLocales.includes(locale.code)}
+                      onChange={() => togglePrimaryLocale(locale.code)}
+                      style={{ width: '1.125rem', height: '1.125rem', cursor: 'pointer' }} />
+                    <span style={{ fontSize: '0.9375rem' }}>{locale.label}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <fieldset className={`border border-[var(--border)] rounded-md p-3 bg-white ${mode === 'edit' ? 'md:col-span-3' : ''}`}>
+          <legend className="px-2 text-sm font-medium text-[var(--foreground)]">{t('enable')}</legend>
+          <label className="flex items-center gap-2 text-sm text-[var(--foreground)] cursor-pointer">
+            <input
+              type="checkbox"
+              name="is_public"
+              defaultChecked={journal?.isPublic ?? true}
+              className="h-4 w-4 rounded border border-[var(--border)] text-[#006798] focus:ring-[#006798]"
+            />
+            {t('enableHint')}
+          </label>
+        </fieldset>
+      </div>
 
       {error && <FormMessage tone="error">{error}</FormMessage>}
 

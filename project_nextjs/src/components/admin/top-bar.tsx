@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronDown, Languages, LogOut, UserCircle } from "lucide-react";
+import { Bell, BookOpen, ChevronDown, Home, Languages, LogOut, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -65,7 +65,7 @@ export function TopBar() {
           rows = rows.map((j) => ({ ...j, title: j.title || nameMap.get(j.id) || j.path }));
         }
         setJournals(rows);
-      } catch {}
+      } catch { }
     };
     fetchJournals();
   }, [supabase]);
@@ -89,7 +89,7 @@ export function TopBar() {
         setLogoUrl(lu && lu.length ? lu : null);
         setShowLogo(sl);
         setHeaderBg(hb && hb.length ? hb : "#1e40af"); // Default warna biru OJS
-      } catch {}
+      } catch { }
     };
     fetchBranding();
   }, [supabase]);
@@ -127,10 +127,16 @@ export function TopBar() {
             }
             align="left">
             <DropdownSection>
+              <DropdownItem href="/admin/site-management/hosted-journals" icon={<Home size={14} />}>
+                Site Administration
+              </DropdownItem>
+            </DropdownSection>
+            <DropdownSection>
               {journals.map((j) => (
                 <DropdownItem
                   key={j.id}
-                  href="/admin/site-management/hosted-journals">
+                  href={`/admin/journals/${j.id}/settings`}
+                  icon={<BookOpen size={14} />}>
                   {j.title}
                 </DropdownItem>
               ))}
@@ -146,8 +152,8 @@ export function TopBar() {
             variant="ghost"
             size="sm"
             className="app__headerAction relative gap-2 text-white hover:bg-white/10"
-            style={{color: 'white'}}>
-            <Bell size={16} style={{color: 'white'}} />
+            style={{ color: 'white' }}>
+            <Bell size={16} style={{ color: 'white' }} />
             <span className="sr-only">Tasks</span>
             <span className="app__tasksCount absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
               0
@@ -158,14 +164,14 @@ export function TopBar() {
           <Dropdown
             button={
               <>
-                <UserCircle size={18} style={{color: 'white'}} />
-                <span className="sr-only" style={{color: 'white'}}>{user.email}</span>
+                <UserCircle size={18} style={{ color: 'white' }} />
+                <span className="sr-only" style={{ color: 'white' }}>{user.email}</span>
               </>
             }
             align="right">
             <DropdownSection>
               {user.email && (
-                <div className="px-4 py-2 text-xs font-semibold" style={{color: '#333'}}>
+                <div className="px-4 py-2 text-xs font-semibold" style={{ color: '#333' }}>
                   {user.email}
                 </div>
               )}
@@ -191,10 +197,10 @@ export function TopBar() {
           <Dropdown
             button={
               <>
-                <span className="flex items-center gap-1" style={{color: 'white'}}>
-                  <Languages size={16} style={{color: 'white'}} />
+                <span className="flex items-center gap-1" style={{ color: 'white' }}>
+                  <Languages size={16} style={{ color: 'white' }} />
                   English
-                  <ChevronDown size={14} style={{color: 'white'}} />
+                  <ChevronDown size={14} style={{ color: 'white' }} />
                 </span>
               </>
             }
@@ -207,7 +213,7 @@ export function TopBar() {
           <Link
             href="/login"
             className="text-sm font-semibold hover:text-white/80"
-            style={{color: 'white'}}>
+            style={{ color: 'white' }}>
             Sign in
           </Link>
         </div>

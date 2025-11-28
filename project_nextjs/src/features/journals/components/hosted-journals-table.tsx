@@ -91,8 +91,8 @@ export function HostedJournalsTable({ journals }: Props) {
           <div
             style={{
               width: "100%",
-              maxWidth: modalState?.type === "settings" ? "70rem" : "48rem",
-              maxHeight: "90vh",
+              maxWidth: modalState?.type === "settings" ? "70rem" : modalState?.type === "edit" ? "64rem" : "48rem",
+              maxHeight: "95vh",
               backgroundColor: "#fff",
               borderRadius: "4px",
               boxShadow: "0 25px 50px -12px rgba(0,0,0,0.35)",
@@ -262,7 +262,7 @@ export function HostedJournalsTable({ journals }: Props) {
               }
               onClose={closeAll}
             />
-            <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem" }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem" }}>
               <JournalEditForm
                 journal={modalState.journal}
                 mode={modalState.mode}

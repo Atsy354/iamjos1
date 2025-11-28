@@ -35,7 +35,7 @@ export function Dropdown({ button, children, align = "left", className }: Dropdo
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1"
+        className="flex items-center gap-1 cursor-pointer"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -76,7 +76,7 @@ export function DropdownItem({ children, href, onClick, className, icon }: Dropd
   const content = (
     <div
       className={cn(
-        "flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)]",
+        "flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)] cursor-pointer",
         className,
       )}
     >

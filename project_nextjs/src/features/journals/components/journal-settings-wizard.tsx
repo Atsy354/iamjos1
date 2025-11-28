@@ -54,6 +54,8 @@ export function JournalSettingsWizard({ journalId, initialData }: Props) {
     showJournalSummary: false,
     showHeaderBackground: false,
     primaryLanguage: 'en_US',
+    searchDescription: '',
+    searchCustomTags: '',
   });
 
   const [languageSettings, setLanguageSettings] = useState({
@@ -61,6 +63,8 @@ export function JournalSettingsWizard({ journalId, initialData }: Props) {
     es_ES: { ui: false, forms: false, submissions: false },
     id_ID: { ui: false, forms: false, submissions: false },
   });
+
+  const [restrictedRoles, setRestrictedRoles] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,13 +213,294 @@ export function JournalSettingsWizard({ journalId, initialData }: Props) {
           </table>
         </div>;
       case 'search-indexing':
-        return <div className="p-6"><h2 className="text-lg font-semibold mb-4">Search Indexing</h2><p className="text-gray-600">Search indexing settings coming soon...</p></div>;
+        return <div className="p-6">
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: '#111827' }}>Search Indexing</h2>
+
+          {/* Description text */}
+          <div style={{ marginBottom: '2rem', maxWidth: '600px' }}>
+            <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: '1.6' }}>
+              Help search engines like Google discover and display your site. You are encouraged to submit your{' '}
+              <a href="#" style={{ color: '#006798', textDecoration: 'none', borderBottom: '1px solid #006798' }}>sitemap</a>.
+            </p>
+          </div>
+
+          {/* Description field */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Label htmlFor="search-description">Description</Label>
+              <button
+                type="button"
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  border: '1px solid #9ca3af',
+                  background: '#fff',
+                  color: '#6b7280',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  cursor: 'help',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0
+                }}
+                title="Provide a brief description for search engines"
+              >
+                ?
+              </button>
+            </div>
+            <textarea
+              id="search-description"
+              value={formData.searchDescription}
+              onChange={(e) => setFormData({ ...formData, searchDescription: e.target.value })}
+              rows={3}
+              style={{
+                width: '100%',
+                maxWidth: '700px',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                fontSize: '0.9375rem',
+                resize: 'vertical',
+                fontFamily: 'inherit'
+              }}
+              placeholder=""
+            />
+          </div>
+
+          {/* Custom Tags field */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Label htmlFor="search-custom-tags">Custom Tags</Label>
+              <button
+                type="button"
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  border: '1px solid #9ca3af',
+                  background: '#fff',
+                  color: '#6b7280',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  cursor: 'help',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0
+                }}
+                title="Add custom meta tags for search engine optimization"
+              >
+                ?
+              </button>
+            </div>
+            <textarea
+              id="search-custom-tags"
+              value={formData.searchCustomTags}
+              onChange={(e) => setFormData({ ...formData, searchCustomTags: e.target.value })}
+              rows={12}
+              style={{
+                width: '100%',
+                maxWidth: '700px',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                resize: 'vertical',
+                fontFamily: 'monospace'
+              }}
+              placeholder=""
+            />
+          </div>
+        </div>;
       case 'restrict-bulk-emails':
-        return <div className="p-6"><h2 className="text-lg font-semibold mb-4">Restrict Bulk Emails</h2><p className="text-gray-600">Bulk email settings coming soon...</p></div>;
+        const roles = [
+          'Journal manager',
+          'Journal editor',
+          'Production editor',
+          'Section editor',
+          'Guest editor',
+          'Copyeditor',
+          'Designer',
+          'Funding coordinator',
+          'Indexer',
+          'Layout Editor',
+          'Marketing and sales coordinator',
+          'Proofreader',
+          'Author',
+          'Translator',
+          'Reviewer',
+          'Reader',
+          'Subscription Manager',
+        ];
+
+        const toggleRole = (role: string) => {
+          if (restrictedRoles.includes(role)) {
+            setRestrictedRoles(restrictedRoles.filter(r => r !== role));
+          } else {
+            setRestrictedRoles([...restrictedRoles, role]);
+          }
+        };
+
+        return <div className="p-6">
+          {/* Box with border and padding */}
+          <div style={{
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            padding: '1.5rem',
+            background: '#fff',
+            maxWidth: '900px'
+          }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#111827' }}>
+              Disable Roles
+            </h2>
+
+            {/* Description paragraph */}
+            <p style={{ fontSize: '0.9375rem', color: '#374151', lineHeight: '1.6', marginBottom: '1rem' }}>
+              A journal manager will be unable to send bulk emails to any of the roles selected below. Use this setting to limit abuse of the email notification feature. For example, it may be safer to disable bulk emails to readers, authors, or other large user groups that have not consented to receive such emails.
+            </p>
+
+            {/* Info about disabling completely */}
+            <p style={{ fontSize: '0.9375rem', color: '#374151', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+              The bulk email feature can be disabled completely for this journal in{' '}
+              <a href="/admin/site-settings" style={{ color: '#006798', textDecoration: 'none', borderBottom: '1px solid #006798' }}>
+                Admin &gt; Site Settings
+              </a>.
+            </p>
+
+            {/* Roles checkboxes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {roles.map((role) => (
+                <label
+                  key={role}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '0.9375rem',
+                    color: '#374151'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={restrictedRoles.includes(role)}
+                    onChange={() => toggleRole(role)}
+                    style={{
+                      width: '1.125rem',
+                      height: '1.125rem',
+                      cursor: 'pointer',
+                      accentColor: '#006798'
+                    }}
+                  />
+                  {role}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>;
       default:
         return null;
     }
   };
 
-  return <div style={{ minHeight: '100vh', background: '#fff' }}><div style={{ background: '#e5e5e5', padding: '1rem 1.5rem', borderBottom: '1px solid #d1d5db' }}><h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>Settings Wizard</h1><div style={{ display: 'flex', gap: '2rem', borderBottom: '2px solid #d1d5db' }}>{TOP_TABS.map(tab => <button key={tab.id} onClick={() => setActiveTopTab(tab.id)} style={{ padding: '0.75rem 0', background: 'transparent', border: 'none', borderBottom: activeTopTab === tab.id ? '3px solid #006798' : 'none', color: activeTopTab === tab.id ? '#006798' : '#6b7280', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', marginBottom: '-2px' }}>{tab.label}</button>)}</div></div><div style={{ display: 'flex' }}>{activeTopTab === 'journal-settings' && <div style={{ width: '220px', borderRight: '1px solid #e5e7eb', background: '#f9fafb', minHeight: 'calc(100vh - 140px)' }}><nav style={{ padding: '1rem 0' }}>{SIDEBAR_MENU.map(item => <button key={item.id} onClick={() => setActiveSidebarItem(item.id)} style={{ width: '100%', padding: '0.75rem 1.5rem', background: 'transparent', border: 'none', borderLeft: activeSidebarItem === item.id ? '3px solid #006798' : '3px solid transparent', color: activeSidebarItem === item.id ? '#006798' : '#4b5563', fontWeight: activeSidebarItem === item.id ? '600' : '400', fontSize: '0.9375rem', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>{item.label}</button>)}</nav></div>}<div style={{ flex: 1 }}><form onSubmit={handleSubmit}>{renderMainContent()}<div style={{ borderTop: '1px solid #e5e7eb', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}><Button type="button" variant="secondary" onClick={() => router.push('/admin/site-management/hosted-journals')}>Cancel</Button><Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</Button></div></form></div></div></div>;
+  return (
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
+      {/* Header Section */}
+      <div style={{ background: '#e5e5e5', padding: '1.5rem 2rem', borderBottom: '1px solid #d1d5db' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
+          Settings Wizard
+        </h1>
+
+        {/* Top Tabs */}
+        <div style={{ display: 'flex', gap: '2rem', borderBottom: '2px solid #d1d5db' }}>
+          {TOP_TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTopTab(tab.id)}
+              style={{
+                padding: '0.75rem 0',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: activeTopTab === tab.id ? '3px solid #006798' : 'none',
+                color: activeTopTab === tab.id ? '#006798' : '#6b7280',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                marginBottom: '-2px'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div style={{ display: 'flex' }}>
+        {/* Sidebar */}
+        {activeTopTab === 'journal-settings' && (
+          <div style={{
+            width: '220px',
+            borderRight: '1px solid #e5e7eb',
+            background: '#f9fafb',
+            minHeight: 'calc(100vh - 140px)'
+          }}>
+            <nav style={{ padding: '1rem 0' }}>
+              {SIDEBAR_MENU.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSidebarItem(item.id)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1.5rem',
+                    background: 'transparent',
+                    border: 'none',
+                    borderLeft: activeSidebarItem === item.id ? '3px solid #006798' : '3px solid transparent',
+                    color: activeSidebarItem === item.id ? '#006798' : '#4b5563',
+                    fontWeight: activeSidebarItem === item.id ? '600' : '400',
+                    fontSize: '0.9375rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          <form onSubmit={handleSubmit}>
+            {renderMainContent()}
+
+            {/* Footer Buttons */}
+            <div style={{
+              borderTop: '1px solid #e5e7eb',
+              padding: '1.5rem 2rem',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '0.75rem',
+              background: '#fff'
+            }}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => router.push('/admin/site-management/hosted-journals')}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 }

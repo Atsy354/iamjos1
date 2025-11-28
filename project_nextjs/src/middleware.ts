@@ -7,6 +7,7 @@ import { getUserRoles } from '@/lib/db'
 // Manager can only access site-management, not full admin panel
 const PROTECTED_ROUTES = {
   '/admin/site-management': ['admin', 'manager'], // Manager can access site management
+  '/admin/journals': ['admin', 'manager'], // Manager can access journal settings
   '/admin/site-settings': ['admin'], // Only admin can access site settings
   '/admin/system': ['admin'], // Only admin can access system functions
   '/admin/users': ['admin'], // Only admin can access users management
@@ -38,10 +39,10 @@ export async function middleware(request: NextRequest) {
   // Priority: more specific routes first (longer paths)
   let requiredRoles: string[] | null = null
   let matchedRoute = ''
-  
+
   // Sort routes by length (longest first) to prioritize specific routes
   const sortedRoutes = Object.entries(PROTECTED_ROUTES).sort((a, b) => b[0].length - a[0].length)
-  
+
   // Check main protected routes - more specific routes checked first
   for (const [route, roles] of sortedRoutes) {
     if (pathname.startsWith(route)) {
@@ -69,10 +70,10 @@ export async function middleware(request: NextRequest) {
   try {
     // Create Supabase server client
     const supabase = await createSupabaseServerClient()
-    
+
     // Get session from Supabase
     const { data: { session } } = await supabase.auth.getSession()
-    
+
     if (!session?.user) {
       // No valid session, redirect to login
       const url = new URL('/login', request.url)
@@ -84,12 +85,12 @@ export async function middleware(request: NextRequest) {
     // Important: Supabase Auth user.id might differ from user_accounts.id
     // So we need to get the correct user_id from database using email or metadata
     let userRoles: string[] = []
-    
+
     try {
       // Try to get user_id from metadata first (stored during login)
       let dbUserId = session.user.user_metadata?.user_id
       console.log(`[Middleware] Checking access for ${pathname}, Supabase user.id: ${session.user.id}, metadata user_id: ${dbUserId}`)
-      
+
       // If not in metadata, find user by email from database
       if (!dbUserId) {
         const { getUserByEmail } = await import('@/lib/db')
@@ -97,13 +98,13 @@ export async function middleware(request: NextRequest) {
         dbUserId = userData?.user_id
         console.log(`[Middleware] Found user by email: ${dbUserId}`)
       }
-      
+
       // If still no user_id, use Supabase Auth user.id as fallback
       if (!dbUserId) {
         dbUserId = session.user.id
         console.log(`[Middleware] Using Supabase user.id as fallback: ${dbUserId}`)
       }
-      
+
       // Get roles from database using the correct user_id
       const roles = await getUserRoles(dbUserId)
       userRoles = roles.map(role => role.role_path)
@@ -120,13 +121,13 @@ export async function middleware(request: NextRequest) {
     // Check if user has required role
     const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role))
     console.log(`[Middleware] Path: ${pathname}, Matched route: ${matchedRoute}, Required roles: [${requiredRoles.join(', ')}], User roles: [${userRoles.join(', ')}], Has role: ${hasRequiredRole}`)
-    
+
     if (!hasRequiredRole) {
       console.log(`[Middleware] Access denied: User ${session.user.id} with roles [${userRoles.join(', ')}] does not have required roles [${requiredRoles.join(', ')}] for ${pathname} (matched route: ${matchedRoute})`)
       // User doesn't have required role, redirect to unauthorized
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
-    
+
     console.log(`[Middleware] Access granted for ${pathname} (matched route: ${matchedRoute})`)
 
     // User has required role, allow access
