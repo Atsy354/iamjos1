@@ -28,7 +28,6 @@ import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdow
 import { useSupabase } from "@/providers/supabase-provider";
 import { LanguageSwitcher } from "@/components/admin/language-switcher";
 import { useI18n } from "@/contexts/I18nContext";
-import { SiteSidebar } from "@/components/site/site-sidebar";
 import { pkpColors } from "@/lib/theme";
 
 export default function AdminLayout({
@@ -201,7 +200,16 @@ export default function AdminLayout({
           }}
         >
           {/* Left: Open Journal Systems and Tasks */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            {/* Hamburger Menu */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-1 hover:bg-white/10 rounded transition-colors"
+              aria-label="Open Menu"
+            >
+              <Menu className="h-6 w-6 text-white" />
+            </button>
+
             <div className="relative">
               <Dropdown
                 button={
@@ -234,18 +242,24 @@ export default function AdminLayout({
                       ))}
                     </>
                   )}
+                  <div className="border-t border-gray-200 my-1"></div>
+                  <Link
+                    href="/"
+                    target="_blank"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100 transition-colors"
+                  >
+                    <Globe className="h-4 w-4" />
+                    View Site
+                  </Link>
                 </div>
               </Dropdown>
             </div>
             {/* Tasks */}
-            <div className="flex items-center gap-2">
-              <span className="text-white text-base font-medium" style={{ fontSize: '1rem' }}>{t('admin.tasks')}</span>
-              <span className="bg-gray-600 text-white rounded-full px-2 py-0.5 text-sm" style={{
-                backgroundColor: '#4B5563',
-                padding: '0.125rem 0.5rem',
-                fontSize: '0.875rem',
-                borderRadius: '9999px'
-              }}>0</span>
+            <div className="flex items-center relative cursor-pointer hover:opacity-80 transition-opacity" title={t('admin.tasks')}>
+              <Bell className="h-5 w-5 text-white" />
+              <span className="absolute -top-1 -right-1 bg-[#d9534f] text-white rounded-full px-1 text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center">
+                0
+              </span>
             </div>
           </div>
 
@@ -267,6 +281,12 @@ export default function AdminLayout({
             >
               <DropdownSection>
                 <DropdownItem
+                  onClick={() => router.push('/admin/profile')}
+                  icon={<User className="h-4 w-4" />}
+                >
+                  {t('Edit Profile') || 'Edit Profile'}
+                </DropdownItem>
+                <DropdownItem
                   onClick={async () => {
                     await logout();
                     router.push('/login');
@@ -278,123 +298,69 @@ export default function AdminLayout({
               </DropdownSection>
             </Dropdown>
           </div>
-        </div>
-      </header>
+        </div >
+      </header >
 
-      {/* Conditional Layout: Sidebar only on /admin page */}
-      {pathname === '/admin' ? (
-        // Dashboard layout with sidebar
-        <div className="flex flex-1">
-          {/* Sidebar - Only on dashboard */}
-          <aside
-            className={`${sidebarOpen ? "block" : "hidden"} lg:block`}
-            style={{
-              backgroundColor: pkpColors.sidebarBg,
-              minHeight: "calc(100vh - 60px)",
-              width: "250px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div style={{ padding: "1.5rem 1rem", flexShrink: 0 }}>
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden mb-4 p-2 rounded-md text-white transition-colors"
-                style={{ backgroundColor: "transparent" }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
-              >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+      {/* Sidebar Drawer */}
+      {
+        sidebarOpen && (
+          <div className="fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 transition-opacity"
+              onClick={() => setSidebarOpen(false)}
+            />
 
-              {/* iamJOS Logo */}
-              <div className="mb-8" style={{ marginBottom: "1.5rem" }}>
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span
-                    className="text-white font-bold"
-                    style={{
-                      fontSize: "2.5rem",
-                      lineHeight: "1",
-                      fontWeight: "bold",
-                      letterSpacing: "-0.02em",
-                    }}
-                  >
-                    iam
-                  </span>
-                  <span
-                    className="text-white font-bold"
-                    style={{
-                      fontSize: "3rem",
-                      lineHeight: "1",
-                      fontWeight: "bold",
-                      letterSpacing: "-0.02em",
-                    }}
-                  >
-                    JOS
-                  </span>
-                </div>
-                <div className="text-white uppercase tracking-wider opacity-85" style={{
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.2em',
-                  lineHeight: '1.5',
-                  fontWeight: '500',
-                  marginTop: '0.5rem'
-                }}>
-                  INTEGRATED ACADEMIC MANAGEMENT
-                </div>
-                <div className="text-white uppercase tracking-wider opacity-85" style={{
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.2em',
-                  lineHeight: '1.5',
-                  fontWeight: '500'
-                }}>
-                  JOURNAL OPERATION SYSTEM
-                </div>
+            {/* Drawer */}
+            <div className="relative flex w-64 max-w-xs flex-col bg-[#1E293B] text-white shadow-xl transition-transform">
+              <div className="flex h-16 items-center justify-between px-4 border-b border-gray-700">
+                <span className="text-lg font-bold">Menu</span>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1 hover:bg-white/10 rounded"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-            </div>
 
-            {/* Site Administration heading */}
-            <div style={{ padding: '0 1.5rem' }}>
-              <h2 className="text-white font-bold" style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold'
-              }}>{t('admin.administration')}</h2>
+              <nav className="flex-1 overflow-y-auto py-4">
+                <ul className="space-y-1 px-2">
+                  {navItems.map((item) => (
+                    <li key={item.key}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${pathname === item.href
+                          ? "bg-[#006798] text-white"
+                          : "text-gray-300 hover:bg-white/10 hover:text-white"
+                          }`}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             </div>
-          </aside>
+          </div>
+        )
+      }
 
-          {/* Main Content with sidebar */}
-          <main
-            className="flex-1 bg-white min-h-screen"
-            style={{
-              padding: "2rem 1.5rem",
-              backgroundColor: "#ffffff",
-              minHeight: "calc(100vh - 60px)"
-            }}
-          >
-            {children}
-          </main>
-        </div>
-      ) : (
-        // Sub-pages layout without sidebar (full width)
-        <main
-          className="flex-1 bg-white min-h-screen"
-          style={{
-            padding: "2rem 1.5rem",
-            backgroundColor: "#ffffff",
-            minHeight: "calc(100vh - 60px)",
-            maxWidth: "1400px",
-            margin: "0 auto",
-            width: "100%"
-          }}
-        >
-          {children}
-        </main>
-      )}
-    </div>
+      {/* Main Content - Full Width */}
+      <main
+        className="flex-1 bg-white min-h-screen"
+        style={{
+          padding: "2rem 1.5rem",
+          backgroundColor: "#ffffff",
+          minHeight: "calc(100vh - 60px)",
+          maxWidth: "1400px",
+          margin: "0 auto",
+          width: "100%"
+        }}
+      >
+        {children}
+      </main>
+    </div >
   );
 }

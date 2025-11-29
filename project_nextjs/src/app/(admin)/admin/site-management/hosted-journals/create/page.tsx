@@ -51,7 +51,7 @@ export default function CreateJournalPage() {
 
       if (result.success && result.journalId) {
         // Redirect to journal settings wizard
-        router.push(`/journals/${result.journalId}/settings`);
+        router.push(`/admin/journals/${result.journalId}/settings/wizard`);
       } else if (!result.success) {
         setError(result.message);
         setLoading(false);

@@ -1,43 +1,28 @@
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { JournalSettingsWizard } from "@/features/journals/components/journal-settings-wizard";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
-type Props = {
+interface PageProps {
     params: Promise<{ journalId: string }>;
-};
+}
 
-export default async function JournalSettingsWizardPage({ params }: Props) {
+export default async function WizardPage({ params }: PageProps) {
     const { journalId } = await params;
-    const supabase = getSupabaseAdminClient();
+    const supabase = await createSupabaseServerClient();
 
-    // Get journal data
-    const { data: journal, error } = await supabase
+    const { data: journal } = await supabase
         .from("journals")
         .select("*")
         .eq("id", journalId)
         .single();
 
-    if (error || !journal) {
+    if (!journal) {
         notFound();
     }
 
-    // Get journal settings
-    const { data: settings } = await supabase
-        .from("journal_settings")
-        .select("*")
-        .eq("journal_id", journalId);
-
-    // Get name from settings
-    const nameSetting = settings?.find(s => s.setting_name === "name");
-    const descSetting = settings?.find(s => s.setting_name === "description");
-
-    const initialData = {
-        id: journal.id,
-        name: nameSetting?.setting_value || "",
-        path: journal.path || "",
-        description: descSetting?.setting_value || "",
-        settings: settings || [],
-    };
-
-    return <JournalSettingsWizard journalId={journalId} initialData={initialData} />;
+    return (
+        <div className="p-6 max-w-5xl mx-auto">
+            <JournalSettingsWizard journalId={journalId} initialData={journal} />
+        </div>
+    );
 }

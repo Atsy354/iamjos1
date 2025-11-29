@@ -47,12 +47,12 @@ export function LoginForm() {
 
     try {
       const email = (username || "").trim().toLowerCase();
-      
+
       await login(email, password);
-      
+
       // Wait for session to be set in cookies
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Get user data after login to determine redirect
       let loggedInUser = null;
       try {
@@ -67,7 +67,7 @@ export function LoginForm() {
       } catch (error) {
         console.error('Error fetching session:', error);
       }
-      
+
       // Redirect based on role or source
       // Always redirect to dashboard first to ensure session is loaded
       if (source && source.startsWith("/") && source !== "/login") {
@@ -79,7 +79,7 @@ export function LoginForm() {
         router.push(redirectPath);
       } else {
         // Default to dashboard if no user data
-        router.push("/dashboard");
+        router.push("/");
       }
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
@@ -100,7 +100,7 @@ export function LoginForm() {
 
       <fieldset className="space-y-4">
         <legend className="sr-only">Login</legend>
-        
+
         <div className="space-y-1">
           <Label htmlFor="username">
             <span className="label">

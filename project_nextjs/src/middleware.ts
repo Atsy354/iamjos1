@@ -46,100 +46,88 @@ export async function middleware(request: NextRequest) {
   // Check main protected routes - more specific routes checked first
   for (const [route, roles] of sortedRoutes) {
     if (pathname.startsWith(route)) {
-      requiredRoles = roles
-      matchedRoute = route
-      break
-    }
-  }
+      requiredRoles = roles;
 
-  // Check API routes
-  if (!requiredRoles) {
-    for (const apiRoute of PROTECTED_API_ROUTES) {
-      if (pathname.startsWith(apiRoute)) {
-        requiredRoles = ['admin', 'manager', 'editor', 'section_editor'] // Default API roles
-        break
+      try {
+        // Create Supabase server client
+        const supabase = await createSupabaseServerClient()
+
+        // Get session from Supabase
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (!session?.user) {
+          // No valid session, redirect to login
+          const url = new URL('/login', request.url)
+          url.searchParams.set('redirectTo', pathname)
+          return NextResponse.redirect(url)
+        }
+
+        // Get user roles directly from database
+        // Important: Supabase Auth user.id might differ from user_accounts.id
+        // So we need to get the correct user_id from database using email or metadata
+        let userRoles: string[] = []
+
+        try {
+          // Try to get user_id from metadata first (stored during login)
+          let dbUserId = session.user.user_metadata?.user_id
+          console.log(`[Middleware] Checking access for ${pathname}, Supabase user.id: ${session.user.id}, metadata user_id: ${dbUserId}`)
+
+          // If not in metadata, find user by email from database
+          if (!dbUserId) {
+            const { getUserByEmail } = await import('@/lib/db')
+            const email = session.user.email || ''
+            console.log(`[Middleware] Searching for email: '${email}' (Length: ${email.length})`)
+            const userData = await getUserByEmail(email)
+            dbUserId = userData?.user_id
+            console.log(`[Middleware] Found user by email: ${dbUserId}`)
+          }
+
+          // If still no user_id, use Supabase Auth user.id as fallback
+          if (!dbUserId) {
+            dbUserId = session.user.id
+            console.log(`[Middleware] Using Supabase user.id as fallback: ${dbUserId}`)
+          }
+
+          // Get roles from database using the correct user_id
+          const { getUserRoles } = await import('@/lib/db')
+          const roles = await getUserRoles(dbUserId)
+          userRoles = roles.map(role => role.role_path)
+          console.log(`[Middleware] User roles from database for ${dbUserId}: [${userRoles.join(', ')}]`)
+        } catch (error) {
+          console.error('[Middleware] Error getting user roles from database:', error)
+          // Fallback: try to get from Supabase user metadata (might not have roles)
+          if (session.user.user_metadata?.roles) {
+            userRoles = session.user.user_metadata.roles.map((role: any) => role.role_path || role.user_group_name || '')
+            console.log(`[Middleware] Using roles from metadata: [${userRoles.join(', ')}]`)
+          }
+        }
+
+        // Check if user has required role
+        const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role))
+        console.log(`[Middleware] Path: ${pathname}, Matched route: ${matchedRoute}, Required roles: [${requiredRoles.join(', ')}], User roles: [${userRoles.join(', ')}], Has role: ${hasRequiredRole}`)
+
+        if (!hasRequiredRole) {
+          console.log(`[Middleware] Access denied: User ${session.user.id} with roles [${userRoles.join(', ')}] does not have required roles [${requiredRoles.join(', ')}] for ${pathname} (matched route: ${matchedRoute})`)
+          // User doesn't have required role, redirect to unauthorized
+          return NextResponse.redirect(new URL('/unauthorized', request.url))
+        }
+
+        console.log(`[Middleware] Access granted for ${pathname} (matched route: ${matchedRoute})`)
+
+        // User has required role, allow access
+        return NextResponse.next()
+
+      } catch (error) {
+        console.error('Middleware error:', error)
+        // On error, redirect to login
+        const url = new URL('/login', request.url)
+        url.searchParams.set('redirectTo', pathname)
+        return NextResponse.redirect(url)
       }
     }
   }
 
-  // If route is not protected, allow access
-  if (!requiredRoles) {
-    return NextResponse.next()
-  }
-
-  try {
-    // Create Supabase server client
-    const supabase = await createSupabaseServerClient()
-
-    // Get session from Supabase
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session?.user) {
-      // No valid session, redirect to login
-      const url = new URL('/login', request.url)
-      url.searchParams.set('redirectTo', pathname)
-      return NextResponse.redirect(url)
-    }
-
-    // Get user roles directly from database
-    // Important: Supabase Auth user.id might differ from user_accounts.id
-    // So we need to get the correct user_id from database using email or metadata
-    let userRoles: string[] = []
-
-    try {
-      // Try to get user_id from metadata first (stored during login)
-      let dbUserId = session.user.user_metadata?.user_id
-      console.log(`[Middleware] Checking access for ${pathname}, Supabase user.id: ${session.user.id}, metadata user_id: ${dbUserId}`)
-
-      // If not in metadata, find user by email from database
-      if (!dbUserId) {
-        const { getUserByEmail } = await import('@/lib/db')
-        const userData = await getUserByEmail(session.user.email || '')
-        dbUserId = userData?.user_id
-        console.log(`[Middleware] Found user by email: ${dbUserId}`)
-      }
-
-      // If still no user_id, use Supabase Auth user.id as fallback
-      if (!dbUserId) {
-        dbUserId = session.user.id
-        console.log(`[Middleware] Using Supabase user.id as fallback: ${dbUserId}`)
-      }
-
-      // Get roles from database using the correct user_id
-      const roles = await getUserRoles(dbUserId)
-      userRoles = roles.map(role => role.role_path)
-      console.log(`[Middleware] User roles from database: [${userRoles.join(', ')}]`)
-    } catch (error) {
-      console.error('[Middleware] Error getting user roles from database:', error)
-      // Fallback: try to get from Supabase user metadata (might not have roles)
-      if (session.user.user_metadata?.roles) {
-        userRoles = session.user.user_metadata.roles.map((role: any) => role.role_path || role.user_group_name || '')
-        console.log(`[Middleware] Using roles from metadata: [${userRoles.join(', ')}]`)
-      }
-    }
-
-    // Check if user has required role
-    const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role))
-    console.log(`[Middleware] Path: ${pathname}, Matched route: ${matchedRoute}, Required roles: [${requiredRoles.join(', ')}], User roles: [${userRoles.join(', ')}], Has role: ${hasRequiredRole}`)
-
-    if (!hasRequiredRole) {
-      console.log(`[Middleware] Access denied: User ${session.user.id} with roles [${userRoles.join(', ')}] does not have required roles [${requiredRoles.join(', ')}] for ${pathname} (matched route: ${matchedRoute})`)
-      // User doesn't have required role, redirect to unauthorized
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
-
-    console.log(`[Middleware] Access granted for ${pathname} (matched route: ${matchedRoute})`)
-
-    // User has required role, allow access
-    return NextResponse.next()
-
-  } catch (error) {
-    console.error('Middleware error:', error)
-    // On error, redirect to login
-    const url = new URL('/login', request.url)
-    url.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(url)
-  }
+  return NextResponse.next()
 }
 
 export const config = {
@@ -153,6 +141,6 @@ export const config = {
      * - login and unauthorized pages
      * - dashboard (accessible to all authenticated users)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|login|unauthorized|dashboard).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|login|unauthorized).*)',
   ],
 }

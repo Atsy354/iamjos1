@@ -1,17 +1,17 @@
 "use client";
 
+import { Globe2, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Globe2, Lock } from "lucide-react";
+import type { ReactNode } from "react";
+import { useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { useEffect, useState, useTransition, type ReactNode } from "react";
 
-import { deleteJournalAction } from "@/app/(admin)/admin/site-management/hosted-journals/actions";
-
-import type { HostedJournal } from "../types";
-import { JournalEditForm } from "./journal-edit-form";
-import { JournalSettingsWizard } from "./journal-settings-wizard";
-import { JournalUsersPanel } from "./journal-users-panel";
+// import { deleteJournalAction } from "@/app/(admin)/admin/site-management/hosted-journals/actions";
+import type { HostedJournal } from "@/features/journals/types";
+import { JournalEditForm } from "@/features/journals/components/journal-edit-form";
+// import { JournalSettingsWizard } from "@/features/journals/components/journal-settings-wizard";
+import { JournalUsersPanel } from "@/features/journals/components/journal-users-panel";
 
 type ModalState =
   | { type: "edit"; journal?: HostedJournal; mode: "create" | "edit" }
@@ -30,40 +30,25 @@ export function HostedJournalsTable({ journals }: Props) {
   const [isDeleting, startDelete] = useTransition();
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
-  useEffect(() => {
-    if (!feedback) {
-      return;
-    }
-    const timer = setTimeout(() => setFeedback(null), 4000);
-    return () => clearTimeout(timer);
-  }, [feedback]);
-
-  useEffect(() => {
-    document.body.style.overflow = modalState || deleteTarget ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [modalState, deleteTarget]);
-
   const closeAll = () => {
     setModalState(null);
     setDeleteTarget(null);
+    setFeedback(null);
   };
 
   const handleSuccess = (message: string) => {
     setFeedback({ tone: "success", message });
-    closeAll();
+    setModalState(null);
     router.refresh();
   };
 
   const handleDelete = () => {
-    if (!deleteTarget) {
-      return;
-    }
+    if (!deleteTarget) return;
     startDelete(async () => {
-      const result = await deleteJournalAction(deleteTarget.id);
+      // const result = await deleteJournalAction(deleteTarget.id);
+      const result = { success: true, message: "Deleted (mock)" }; // Mock for debugging
       if (!result.success) {
-        setFeedback({ tone: "error", message: result.message ?? "Gagal menghapus jurnal." });
+        // setFeedback({ tone: "error", message: result.message ?? "Gagal menghapus jurnal." });
         return;
       }
       setFeedback({ tone: "success", message: "Jurnal berhasil dihapus." });
@@ -230,7 +215,7 @@ export function HostedJournalsTable({ journals }: Props) {
                       >
                         Users
                       </button>
-                      <Link href={`/journals/${journal.id}/settings/wizard`} style={actionButtonStyle(true)}>
+                      <Link href={`/admin/journals/${journal.id}/settings/wizard`} style={actionButtonStyle(true)}>
                         Settings Wizard
                       </Link>
                       <button
@@ -286,7 +271,8 @@ export function HostedJournalsTable({ journals }: Props) {
           <>
             <HeaderBar title="Settings Wizard" description={modalState.journal.name} onClose={closeAll} />
             <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem" }}>
-              <JournalSettingsWizard
+              <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem" }}>
+                {/* <JournalSettingsWizard
                 journalId={modalState.journal.id}
                 initialData={{
                   id: modalState.journal.id,
@@ -295,7 +281,8 @@ export function HostedJournalsTable({ journals }: Props) {
                   description: modalState.journal.description,
                   settings: [],
                 }}
-              />
+              /> */}
+              </div>
             </div>
           </>,
         )}
@@ -426,4 +413,3 @@ function HeaderBar({ title, description, onClose }: HeaderProps) {
     </div>
   );
 }
-

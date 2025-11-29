@@ -10,9 +10,9 @@ let browserClient: SupabaseClient | null = null;
 export function getSupabaseBrowserClient() {
   if (!browserClient) {
     if (!isPublicEnvValid) {
-      throw new Error(
-        "Supabase environment (URL/anon key) belum dikonfigurasi. Cek file .env.",
-      );
+      console.error("Supabase environment (URL/anon key) belum dikonfigurasi. Cek file .env.");
+      // Return a dummy client or throw, but logging is better for dev
+      throw new Error("Supabase environment missing");
     }
 
     browserClient = createBrowserClient(

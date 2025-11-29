@@ -1,7 +1,7 @@
 /**
- * Settings Helpers
- * Helper functions untuk operations dengan journal_settings table
- * Menggunakan key-value pairs sesuai OJS 3.3 structure
+ * Settings Helper Functions
+ * 
+ * OJS uses EAV (Entity-Attribute-Value) pattern for settings sto
  */
 
 import { getSupabaseAdminClient } from "./supabase/admin";

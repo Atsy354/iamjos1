@@ -10,6 +10,7 @@ import { PkpTable, PkpTableHeader, PkpTableRow, PkpTableHead, PkpTableCell } fro
 import { PkpCheckbox } from "@/components/ui/pkp-checkbox";
 import { useJournalSettings, useMigrateLocalStorageToDatabase } from "@/features/editor/hooks/useJournalSettings";
 import { useI18n } from "@/contexts/I18nContext";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SectionItem = {
   id: string;
@@ -106,28 +107,97 @@ export default function SettingsContextPage() {
           mailingAddress: settings.contact_mailingAddress || '',
         });
       }
-      if (settings.context_sections) {
-        try {
-          const sectionsData = typeof settings.context_sections === 'string' ? JSON.parse(settings.context_sections) : settings.context_sections;
-          if (Array.isArray(sectionsData)) {
-            setSections(sectionsData);
-          }
-        } catch {
-          // ignore malformed data
-        }
-      }
-      if (settings.context_categories) {
-        try {
-          const categoriesData = typeof settings.context_categories === 'string' ? JSON.parse(settings.context_categories) : settings.context_categories;
-          if (Array.isArray(categoriesData)) {
-            setCategories(categoriesData);
-          }
-        } catch {
-          // ignore
-        }
-      }
     }
   }, [contextSettings.settings]);
+
+  // Load sections and categories from tables
+  useEffect(() => {
+    const loadSectionsAndCategories = async () => {
+      if (!contextSettings.journalId) return;
+
+      const supabase = getSupabaseBrowserClient();
+
+      // Load Sections
+      const { data: sectionsData } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('journal_id', contextSettings.journalId)
+        .order('seq', { ascending: true });
+
+      if (sectionsData) {
+        // Fetch section settings (title, abbreviation, policy)
+        const sectionIds = sectionsData.map(s => s.id);
+        if (sectionIds.length > 0) {
+          const { data: settingsData } = await supabase
+            .from('section_settings')
+            .select('*')
+            .in('section_id', sectionIds);
+
+          const settingsMap = new Map();
+          settingsData?.forEach((setting: any) => {
+            if (!settingsMap.has(setting.section_id)) {
+              settingsMap.set(setting.section_id, {});
+            }
+            settingsMap.get(setting.section_id)[setting.setting_name] = setting.setting_value;
+          });
+
+          const formattedSections = sectionsData.map((s: any) => {
+            const settings = settingsMap.get(s.id) || {};
+            return {
+              id: s.id,
+              title: settings.title || '',
+              abbreviation: settings.abbreviation || '',
+              enabled: !s.is_inactive,
+              policy: settings.policy || '',
+            };
+          });
+          setSections(formattedSections);
+        } else {
+          setSections([]);
+        }
+      }
+
+      // Load Categories
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('context_id', contextSettings.journalId);
+
+      if (categoriesData) {
+        // Fetch category settings
+        const categoryIds = categoriesData.map(c => c.id);
+        if (categoryIds.length > 0) {
+          const { data: settingsData } = await supabase
+            .from('category_settings')
+            .select('*')
+            .in('category_id', categoryIds);
+
+          const settingsMap = new Map();
+          settingsData?.forEach((setting: any) => {
+            if (!settingsMap.has(setting.category_id)) {
+              settingsMap.set(setting.category_id, {});
+            }
+            settingsMap.get(setting.category_id)[setting.setting_name] = setting.setting_value;
+          });
+
+          const formattedCategories = categoriesData.map((c: any) => {
+            const settings = settingsMap.get(c.id) || {};
+            return {
+              id: c.id,
+              title: settings.title || '',
+              path: c.path,
+              description: settings.description || '',
+            };
+          });
+          setCategories(formattedCategories);
+        } else {
+          setCategories([]);
+        }
+      }
+    };
+
+    loadSectionsAndCategories();
+  }, [contextSettings.journalId]);
 
   // Auto-dismiss feedback messages
   useEffect(() => {
@@ -158,35 +228,16 @@ export default function SettingsContextPage() {
     }
   }, [categoriesFeedback]);
 
-  const generateId = () =>
-    (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 10));
-
   const persistSections = async (next: SectionItem[], successMessage: string) => {
-    setSectionsSaving(true);
-    const success = await contextSettings.saveSettings({
-      context_sections: next,
-    });
-    setSectionsSaving(false);
-    if (success) {
-      setSections(next);
-      setSectionsFeedback({ type: 'success', message: successMessage });
-    } else {
-      setSectionsFeedback({ type: 'error', message: contextSettings.error || 'Failed to save sections.' });
-    }
+    // This function is now mainly for updating local state after DB operations
+    // The actual DB operations happen in add/delete/toggle handlers
+    setSections(next);
+    setSectionsFeedback({ type: 'success', message: successMessage });
   };
 
   const persistCategories = async (next: CategoryItem[], successMessage: string) => {
-    setCategoriesSaving(true);
-    const success = await contextSettings.saveSettings({
-      context_categories: next,
-    });
-    setCategoriesSaving(false);
-    if (success) {
-      setCategories(next);
-      setCategoriesFeedback({ type: 'success', message: successMessage });
-    } else {
-      setCategoriesFeedback({ type: 'error', message: contextSettings.error || 'Failed to save categories.' });
-    }
+    setCategories(next);
+    setCategoriesFeedback({ type: 'success', message: successMessage });
   };
 
   const handleAddSection = async () => {
@@ -194,35 +245,110 @@ export default function SettingsContextPage() {
       setSectionsFeedback({ type: 'error', message: 'Section title is required.' });
       return;
     }
-    const next: SectionItem[] = [
-      ...sections,
-      {
-        id: generateId(),
+    if (!contextSettings.journalId) {
+      setSectionsFeedback({ type: 'error', message: 'Journal ID missing.' });
+      return;
+    }
+
+    setSectionsSaving(true);
+    const supabase = getSupabaseBrowserClient();
+
+    try {
+      // 1. Insert into sections table
+      const { data: sectionData, error: sectionError } = await supabase
+        .from('sections')
+        .insert({
+          journal_id: contextSettings.journalId,
+          seq: sections.length + 1,
+          is_inactive: !newSection.enabled,
+          editor_restricted: false,
+          meta_indexed: true,
+          meta_reviewed: true,
+          abstracts_not_required: false,
+          hide_title: false,
+          hide_author: false,
+          abstract_word_count: 0
+        })
+        .select()
+        .single();
+
+      if (sectionError) throw sectionError;
+
+      // 2. Insert into section_settings
+      const settingsToInsert = [
+        { section_id: sectionData.id, setting_name: 'title', setting_value: newSection.title.trim(), locale: 'en_US' },
+        { section_id: sectionData.id, setting_name: 'abbreviation', setting_value: newSection.abbreviation.trim() || newSection.title.trim().slice(0, 3).toUpperCase(), locale: 'en_US' },
+        { section_id: sectionData.id, setting_name: 'policy', setting_value: newSection.policy?.trim(), locale: 'en_US' }
+      ];
+
+      const { error: settingsError } = await supabase
+        .from('section_settings')
+        .insert(settingsToInsert);
+
+      if (settingsError) throw settingsError;
+
+      // Update local state
+      const newItem: SectionItem = {
+        id: sectionData.id,
         title: newSection.title.trim(),
         abbreviation: newSection.abbreviation.trim() || newSection.title.trim().slice(0, 3).toUpperCase(),
         enabled: newSection.enabled,
         policy: newSection.policy?.trim(),
-      },
-    ];
-    await persistSections(next, 'Section saved successfully.');
-    setNewSection({
-      title: '',
-      abbreviation: '',
-      enabled: true,
-      policy: '',
-    });
+      };
+
+      setSections([...sections, newItem]);
+      setSectionsFeedback({ type: 'success', message: 'Section added successfully.' });
+      setNewSection({
+        title: '',
+        abbreviation: '',
+        enabled: true,
+        policy: '',
+      });
+
+    } catch (error: any) {
+      console.error('Error adding section:', error);
+      setSectionsFeedback({ type: 'error', message: error.message || 'Failed to add section.' });
+    } finally {
+      setSectionsSaving(false);
+    }
   };
 
   const handleDeleteSection = async (id: string) => {
-    const next = sections.filter((section) => section.id !== id);
-    await persistSections(next, 'Section removed.');
+    setSectionsSaving(true);
+    const supabase = getSupabaseBrowserClient();
+    try {
+      const { error } = await supabase.from('sections').delete().eq('id', id);
+      if (error) throw error;
+
+      setSections(sections.filter(s => s.id !== id));
+      setSectionsFeedback({ type: 'success', message: 'Section deleted.' });
+    } catch (error: any) {
+      console.error('Error deleting section:', error);
+      setSectionsFeedback({ type: 'error', message: error.message || 'Failed to delete section.' });
+    } finally {
+      setSectionsSaving(false);
+    }
   };
 
   const handleToggleSection = async (id: string) => {
-    const next = sections.map((section) =>
-      section.id === id ? { ...section, enabled: !section.enabled } : section
-    );
-    await persistSections(next, 'Section updated.');
+    const section = sections.find(s => s.id === id);
+    if (!section) return;
+
+    const supabase = getSupabaseBrowserClient();
+    try {
+      const { error } = await supabase
+        .from('sections')
+        .update({ is_inactive: section.enabled }) // toggle logic: enabled -> is_inactive=false
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setSections(sections.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+      setSectionsFeedback({ type: 'success', message: 'Section updated.' });
+    } catch (error: any) {
+      console.error('Error updating section:', error);
+      setSectionsFeedback({ type: 'error', message: error.message || 'Failed to update section.' });
+    }
   };
 
   const handleAddCategory = async () => {
@@ -230,32 +356,86 @@ export default function SettingsContextPage() {
       setCategoriesFeedback({ type: 'error', message: 'Category title and path are required.' });
       return;
     }
-    const next: CategoryItem[] = [
-      ...categories,
-      {
-        id: generateId(),
+    if (!contextSettings.journalId) {
+      setCategoriesFeedback({ type: 'error', message: 'Journal ID missing.' });
+      return;
+    }
+
+    setCategoriesSaving(true);
+    const supabase = getSupabaseBrowserClient();
+
+    try {
+      // 1. Insert into categories table
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .insert({
+          context_id: contextSettings.journalId,
+          path: newCategory.path.trim(),
+          parent_id: 0,
+          seq: categories.length + 1,
+        })
+        .select()
+        .single();
+
+      if (categoryError) throw categoryError;
+
+      // 2. Insert into category_settings
+      const settingsToInsert = [
+        { category_id: categoryData.id, setting_name: 'title', setting_value: newCategory.title.trim(), locale: 'en_US' },
+        { category_id: categoryData.id, setting_name: 'description', setting_value: newCategory.description?.trim(), locale: 'en_US' }
+      ];
+
+      const { error: settingsError } = await supabase
+        .from('category_settings')
+        .insert(settingsToInsert);
+
+      if (settingsError) throw settingsError;
+
+      // Update local state
+      const newItem: CategoryItem = {
+        id: categoryData.id,
         title: newCategory.title.trim(),
         path: newCategory.path.trim(),
         description: newCategory.description?.trim(),
-      },
-    ];
-    await persistCategories(next, 'Category saved successfully.');
-    setNewCategory({
-      title: '',
-      path: '',
-      description: '',
-    });
+      };
+
+      setCategories([...categories, newItem]);
+      setCategoriesFeedback({ type: 'success', message: 'Category added successfully.' });
+      setNewCategory({
+        title: '',
+        path: '',
+        description: '',
+      });
+
+    } catch (error: any) {
+      console.error('Error adding category:', error);
+      setCategoriesFeedback({ type: 'error', message: error.message || 'Failed to add category.' });
+    } finally {
+      setCategoriesSaving(false);
+    }
   };
 
   const handleDeleteCategory = async (id: string) => {
-    const next = categories.filter((category) => category.id !== id);
-    await persistCategories(next, 'Category removed.');
+    setCategoriesSaving(true);
+    const supabase = getSupabaseBrowserClient();
+    try {
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) throw error;
+
+      setCategories(categories.filter(c => c.id !== id));
+      setCategoriesFeedback({ type: 'success', message: 'Category deleted.' });
+    } catch (error: any) {
+      console.error('Error deleting category:', error);
+      setCategoriesFeedback({ type: 'error', message: error.message || 'Failed to delete category.' });
+    } finally {
+      setCategoriesSaving(false);
+    }
   };
 
   // Save handlers
   const handleSaveMasthead = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!masthead.journalTitle.trim()) {
       setMastheadFeedback({ type: 'error', message: t('editor.settings.context.journalTitle') + ' is required.' });
@@ -276,13 +456,13 @@ export default function SettingsContextPage() {
 
   const handleSaveContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!contact.contactEmail.trim()) {
       setContactFeedback({ type: 'error', message: t('editor.settings.context.contactEmail') + ' is required.' });
       return;
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contact.contactEmail)) {
       setContactFeedback({ type: 'error', message: 'Please enter a valid email address.' });
@@ -656,12 +836,12 @@ export default function SettingsContextPage() {
                             />
                           </PkpTableCell>
                           <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }} disabled>
-                                    {t('editor.settings.context.edit')}
-                                  </PkpButton>
-                                  <PkpButton variant="warnable" size="sm" onClick={() => handleDeleteSection(section.id)}>
-                                    {t('editor.settings.context.delete')}
-                                  </PkpButton>
+                            <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }} disabled>
+                              {t('editor.settings.context.edit')}
+                            </PkpButton>
+                            <PkpButton variant="warnable" size="sm" onClick={() => handleDeleteSection(section.id)}>
+                              {t('editor.settings.context.delete')}
+                            </PkpButton>
                           </PkpTableCell>
                         </PkpTableRow>
                       ))
@@ -764,10 +944,10 @@ export default function SettingsContextPage() {
                           </PkpTableCell>
                           <PkpTableCell>{category.path}</PkpTableCell>
                           <PkpTableCell style={{ width: "120px", textAlign: "center" }}>
-                                  <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }} disabled>{t('editor.settings.context.edit')}</PkpButton>
-                                  <PkpButton variant="warnable" size="sm" onClick={() => handleDeleteCategory(category.id)}>
-                                    {t('editor.settings.context.delete')}
-                                  </PkpButton>
+                            <PkpButton variant="onclick" size="sm" style={{ marginRight: "0.5rem" }} disabled>{t('editor.settings.context.edit')}</PkpButton>
+                            <PkpButton variant="warnable" size="sm" onClick={() => handleDeleteCategory(category.id)}>
+                              {t('editor.settings.context.delete')}
+                            </PkpButton>
                           </PkpTableCell>
                         </PkpTableRow>
                       ))

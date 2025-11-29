@@ -58,49 +58,40 @@ export const getSessionUserId = cache(async () => {
 });
 
 export async function getEditorDashboardStats(editorId?: string | null): Promise<EditorDashboardStats> {
-  try {
-    await ensureDummyEditorData();
-    const supabase = getSupabaseAdminClient();
+  const supabase = getSupabaseAdminClient();
 
-    const [myQueue, unassigned, submission, inReview, copyediting, production, allActive, archived, tasks] = await Promise.all([
-      countSubmissions({ supabase, filter: { queue: "my", editorId } }),
-      countSubmissions({ supabase, filter: { queue: "unassigned" } }),
-      countSubmissions({ supabase, filter: { stage: "submission" } }),
-      countSubmissions({ supabase, filter: { stage: "review" } }),
-      countSubmissions({ supabase, filter: { stage: "copyediting" } }),
-      countSubmissions({ supabase, filter: { stage: "production" } }),
-      countSubmissions({ supabase, filter: {} }),
-      countSubmissions({ supabase, filter: { queue: "archived" } }),
-      countTasks({ supabase, editorId }),
-    ]);
+  const [myQueue, unassigned, submission, inReview, copyediting, production, allActive, archived, tasks] = await Promise.all([
+    countSubmissions({ supabase, filter: { queue: "my", editorId } }),
+    countSubmissions({ supabase, filter: { queue: "unassigned" } }),
+    countSubmissions({ supabase, filter: { stage: "submission" } }),
+    countSubmissions({ supabase, filter: { stage: "review" } }),
+    countSubmissions({ supabase, filter: { stage: "copyediting" } }),
+    countSubmissions({ supabase, filter: { stage: "production" } }),
+    countSubmissions({ supabase, filter: {} }),
+    countSubmissions({ supabase, filter: { queue: "archived" } }),
+    countTasks({ supabase, editorId }),
+  ]);
 
-    return {
-      myQueue,
-      unassigned,
-      submission,
-      inReview,
-      copyediting,
-      production,
-      allActive,
-      archived,
-      tasks,
-    };
-  } catch {
-    // Fallback to dummy data stats calculation using helper functions
-    const userId = editorId || "current-user-id";
-    return calculateDummyStats(userId);
-  }
+  return {
+    myQueue,
+    unassigned,
+    submission,
+    inReview,
+    copyediting,
+    production,
+    allActive,
+    archived,
+    tasks,
+  };
 }
 
 export async function listSubmissions(params: ListSubmissionsParams = {}): Promise<SubmissionSummary[]> {
   const { queue = "all", stage, search, limit = 20, offset = 0, editorId } = params;
-  try {
-    await ensureDummyEditorData();
-    const supabase = getSupabaseAdminClient();
-    let query = supabase
-      .from("submissions")
-      .select(
-        `
+  const supabase = getSupabaseAdminClient();
+  let query = supabase
+    .from("submissions")
+    .select(
+      `
         id,
         title,
         status,
@@ -111,98 +102,73 @@ export async function listSubmissions(params: ListSubmissionsParams = {}): Promi
         journal_id,
         metadata,
         journals:journal_id (title)`
-      )
-      .order("updated_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    )
+    .order("updated_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
-    if (queue === "archived") {
-      query = query.eq("is_archived", true);
-    } else {
-      query = query.eq("is_archived", false);
-    }
-
-    if (stage) {
-      query = query.eq("current_stage", stage);
-    }
-
-    if (search) {
-      query = query.ilike("title", `%${search}%`);
-    }
-
-    if (queue === "my" && editorId) {
-      const assignedIds = await getAssignedSubmissionIds(editorId);
-      if (assignedIds.length === 0) {
-        // If user has no assigned submissions, show unassigned ones as fallback
-        const unassignedIds = await getAssignedSubmissionIdsForRoles();
-        if (unassignedIds.length > 0) {
-          query = query.not("id", "in", unassignedIds);
-        }
-        // If no unassigned either, return empty (no submissions available)
-      } else {
-        query = query.in("id", assignedIds);
-      }
-    }
-
-    if (queue === "unassigned") {
-      const assignedIds = await getAssignedSubmissionIdsForRoles();
-      if (assignedIds.length > 0) {
-        // Exclude submissions that already have editor/section_editor assigned
-        // Supabase .not('in') expects a Postgres list; supabase-js supports array directly
-        query = query.not("id", "in", assignedIds);
-      }
-    }
-
-    const { data, error } = await query;
-    if (error || !data) {
-      throw error;
-    }
-
-    return data.map((row) => ({
-      id: row.id,
-      title: row.title,
-      journalId: row.journal_id,
-      journalTitle: (row.journals as { title?: string } | null)?.title,
-      stage: row.current_stage as SubmissionStage,
-      current_stage: row.current_stage as SubmissionStage,
-      status: row.status as SubmissionStatus,
-      isArchived: row.is_archived,
-      submittedAt: row.submitted_at,
-      updatedAt: row.updated_at,
-      author_name: (row.metadata as { author_name?: string } | null)?.author_name,
-      assignees: [],
-    }));
-  } catch {
-    // Return dummy data for demonstration using helper functions
-    const userId = editorId || "current-user-id";
-    let filtered = getFilteredSubmissions(
-      queue === "my" ? "my" : queue === "unassigned" ? "unassigned" : queue === "archived" ? "archived" : "all",
-      queue === "my" ? userId : undefined
-    );
-
-    // Filter by stage if provided
-    if (stage) {
-      filtered = filtered.filter((s) => s.stage === stage);
-    }
-
-    // Filter by search if provided
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(
-        (s) =>
-          s.title.toLowerCase().includes(searchLower) ||
-          s.author_name?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered.slice(offset, offset + limit);
+  if (queue === "archived") {
+    query = query.eq("is_archived", true);
+  } else {
+    query = query.eq("is_archived", false);
   }
+
+  if (stage) {
+    query = query.eq("current_stage", stage);
+  }
+
+  if (search) {
+    query = query.ilike("title", `%${search}%`);
+  }
+
+  if (queue === "my" && editorId) {
+    const assignedIds = await getAssignedSubmissionIds(editorId);
+    if (assignedIds.length === 0) {
+      // If user has no assigned submissions, show unassigned ones as fallback
+      const unassignedIds = await getAssignedSubmissionIdsForRoles();
+      if (unassignedIds.length > 0) {
+        query = query.not("id", "in", unassignedIds);
+      }
+      // If no unassigned either, return empty (no submissions available)
+    } else {
+      query = query.in("id", assignedIds);
+    }
+  }
+
+  if (queue === "unassigned") {
+    const assignedIds = await getAssignedSubmissionIdsForRoles();
+    if (assignedIds.length > 0) {
+      // Exclude submissions that already have editor/section_editor assigned
+      // Supabase .not('in') expects a Postgres list; supabase-js supports array directly
+      query = query.not("id", "in", assignedIds);
+    }
+  }
+
+  const { data, error } = await query;
+  if (error || !data) {
+    throw error;
+  }
+
+  return data.map((row) => ({
+    id: row.id,
+    title: row.title,
+    journalId: row.journal_id,
+    journalTitle: (row.journals as { title?: string } | null)?.title,
+    stage: row.current_stage as SubmissionStage,
+    current_stage: row.current_stage as SubmissionStage,
+    status: row.status as SubmissionStatus,
+    isArchived: row.is_archived,
+    submittedAt: row.submitted_at,
+    updatedAt: row.updated_at,
+    author_name: (row.metadata as { author_name?: string } | null)?.author_name,
+    assignees: [],
+  }));
 }
 
 export async function getSubmissionDetail(id: string): Promise<SubmissionDetail | null> {
   try {
     await ensureDummyEditorData();
     const supabase = getSupabaseAdminClient();
-    
+
     // Fetch all data in parallel, but handle errors gracefully
     const [
       { data: submission, error: submissionError },
@@ -213,10 +179,10 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
       { data: reviewRoundsData, error: reviewRoundsError },
       { data: queriesData, error: queriesError },
     ] = await Promise.all([
-        supabase
-          .from("submissions")
-          .select(
-            `
+      supabase
+        .from("submissions")
+        .select(
+          `
             id,
             title,
             status,
@@ -227,34 +193,34 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
             journal_id,
             metadata,
             journals:journal_id (title)`
-          )
-          .eq("id", id)
-          .maybeSingle(),
-        supabase
-          .from("submission_versions")
-          .select("id, version, status, metadata, published_at, created_at, issue_id, issues:issue_id (title, year, volume)")
-          .eq("submission_id", id)
-          .order("version", { ascending: false }),
-        supabase
-          .from("submission_participants")
-          .select("user_id, role, stage, assigned_at")
-          .eq("submission_id", id),
-        supabase
-          .from("submission_files")
-          .select("id, label, stage, file_kind, storage_path, version_label, round, is_visible_to_authors, file_size, uploaded_at, uploaded_by")
-          .eq("submission_id", id)
-          .order("uploaded_at", { ascending: false })
-          .limit(50),
-        supabase
-          .from("submission_activity_logs")
-          .select("id, message, category, created_at, actor_id")
-          .eq("submission_id", id)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("submission_review_rounds")
-          .select(
-            `
+        )
+        .eq("id", id)
+        .maybeSingle(),
+      supabase
+        .from("submission_versions")
+        .select("id, version, status, metadata, published_at, created_at, issue_id, issues:issue_id (title, year, volume)")
+        .eq("submission_id", id)
+        .order("version", { ascending: false }),
+      supabase
+        .from("submission_participants")
+        .select("user_id, role, stage, assigned_at")
+        .eq("submission_id", id),
+      supabase
+        .from("submission_files")
+        .select("id, label, stage, file_kind, storage_path, version_label, round, is_visible_to_authors, file_size, uploaded_at, uploaded_by")
+        .eq("submission_id", id)
+        .order("uploaded_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("submission_activity_logs")
+        .select("id, message, category, created_at, actor_id")
+        .eq("submission_id", id)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("submission_review_rounds")
+        .select(
+          `
             id,
             stage,
             round,
@@ -273,13 +239,13 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
               submitted_at
             )
           `,
-          )
-          .eq("submission_id", id)
-          .order("round", { ascending: true }),
-        supabase
-          .from("queries")
-          .select(
-            `
+        )
+        .eq("submission_id", id)
+        .order("round", { ascending: true }),
+      supabase
+        .from("queries")
+        .select(
+          `
             id,
             stage_id,
             seq,
@@ -296,10 +262,10 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
               date_modified
             )
           `
-          )
-          .eq("submission_id", id)
-          .order("seq", { ascending: true }),
-      ]);
+        )
+        .eq("submission_id", id)
+        .order("seq", { ascending: true }),
+    ]);
 
     // Log errors for debugging (but don't fail if non-critical queries fail)
     if (versionsError) {
@@ -356,7 +322,7 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
       assignees: [],
     };
 
-  const mappedVersionsBase =
+    const mappedVersionsBase =
       versions?.map((item) => ({
         id: item.id,
         version: item.version,
@@ -364,11 +330,11 @@ export async function getSubmissionDetail(id: string): Promise<SubmissionDetail 
         metadata: (item.metadata as Record<string, unknown>) ?? {},
         issue: item.issues
           ? {
-              id: item.issue_id,
-              title: (item.issues as { title?: string | null; year?: number | null; volume?: number | null }).title,
-              year: (item.issues as { year?: number | null }).year,
-              volume: (item.issues as { volume?: number | null }).volume,
-            }
+            id: item.issue_id,
+            title: (item.issues as { title?: string | null; year?: number | null; volume?: number | null }).title,
+            year: (item.issues as { year?: number | null }).year,
+            volume: (item.issues as { volume?: number | null }).volume,
+          }
           : undefined,
         publishedAt: item.published_at,
         createdAt: item.created_at,
@@ -597,7 +563,7 @@ export async function listSubmissionTasks(params: ListTasksParams = {}): Promise
   }
 
   const { data, error } = await query;
-  
+
   // If no tasks found for this user and we're looking for open tasks, also show unassigned ones
   if (assigneeId && (!data || data.length === 0) && (!status || status === "open")) {
     const unassignedQuery = supabase
@@ -619,7 +585,7 @@ export async function listSubmissionTasks(params: ListTasksParams = {}): Promise
       .eq("status", "open")
       .order("created_at", { ascending: false })
       .limit(limit);
-    
+
     const { data: unassignedData, error: unassignedError } = await unassignedQuery;
     if (!unassignedError && unassignedData) {
       const mapped = unassignedData.map((row) => ({
@@ -636,7 +602,7 @@ export async function listSubmissionTasks(params: ListTasksParams = {}): Promise
       return mapped;
     }
   }
-  
+
   if (error || !data) {
     return [];
   }

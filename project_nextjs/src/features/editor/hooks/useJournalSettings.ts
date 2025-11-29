@@ -21,6 +21,7 @@ export type UseJournalSettingsReturn<T extends SettingsMap> = {
   error: string | null;
   saveSettings: (newSettings: Partial<T>) => Promise<boolean>;
   reload: () => Promise<void>;
+  journalId: string | null;
 };
 
 /**
@@ -138,12 +139,21 @@ export function useJournalSettings<T extends SettingsMap = SettingsMap>(
     }
   }, [autoLoad, user, loadSettings]);
 
+  const [currentJournalId, setCurrentJournalId] = useState<string | null>(null);
+
+  // Update currentJournalId when it changes
+  useEffect(() => {
+    const id = getJournalId();
+    setCurrentJournalId(id);
+  }, [getJournalId]);
+
   return {
     settings,
     loading,
     error,
     saveSettings,
     reload: loadSettings,
+    journalId: currentJournalId,
   };
 }
 

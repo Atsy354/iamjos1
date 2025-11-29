@@ -24,31 +24,8 @@ export async function getUserById(userId: string) {
 
     if (error) {
       console.error('Error fetching user from user_accounts:', error)
-      // Fallback to users table (original OJS schema)
-      console.log('Trying users table as fallback...')
-      const { data: fallbackData, error: fallbackError } = await supabaseAdmin
-        .from('users')
-        .select('id, username, email, first_name, last_name, password')
-        .eq('id', userId)
-        .single()
-      
-      if (fallbackError) {
-        console.error('Error fetching user from both tables:', fallbackError)
-        return null
-      }
-      
-      console.log('Raw user data from users table:', fallbackData)
-      return fallbackData ? {
-        user_id: fallbackData.id,
-        username: fallbackData.username,
-        email: fallbackData.email,
-        first_name: fallbackData.first_name,
-        last_name: fallbackData.last_name,
-        password: fallbackData.password
-      } : null
+      return null
     }
-
-    console.log('Raw user data from user_accounts table:', data)
 
     // Map the data to match our expected interface
     return data ? {
@@ -76,31 +53,8 @@ export async function getUserByEmail(email: string) {
 
     if (error) {
       console.error('Error fetching user from user_accounts:', error)
-      // Fallback to users table (original OJS schema)
-      console.log('Trying users table as fallback...')
-      const { data: fallbackData, error: fallbackError } = await supabaseAdmin
-        .from('users')
-        .select('id, username, email, first_name, last_name, password')
-        .eq('email', email)
-        .single()
-      
-      if (fallbackError) {
-        console.error('Error fetching user from both tables:', fallbackError)
-        return null
-      }
-      
-      console.log('Raw user data from users table:', fallbackData)
-      return fallbackData ? {
-        user_id: fallbackData.id,
-        username: fallbackData.username,
-        email: fallbackData.email,
-        first_name: fallbackData.first_name,
-        last_name: fallbackData.last_name,
-        password: fallbackData.password
-      } : null
+      return null
     }
-
-    console.log('Raw user data from user_accounts table:', data)
 
     // Map the data to match our expected interface
     return data ? {
@@ -120,7 +74,7 @@ export async function getUserByEmail(email: string) {
 export async function getUserRoles(userId: string) {
   try {
     console.log('Fetching roles for userId:', userId)
-    
+
     // Try user_account_roles first (new migration)
     const { data: accountRolesData, error: accountRolesError } = await supabaseAdmin
       .from('user_account_roles')
@@ -129,7 +83,7 @@ export async function getUserRoles(userId: string) {
 
     if (!accountRolesError && accountRolesData && accountRolesData.length > 0) {
       console.log('Found roles in user_account_roles:', accountRolesData)
-      
+
       // Map to our expected format
       const roles = accountRolesData.map(role => ({
         user_group_id: role.role_name, // Use role name as ID for now
@@ -138,13 +92,13 @@ export async function getUserRoles(userId: string) {
         journal_name: 'Site',
         role_path: getRolePath(role.role_name)
       }))
-      
+
       console.log('Final roles from user_account_roles:', roles)
       return roles
     }
 
     console.log('No roles in user_account_roles, trying original OJS schema...')
-    
+
     // Get user group IDs for this user (original OJS schema)
     const { data: userGroupData, error: userGroupError } = await supabaseAdmin
       .from('user_user_groups')
@@ -222,7 +176,7 @@ export async function getUserRoles(userId: string) {
     const roles = userGroupsData?.map(ug => {
       const setting = settingsData?.find(s => s.user_group_id === ug.id)
       const journalSetting = journalSettings.find(js => js.journal_id === ug.context_id)
-      
+
       const userGroupName = setting?.setting_value || `Role ${ug.role_id}`
       const journalName = journalSetting?.setting_value || (ug.context_id ? 'Journal' : 'Site')
 

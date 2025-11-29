@@ -95,7 +95,7 @@ function getRolePath(userGroupName: string): string {
 export async function POST(request: NextRequest, { params }: { params: Promise<{}> }) {
   try {
     let email, password
-    
+
     try {
       const body = await request.json()
       email = body.email
@@ -117,48 +117,101 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     console.log('Login attempt for email:', email)
 
-    // Get user from user_accounts table (primary source)
-    const userData = await getUserFromAccounts(email)
+    // 1. Try Supabase Auth FIRST (Source of Truth)
+    const supabase = await createSupabaseServerClient()
+    let authData = null
+    let authError = null
 
-    console.log('User data retrieved:', userData)
+    try {
+      const signInResult = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      })
+      authData = signInResult.data
+      authError = signInResult.error
+    } catch (signInErr) {
+      console.log('Supabase sign in attempt failed:', signInErr)
+    }
+
+    // If Supabase Auth succeeds, we are good!
+    if (authData?.session) {
+      console.log('Supabase Auth successful for:', email)
+
+      // Sync/Get user data from user_accounts to return consistent response
+      let userData = await getUserFromAccounts(email)
+
+      if (!userData) {
+        // If user exists in Auth but not in DB, we should probably create them or handle it.
+        // For now, let's try to find them or return basic info.
+        // But getRolesFromAccountRoles needs userId.
+        // Let's assume sync_users.js ran, so they should be there.
+        // If not, we might need to create a record.
+        console.warn('User authenticated but not found in user_accounts:', email)
+        // We can return the Auth user, but roles might be missing.
+        // Let's try to fetch by ID from Auth data if email lookup failed?
+        // But we need userData for roles.
+      } else {
+        // Update local password hash to match (optional, but good for fallback)
+        // We can't get the hash from Supabase, so we can't sync it easily without knowing the plain text (which we have).
+        // Let's update it if it's a placeholder.
+        if (userData.password === 'hashed_placeholder') {
+          try {
+            const hashedPassword = await bcrypt.hash(password, 10)
+            await supabaseAdmin
+              .from('user_accounts')
+              .update({ password: hashedPassword })
+              .eq('id', userData.user_id)
+            console.log('Updated placeholder password for user:', email)
+          } catch (e) {
+            console.error('Failed to update placeholder password', e)
+          }
+        }
+      }
+
+      // Construct response
+      const userId = userData?.user_id || authData.user.id
+      const roles = await getRolesFromAccountRoles(userId)
+      const uniqueRoles = Array.from(
+        new Map(
+          roles.map(r => [
+            `${r.user_group_id}|${r.journal_name || ''}|${r.context_id || ''}`,
+            r
+          ])
+        ).values()
+      )
+
+      const user = {
+        id: userId,
+        username: userData?.username || authData.user.user_metadata?.username || email.split('@')[0],
+        email: email,
+        full_name: userData ? `${userData.first_name || ''} ${userData.last_name || ''}`.trim() : undefined,
+        roles: uniqueRoles
+      }
+
+      return NextResponse.json({ user })
+    }
+
+    // 2. If Supabase Auth fails, try Legacy/Local DB check
+    console.log('Supabase Auth failed, trying local DB check...')
+
+    const userData = await getUserFromAccounts(email)
 
     if (!userData) {
       console.error('User not found for email:', email)
       return NextResponse.json(
-        { error: 'Invalid credentials - user not found' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       )
     }
 
-    // Secure password check with bcrypt
-    // Handle both hashed and plain text passwords for backward compatibility
+    // Check local password
     let isPasswordValid = false
-    
-    // Check if password is hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
     if (userData.password.startsWith('$2a$') || userData.password.startsWith('$2b$') || userData.password.startsWith('$2y$')) {
-      // Password is hashed, use bcrypt.compare
       isPasswordValid = await bcrypt.compare(password, userData.password)
     } else {
-      // Password is plain text, do direct comparison
-      // This is for backward compatibility with existing data
       isPasswordValid = password === userData.password
-      
-      // If password is valid and still plain text, hash it for future use
-      if (isPasswordValid) {
-        try {
-          const hashedPassword = await bcrypt.hash(password, 10)
-          await supabaseAdmin
-            .from('user_accounts')
-            .update({ password: hashedPassword })
-            .eq('id', userData.user_id)
-          console.log('Password hashed and updated for user:', userData.email)
-        } catch (hashError) {
-          console.error('Error hashing password:', hashError)
-          // Continue even if hashing fails
-        }
-      }
     }
-    
+
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -166,153 +219,82 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Create Supabase session
+    // Local password valid! This is a legacy user not yet in Auth.
+    // Migrate them to Supabase Auth.
+    console.log('Local password valid, migrating to Supabase Auth...')
+
     try {
-      const supabase = await createSupabaseServerClient()
-      
-      // Try to sign in with Supabase Auth first
-      let authData = null
-      let authError = null
-      
-      try {
+      const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: userData.email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          username: userData.username,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          user_id: userData.user_id
+        }
+      })
+
+      if (createError) {
+        console.error('Error migrating user to Supabase Auth:', createError)
+        // Continue with custom session
+      } else if (newAuthUser?.user) {
+        // Sign in to get session
         const signInResult = await supabase.auth.signInWithPassword({
           email: userData.email,
           password: password
         })
-        authData = signInResult.data
-        authError = signInResult.error
-      } catch (signInErr) {
-        console.log('Sign in attempt failed, will try to create user:', signInErr)
-      }
-
-      // If Supabase auth fails, user might not exist in Supabase Auth yet
-      // Create user in Supabase Auth using admin client
-      if (authError || !authData) {
-        console.log('User not found in Supabase Auth, creating user...')
-        
-        try {
-          // Create user in Supabase Auth using admin client
-          const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-            email: userData.email,
-            password: password,
-            email_confirm: true, // Auto-confirm email
-            user_metadata: {
-              username: userData.username,
-              first_name: userData.first_name,
-              last_name: userData.last_name,
-              user_id: userData.user_id
-            }
-          })
-
-          if (createError) {
-            console.error('Error creating user in Supabase Auth:', createError)
-            // If user already exists, try to sign in again
-            if (createError.message?.includes('already registered')) {
-              // User exists but password might be different, try sign in again
-              const retryResult = await supabase.auth.signInWithPassword({
-                email: userData.email,
-                password: password
-              })
-              authData = retryResult.data
-              authError = retryResult.error
-            } else {
-              // For other errors, we'll continue with custom session
-              console.log('Will use custom session instead')
-            }
-          } else if (newAuthUser?.user) {
-            // User created successfully, now sign in
-            const signInResult = await supabase.auth.signInWithPassword({
-              email: userData.email,
-              password: password
-            })
-            authData = signInResult.data
-            authError = signInResult.error
+        if (signInResult.data.session) {
+          // Success!
+          // Update local password to hash if it was plain text
+          if (!userData.password.startsWith('$2')) {
+            const hashedPassword = await bcrypt.hash(password, 10)
+            await supabaseAdmin.from('user_accounts').update({ password: hashedPassword }).eq('id', userData.user_id)
           }
-        } catch (createErr) {
-          console.error('Error in user creation process:', createErr)
-          // Continue with custom session if Supabase Auth fails
         }
       }
-
-      // Get user roles from user_account_roles table
-      const roles = await getRolesFromAccountRoles(userData.user_id)
-      const uniqueRoles = Array.from(
-        new Map(
-          roles.map(r => [
-            `${r.user_group_id}|${r.journal_name || ''}|${r.context_id || ''}`,
-            r
-          ])
-        ).values()
-      )
-
-      const user = {
-        id: userData.user_id,
-        username: userData.username,
-        email: userData.email,
-        full_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || undefined,
-        roles: uniqueRoles
-      }
-
-      // If we have a Supabase session, use it
-      if (authData?.session) {
-        const response = NextResponse.json({ user })
-        // The Supabase session is automatically set in cookies by signInWithPassword
-        return response
-      }
-
-      // Fallback: return user data even if Supabase session creation failed
-      // The client can still use the user data for authentication
-      // This allows login to work even if Supabase Auth is not fully configured
-      console.log('Returning user data without Supabase session (fallback mode)')
-      const response = NextResponse.json({ user })
-      
-      // Set a custom session cookie as fallback
-      response.cookies.set('custom-session', JSON.stringify({ userId: userData.user_id, email: userData.email }), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-      
-      return response
-
-    } catch (error) {
-      console.error('Error creating Supabase session:', error)
-      
-      // Even if session creation fails, return user data if password was valid
-      // This allows the app to work with custom authentication
-      const roles = await getRolesFromAccountRoles(userData.user_id)
-      const uniqueRoles = Array.from(
-        new Map(
-          roles.map(r => [
-            `${r.user_group_id}|${r.journal_name || ''}|${r.context_id || ''}`,
-            r
-          ])
-        ).values()
-      )
-
-      const user = {
-        id: userData.user_id,
-        username: userData.username,
-        email: userData.email,
-        full_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || undefined,
-        roles: uniqueRoles
-      }
-
-      const response = NextResponse.json({ user })
-      
-      // Set a custom session cookie as fallback
-      response.cookies.set('custom-session', JSON.stringify({ userId: userData.user_id, email: userData.email }), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-      
-      return response
+    } catch (migrationError) {
+      console.error('Migration error:', migrationError)
     }
+
+    // Return success with custom session (or Auth session if migration worked)
+    const roles = await getRolesFromAccountRoles(userData.user_id)
+    const uniqueRoles = Array.from(
+      new Map(
+        roles.map(r => [
+          `${r.user_group_id}|${r.journal_name || ''}|${r.context_id || ''}`,
+          r
+        ])
+      ).values()
+    )
+
+    const user = {
+      id: userData.user_id,
+      username: userData.username,
+      email: userData.email,
+      full_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || undefined,
+      roles: uniqueRoles
+    }
+
+    const response = NextResponse.json({ user })
+
+    // Set custom session cookie if needed (if Supabase session missing)
+    // But ideally we want Supabase session.
+    // If migration failed, we might need this.
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      response.cookies.set('custom-session', JSON.stringify({ userId: userData.user_id, email: userData.email }), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      })
+    }
+
+    return response
+
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(

@@ -551,7 +551,6 @@ a:hover {
   padding: 0.25rem;
   transition: opacity 0.2s ease;
 }
-
 .pkp_button_link:hover {
   color: #005a87;
   opacity: 0.8;

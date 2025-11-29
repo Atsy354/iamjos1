@@ -8,9 +8,9 @@ export function getRedirectPathByRole(user: User | null): string {
   if (!user || !user.roles || user.roles.length === 0) {
     return "/dashboard";
   }
-  
+
   const rolePaths = user.roles.map(r => r.role_path);
-  
+
   // Priority: admin > manager > editor > assistant > copyeditor > proofreader > layout-editor > author > reviewer
   if (rolePaths.includes("admin")) {
     return "/admin";
@@ -35,6 +35,6 @@ export function getRedirectPathByRole(user: User | null): string {
   } else if (rolePaths.includes("reader")) {
     return "/reader";
   }
-  
-  return "/dashboard";
+
+  return "/";
 }

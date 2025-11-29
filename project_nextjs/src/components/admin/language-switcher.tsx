@@ -7,10 +7,17 @@ import { useI18n } from "@/contexts/I18nContext";
 import { locales, localeNames, type Locale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
-export function LanguageSwitcher() {
+type Props = {
+  variant?: 'dark' | 'light';
+};
+
+export function LanguageSwitcher({ variant = 'dark' }: Props) {
   const { locale, setLocale } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const textColor = variant === 'dark' ? 'text-white' : 'text-gray-700';
+  const hoverColor = variant === 'dark' ? 'hover:opacity-80' : 'hover:text-[var(--primary)]';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -44,15 +51,18 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        className={cn(
+          "flex items-center gap-2 cursor-pointer transition-opacity",
+          hoverColor
+        )}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <Globe className="h-4 w-4 text-white" />
-        <span className="text-white text-base font-medium" style={{ fontSize: '1rem' }}>
+        <Globe className={cn("h-4 w-4", textColor)} />
+        <span className={cn("text-base font-medium", textColor)} style={{ fontSize: '1rem' }}>
           {localeNames[locale]}
         </span>
-        <ChevronDown className="h-4 w-4 text-white" />
+        <ChevronDown className={cn("h-4 w-4", textColor)} />
       </button>
       {isOpen && (
         <div

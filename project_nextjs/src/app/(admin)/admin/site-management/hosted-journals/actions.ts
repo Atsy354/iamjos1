@@ -50,19 +50,40 @@ export async function createJournalAction(input: {
   }
 
   // Bypass permission for testing
-  try {
-    await requireSiteAdmin();
-  } catch {
-    console.warn('[createJournalAction] Bypassing permission check');
-  }
+  await requireSiteAdmin();
 
   const supabase = getSupabaseAdminClient();
 
-  // Insert journal
-  const { data: newJournal, error } = await supabase.from("journals").insert({
-    path: parsed.data.path,
-    enabled: parsed.data.isPublic,
-  }).select().single();
+  // Prepare settings array
+  const settings = [
+    { setting_name: "name", setting_value: parsed.data.title },
+  ];
+
+  if (parsed.data.initials) {
+    settings.push({ setting_name: "initials", setting_value: parsed.data.initials });
+  }
+  if (parsed.data.abbreviation) {
+    settings.push({ setting_name: "abbreviation", setting_value: parsed.data.abbreviation });
+  }
+  if (parsed.data.publisher) {
+    settings.push({ setting_name: "publisher", setting_value: parsed.data.publisher });
+  }
+  if (parsed.data.issnOnline) {
+    settings.push({ setting_name: "onlineIssn", setting_value: parsed.data.issnOnline });
+  }
+  if (parsed.data.issnPrint) {
+    settings.push({ setting_name: "printIssn", setting_value: parsed.data.issnPrint });
+  }
+  if (parsed.data.description) {
+    settings.push({ setting_name: "description", setting_value: parsed.data.description });
+  }
+
+  // Call atomic RPC
+  const { data: newJournalId, error } = await supabase.rpc('admin_create_journal', {
+    p_path: parsed.data.path,
+    p_enabled: parsed.data.isPublic,
+    p_settings: settings
+  });
 
   if (error) {
     if (error.code === "23505") {
@@ -71,38 +92,8 @@ export async function createJournalAction(input: {
     return { success: false, message: `Error: ${error.message}` };
   }
 
-  // Store ALL settings in journal_settings
-  if (newJournal) {
-    const settings = [
-      { journal_id: newJournal.id, setting_name: "name", setting_value: parsed.data.title },
-    ];
-
-    if (parsed.data.initials) {
-      settings.push({ journal_id: newJournal.id, setting_name: "initials", setting_value: parsed.data.initials });
-    }
-    if (parsed.data.abbreviation) {
-      settings.push({ journal_id: newJournal.id, setting_name: "abbreviation", setting_value: parsed.data.abbreviation });
-    }
-    if (parsed.data.publisher) {
-      settings.push({ journal_id: newJournal.id, setting_name: "publisher", setting_value: parsed.data.publisher });
-    }
-    if (parsed.data.issnOnline) {
-      settings.push({ journal_id: newJournal.id, setting_name: "onlineIssn", setting_value: parsed.data.issnOnline });
-    }
-    if (parsed.data.issnPrint) {
-      settings.push({ journal_id: newJournal.id, setting_name: "printIssn", setting_value: parsed.data.issnPrint });
-    }
-    if (parsed.data.description) {
-      settings.push({ journal_id: newJournal.id, setting_name: "description", setting_value: parsed.data.description });
-    }
-
-    if (settings.length > 0) {
-      await supabase.from("journal_settings").insert(settings);
-    }
-  }
-
   revalidateHostedJournals();
-  return { success: true, journalId: newJournal?.id };
+  return { success: true, journalId: newJournalId };
 }
 
 // UPDATE JOURNAL ACTION
@@ -120,11 +111,7 @@ export async function updateJournalAction(input: {
     return { success: false, message: parsed.error.issues[0]?.message ?? "Validasi gagal." };
   }
 
-  try {
-    await requireJournalRole(input.id, ["manager", "editor"]);
-  } catch {
-    console.warn('[updateJournalAction] Bypassing permission check');
-  }
+  await requireJournalRole(input.id, ["manager", "editor"]);
 
   const supabase = getSupabaseAdminClient();
 
@@ -155,7 +142,7 @@ export async function updateJournalAction(input: {
     settingsUpdates.push({ setting_name: "abbreviation", setting_value: parsed.data.abbreviation });
   }
   if (parsed.data.description !== undefined) {
-    settingsUpdates.push({ setting_name: "description", setting_value: parsed.data.description });
+    settingsUpdates.push({ setting_name: "description", setting_value: parsed.data.description ?? "" });
   }
 
   for (const setting of settingsUpdates) {
@@ -173,11 +160,7 @@ export async function updateJournalAction(input: {
 
 // DELETE JOURNAL ACTION
 export async function deleteJournalAction(id: string): Promise<Result> {
-  try {
-    await requireJournalRole(id, ["manager"]);
-  } catch {
-    console.warn('[deleteJournalAction] Bypassing permission check');
-  }
+  await requireJournalRole(id, ["manager"]);
 
   const supabase = getSupabaseAdminClient();
   const { error } = await supabase.from("journals").delete().eq("id", id);
@@ -187,5 +170,69 @@ export async function deleteJournalAction(id: string): Promise<Result> {
   }
 
   revalidateHostedJournals();
+  return { success: true };
+}
+
+// USER ROLE MANAGEMENT ACTIONS
+
+export async function listJournalUserRoles(journalId: string) {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("user_account_roles")
+    .select("user_id, role, assigned_at, user_accounts(first_name, last_name, email, username)")
+    .eq("journal_id", journalId);
+
+  if (error) return [];
+
+  return data.map((row: any) => ({
+    user_id: row.user_id,
+    role: row.role,
+    assigned_at: row.assigned_at,
+    first_name: row.user_accounts?.first_name,
+    last_name: row.user_accounts?.last_name,
+    email: row.user_accounts?.email,
+    username: row.user_accounts?.username,
+  }));
+}
+
+export async function addJournalUserRole(journalId: string, userId: string, role: string): Promise<Result> {
+  await requireJournalRole(journalId, ["manager", "admin"]);
+
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase
+    .from("user_account_roles")
+    .insert({
+      journal_id: journalId,
+      user_id: userId,
+      role: role,
+    });
+
+  if (error) {
+    if (error.code === "23505") {
+      return { success: false, message: "Pengguna sudah memiliki peran ini." };
+    }
+    return { success: false, message: "Gagal menambahkan peran." };
+  }
+
+  revalidatePath(`/journals/${journalId}/users`);
+  return { success: true };
+}
+
+export async function removeJournalUserRole(journalId: string, userId: string, role: string): Promise<Result> {
+  await requireJournalRole(journalId, ["manager", "admin"]);
+
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase
+    .from("user_account_roles")
+    .delete()
+    .eq("journal_id", journalId)
+    .eq("user_id", userId)
+    .eq("role", role);
+
+  if (error) {
+    return { success: false, message: "Gagal menghapus peran." };
+  }
+
+  revalidatePath(`/journals/${journalId}/users`);
   return { success: true };
 }

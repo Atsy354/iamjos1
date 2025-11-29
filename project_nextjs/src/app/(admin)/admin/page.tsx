@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useI18n } from "@/contexts/I18nContext";
-import { VersionWarning } from "@/components/admin/version-warning";
+// import { VersionWarning } from "@/components/admin/version-warning";
 import { pkpColors, pkpTypography } from "@/lib/theme";
 
 export default function AdminPage() {
@@ -33,7 +33,7 @@ export default function AdminPage() {
         padding: 0
       }}>
         {/* Version Check Warning */}
-        <VersionWarning />
+        {/* <VersionWarning /> */}
 
         {/* Site Management Section */}
         <div style={{ marginBottom: '3rem' }}>
