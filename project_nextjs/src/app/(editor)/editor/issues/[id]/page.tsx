@@ -118,15 +118,15 @@ export default function IssueDetailPage() {
                             {issue.description || "No description provided."}
                         </div>
                         <div className="flex gap-3">
-                            <Button variant="outline" asChild>
+                            <Button variant="outline">
                                 <Link href={`/editor/issues/${id}/edit`}>Edit Data</Link>
                             </Button>
-                            <Button variant="outline" asChild>
+                            <Button variant="outline">
                                 <Link href={`/editor/issues/${id}/preview`}>Preview</Link>
                             </Button>
                             {issue.published_at ? (
                                 <Button
-                                    variant="destructive"
+                                    variant="danger"
                                     onClick={handleUnpublish}
                                     disabled={publishing}
                                 >

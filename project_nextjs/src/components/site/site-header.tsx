@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LanguageSwitcher } from "@/components/admin/language-switcher";
 import { Search, User, LogOut, LayoutDashboard } from "lucide-react";
 import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdown";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { getRedirectPathByRole } from "@/lib/auth-redirect";
 
 export type Menu = {
@@ -20,13 +20,20 @@ export type Menu = {
     }[];
 };
 
-type Props = {
-    menus?: Menu[];
+export type SiteSettings = {
+    title: string;
+    logo_url?: string;
 };
 
-export function SiteHeader({ menus = [] }: Props) {
+type Props = {
+    menus?: Menu[];
+    siteSettings?: SiteSettings;
+};
+
+export function SiteHeader({ menus = [], siteSettings }: Props) {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const params = useParams();
 
     const handleDashboardClick = () => {
         if (user) {
@@ -41,8 +48,14 @@ export function SiteHeader({ menus = [] }: Props) {
         <header className="border-b border-gray-200 bg-white">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-8">
-                    <Link href="/" className="text-2xl font-bold text-[var(--primary)]">
-                        OJS
+                    <Link href="/" className="flex items-center gap-2">
+                        {siteSettings?.logo_url ? (
+                            <img src={siteSettings.logo_url} alt={siteSettings.title} className="h-8 w-auto" />
+                        ) : (
+                            <span className="text-3xl font-bold text-[var(--primary)]">
+                                {siteSettings?.title || "iamJOS"}
+                            </span>
+                        )}
                     </Link>
 
                     {/* Primary Navigation */}
@@ -56,15 +69,15 @@ export function SiteHeader({ menus = [] }: Props) {
                                 {item.title}
                             </Link>
                         ))}
-                        {!primaryMenu?.items.length && (
+                        {!primaryMenu?.items.length && params?.path && (
                             <>
-                                <Link href="/" className="text-sm font-medium text-gray-700 hover:text-[var(--primary)]">
+                                <Link href={`/journals/${params.path}/issue/current`} className="text-sm font-medium text-gray-700 hover:text-[var(--primary)]">
                                     Current
                                 </Link>
-                                <Link href="#" className="text-sm font-medium text-gray-700 hover:text-[var(--primary)]">
+                                <Link href={`/journals/${params.path}/issue/archive`} className="text-sm font-medium text-gray-700 hover:text-[var(--primary)]">
                                     Archives
                                 </Link>
-                                <Link href="#" className="text-sm font-medium text-gray-700 hover:text-[var(--primary)]">
+                                <Link href={`/journals/${params.path}/about`} className="text-sm font-medium text-gray-700 hover:text-[var(--primary)]">
                                     About
                                 </Link>
                             </>

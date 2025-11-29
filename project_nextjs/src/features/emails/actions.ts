@@ -55,7 +55,7 @@ export async function updateEmailTemplate(formData: FormData) {
 
     const result = updateTemplateSchema.safeParse(rawData);
     if (!result.success) {
-        return { success: false, message: result.error.errors[0].message };
+        return { success: false, message: result.error.issues[0].message };
     }
 
     const { templateId, subject, body } = result.data;

@@ -42,9 +42,9 @@ async function checkParity() {
   // Note: We can't easily check enabled RLS via JS client without querying pg_class/pg_policy directly
   // or trying an anonymous select.
   // We'll try to select as anonymous (should fail or return empty if RLS is on and no public policy)
-  const anonClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+  const anonClient = createClient(supabaseUrl!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
   const { data: anonData, error: anonError } = await anonClient.from('submissions').select('*').limit(1);
-  
+
   // If RLS is on, and there's no public policy, this might return empty data or error depending on setup.
   // But we know we added policies.
   // A better check is to query `pg_policies` via RPC if we had one, but we don't.
@@ -61,7 +61,7 @@ async function checkParity() {
   } else {
     const requiredBuckets = ['journals', 'submissions', 'temporary', 'public'];
     const existingBucketNames = buckets.map(b => b.name);
-    
+
     for (const bucket of requiredBuckets) {
       if (existingBucketNames.includes(bucket)) {
         console.log(`[PASS] Bucket '${bucket}' exists.`);

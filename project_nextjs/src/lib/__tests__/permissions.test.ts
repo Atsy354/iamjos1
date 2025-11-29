@@ -1,4 +1,4 @@
-import { getCurrentUserId, requireSiteAdmin, hasUserSiteRole, hasUserJournalRole, requireJournalRole } from '../permissions';
+import { getCurrentUserId, requireSiteAdmin, hasUserSiteRole, hasUserJournalRole, requireJournalRole, type RolePath } from '../permissions';
 import { createSupabaseServerClient } from '../supabase/server';
 import { getSupabaseAdminClient } from '../supabase/admin';
 
@@ -70,7 +70,7 @@ describe('Permission Helpers', () => {
     it('should return true when user has the specified site role', async () => {
       const userId = 'user-123';
       const rolePath = 'admin';
-      
+
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [
           { role_name: 'Site Administrator', role_path: 'admin', context_id: null },
@@ -86,7 +86,7 @@ describe('Permission Helpers', () => {
     it('should return false when user does not have the specified site role', async () => {
       const userId = 'user-123';
       const rolePath = 'admin';
-      
+
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [
           { role_name: 'Manager', role_path: 'manager', context_id: null },
@@ -102,7 +102,7 @@ describe('Permission Helpers', () => {
     it('should return false when user has no roles', async () => {
       const userId = 'user-123';
       const rolePath = 'admin';
-      
+
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [],
         error: null,
@@ -115,7 +115,7 @@ describe('Permission Helpers', () => {
     it('should return false when role is journal-specific (has context_id)', async () => {
       const userId = 'user-123';
       const rolePath = 'admin';
-      
+
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [
           { role_name: 'Journal Admin', role_path: 'admin', context_id: 'journal-1' },
@@ -132,8 +132,8 @@ describe('Permission Helpers', () => {
     it('should return true when user has one of the specified journal roles', async () => {
       const userId = 'user-123';
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       setupJournalRoleMock([
         { user_id: userId, journal_id: journalId, role: 'editor' },
         { user_id: userId, journal_id: journalId, role: 'author' },
@@ -146,8 +146,8 @@ describe('Permission Helpers', () => {
     it('should return false when user does not have any of the specified journal roles', async () => {
       const userId = 'user-123';
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       setupJournalRoleMock([
         { user_id: userId, journal_id: journalId, role: 'author' },
         { user_id: userId, journal_id: journalId, role: 'reviewer' },
@@ -160,8 +160,8 @@ describe('Permission Helpers', () => {
     it('should return false when user has no journal roles', async () => {
       const userId = 'user-123';
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       setupJournalRoleMock([]);
 
       const result = await hasUserJournalRole(userId, journalId, rolePaths);
@@ -172,12 +172,12 @@ describe('Permission Helpers', () => {
   describe('requireSiteAdmin', () => {
     it('should not throw when user is admin', async () => {
       const userId = 'user-123';
-      
+
       mockSupabaseServer.auth.getSession.mockResolvedValue({
         data: { session: { user: { id: userId } } },
         error: null,
       });
-      
+
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [
           { role_name: 'Site Administrator', role_path: 'admin', context_id: null },
@@ -199,12 +199,12 @@ describe('Permission Helpers', () => {
 
     it('should throw "Forbidden" when user is not admin', async () => {
       const userId = 'user-123';
-      
+
       mockSupabaseServer.auth.getSession.mockResolvedValue({
         data: { session: { user: { id: userId } } },
         error: null,
       });
-      
+
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [
           { role_name: 'Manager', role_path: 'manager', context_id: null },
@@ -220,13 +220,13 @@ describe('Permission Helpers', () => {
     it('should not throw when user has the required journal role', async () => {
       const userId = 'user-123';
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       mockSupabaseServer.auth.getSession.mockResolvedValue({
         data: { session: { user: { id: userId } } },
         error: null,
       });
-      
+
       setupJournalRoleMock([
         { user_id: userId, journal_id: journalId, role: 'editor' },
       ]);
@@ -237,16 +237,16 @@ describe('Permission Helpers', () => {
     it('should not throw when user is site admin', async () => {
       const userId = 'user-123';
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       mockSupabaseServer.auth.getSession.mockResolvedValue({
         data: { session: { user: { id: userId } } },
         error: null,
       });
-      
+
       // User has no journal roles
       setupJournalRoleMock([]);
-      
+
       // But user is site admin
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [
@@ -260,8 +260,8 @@ describe('Permission Helpers', () => {
 
     it('should throw "Unauthorized" when no user is logged in', async () => {
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       mockSupabaseServer.auth.getSession.mockResolvedValue({
         data: { session: null },
         error: null,
@@ -273,16 +273,16 @@ describe('Permission Helpers', () => {
     it('should throw "Forbidden" when user does not have required journal role and is not site admin', async () => {
       const userId = 'user-123';
       const journalId = 'journal-1';
-      const rolePaths = ['editor', 'manager'];
-      
+      const rolePaths: RolePath[] = ['editor', 'manager'];
+
       mockSupabaseServer.auth.getSession.mockResolvedValue({
         data: { session: { user: { id: userId } } },
         error: null,
       });
-      
+
       // User has no journal roles
       setupJournalRoleMock([]);
-      
+
       // User is not site admin
       mockSupabaseAdmin.eq.mockResolvedValueOnce({
         data: [],

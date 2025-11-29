@@ -182,10 +182,10 @@ export default async function JournalHomePage({ params }: Props) {
                             )}
                         </dl>
                         <div className="mt-6 space-y-3">
-                            <Link href={`/author/submission/new?journal=${journal.id}`} className="block w-full rounded-md bg-[var(--primary)] px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-[var(--primary-hover)]">
+                            <Link href={`/author/submission/new?journal=${journal.id}`} className="block w-full rounded-md bg-[var(--primary)] px-3 py-2 text-center text-sm font-semibold !text-white shadow-sm hover:bg-[var(--primary-hover)] transition-colors">
                                 Make a Submission
                             </Link>
-                            <Link href={`/journals/${path}/issue/archive`} className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            <Link href={`/journals/${path}/issue/archive`} className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold !text-[var(--primary)] shadow-sm ring-1 ring-inset ring-[var(--primary)] hover:bg-gray-50 transition-colors">
                                 Browse Archives
                             </Link>
                         </div>

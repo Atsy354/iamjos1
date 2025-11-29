@@ -106,7 +106,7 @@ export async function updateUserProfile(formData: FormData) {
     const result = updateUserSchema.safeParse(rawData);
 
     if (!result.success) {
-        const errorMessage = result.error.errors?.[0]?.message || result.error.message || "Validation failed";
+        const errorMessage = result.error.issues?.[0]?.message || result.error.message || "Validation failed";
         return { success: false, message: errorMessage };
     }
 

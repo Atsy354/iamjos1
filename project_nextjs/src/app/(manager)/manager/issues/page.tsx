@@ -24,10 +24,10 @@ function mapIssue(row: IssueRecord): IssueRow {
       row.number == null
         ? null
         : typeof row.number === "number"
-        ? row.number
-        : Number.isNaN(Number(row.number))
-        ? null
-        : Number(row.number),
+          ? row.number
+          : Number.isNaN(Number(row.number))
+            ? null
+            : Number(row.number),
     year: row.year ?? null,
     status: row.published ? "published" : ("draft" as IssueRow["status"]),
     publishedAt: row.date_published ?? null,
@@ -88,7 +88,7 @@ export default async function ManagerIssuesPage() {
             </p>
           </div>
           <Link
-            href="/manager/issues/create"
+            href="/manager/issues/new"
             style={{
               backgroundColor: "#006798",
               color: "#fff",

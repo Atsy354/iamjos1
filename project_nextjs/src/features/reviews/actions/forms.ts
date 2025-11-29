@@ -87,7 +87,7 @@ export async function createReviewForm(formData: FormData) {
 
     const result = formSchema.safeParse(rawData);
     if (!result.success) {
-        return { success: false, message: result.error.errors[0].message };
+        return { success: false, message: result.error.issues[0].message };
     }
 
     const { title, description } = result.data;
@@ -149,7 +149,7 @@ export async function addFormElement(formData: FormData) {
 
     const result = elementSchema.safeParse(rawData);
     if (!result.success) {
-        return { success: false, message: result.error.errors[0].message };
+        return { success: false, message: result.error.issues[0].message };
     }
 
     const { formId, question, type, required, options } = result.data;

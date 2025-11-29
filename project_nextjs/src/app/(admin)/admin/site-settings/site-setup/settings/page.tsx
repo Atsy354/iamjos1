@@ -21,8 +21,11 @@ export default async function SiteSetupSettingsPage() {
           Settings
         </h2>
       </header>
-      
-      <form action={updateSiteSettingsAction} style={{
+
+      <form action={async (formData) => {
+        "use server";
+        await updateSiteSettingsAction(formData);
+      }} style={{
         display: 'flex',
         flexDirection: 'column',
         gap: '1.5rem'
@@ -58,8 +61,8 @@ export default async function SiteSetupSettingsPage() {
               fontFamily: 'inherit'
             }}
           />
-          <p style={{ 
-            fontSize: "0.875rem", 
+          <p style={{
+            fontSize: "0.875rem",
             color: '#666',
             margin: 0
           }}>
@@ -105,8 +108,8 @@ export default async function SiteSetupSettingsPage() {
                 </option>
               ))}
             </select>
-            <p style={{ 
-              fontSize: "0.875rem", 
+            <p style={{
+              fontSize: "0.875rem",
               color: '#666',
               margin: 0
             }}>

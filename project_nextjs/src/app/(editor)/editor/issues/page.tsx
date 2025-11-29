@@ -29,7 +29,7 @@ export default function IssuesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const supabase = useSupabase();
-  const { journalId } = useJournalSettings();
+  const { journalId } = useJournalSettings({ section: 'issues' });
 
   const fetchIssues = async () => {
     if (!journalId) return;

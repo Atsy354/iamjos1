@@ -11,6 +11,8 @@ export default async function IssuePage({ params }: Props) {
     const { path, issueId } = await params;
     const supabase = await createSupabaseServerClient();
 
+    console.log(`[IssuePage] path: ${path}, issueId: ${issueId}`);
+
     // Fetch Journal
     const { data: journal } = await supabase
         .from('journals')
@@ -24,26 +26,75 @@ export default async function IssuePage({ params }: Props) {
     }
 
     // Fetch Issue
-    const { data: issue } = await supabase
-        .from('issues')
-        .select(`
-            *,
-            submission_versions!inner (
-                submission:submissions (
-                    id,
-                    title,
-                    metadata,
-                    status
-                ),
-                version
-            )
-        `)
-        .eq('id', issueId)
-        .eq('journal_id', journal.id)
-        .not('published_at', 'is', null)
-        .single();
+    let issue;
+
+    if (issueId === 'current') {
+        const { data } = await supabase
+            .from('issues')
+            .select(`
+                *,
+                submission_versions!inner (
+                    submission:submissions (
+                        id,
+                        title,
+                        metadata,
+                        status
+                    ),
+                    version
+                )
+            `)
+            .eq('journal_id', journal.id)
+            .not('published_at', 'is', null)
+            .order('published_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        issue = data;
+    } else {
+        const { data } = await supabase
+            .from('issues')
+            .select(`
+                *,
+                submission_versions!inner (
+                    submission:submissions (
+                        id,
+                        title,
+                        metadata,
+                        status
+                    ),
+                    version
+                )
+            `)
+            .eq('id', issueId)
+            .eq('journal_id', journal.id)
+            .not('published_at', 'is', null)
+            .single();
+
+        issue = data;
+    }
 
     if (!issue) {
+        if (issueId === 'current') {
+            return (
+                <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+                    <div className="rounded-md bg-yellow-50 p-4">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-yellow-800">No issues published yet</h3>
+                                <div className="mt-2 text-sm text-yellow-700">
+                                    <p>This journal has not published any issues yet. Check back later.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         notFound();
     }
 

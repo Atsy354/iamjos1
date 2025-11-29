@@ -37,7 +37,14 @@ export function ReviewFormsClient({ forms }: Props) {
             </div>
 
             {isCreating && (
-                <form action={createReviewForm} className="bg-white p-6 rounded-lg shadow border border-gray-200 mb-6">
+                <form action={async (formData) => {
+                    const result = await createReviewForm(formData);
+                    if (result.success) {
+                        setIsCreating(false);
+                    } else {
+                        alert(result.message);
+                    }
+                }} className="bg-white p-6 rounded-lg shadow border border-gray-200 mb-6">
                     <h3 className="text-lg font-bold mb-4">New Review Form</h3>
                     <div className="space-y-4">
                         <div>

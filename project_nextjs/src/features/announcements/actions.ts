@@ -30,7 +30,7 @@ export async function createAnnouncement(formData: FormData) {
 
     const result = announcementSchema.safeParse(rawData);
     if (!result.success) {
-        return { success: false, message: result.error.errors[0].message };
+        return { success: false, message: result.error.issues[0].message };
     }
 
     const { title, shortDescription, description, dateExpire, journalId } = result.data;
@@ -41,13 +41,7 @@ export async function createAnnouncement(formData: FormData) {
             .from('announcements')
             .insert({
                 assoc_type: journalId ? 256 : 0, // 256 = Journal, 0 = Site (approximate OJS constants)
-                assoc_id: journalId || '00000000-0000-0000-0000-000000000000', // Use a zero UUID for site if needed, or handle nulls if schema allows
-                // Wait, let's check schema. assoc_id is UUID NOT NULL. 
-                // For site-wide, OJS usually uses 0 but UUID must be valid. 
-                // Let's assume we use a specific UUID for site or handle it.
-                // Actually, let's check if we can use a dummy UUID for site.
-                // Or maybe assoc_type 0 implies assoc_id is ignored?
-                // Let's use a zero UUID for now: 00000000-0000-0000-0000-000000000000
+                assoc_id: journalId || '00000000-0000-0000-0000-000000000000',
                 date_expire: dateExpire ? new Date(dateExpire).toISOString() : null,
                 date_posted: new Date().toISOString(),
             })

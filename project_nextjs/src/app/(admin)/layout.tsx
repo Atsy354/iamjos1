@@ -201,14 +201,7 @@ export default function AdminLayout({
         >
           {/* Left: Open Journal Systems and Tasks */}
           <div className="flex items-center gap-4">
-            {/* Hamburger Menu */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-1 hover:bg-white/10 rounded transition-colors"
-              aria-label="Open Menu"
-            >
-              <Menu className="h-6 w-6 text-white" />
-            </button>
+            {/* Hamburger Menu Removed */}
 
             <div className="relative">
               <Dropdown
@@ -233,7 +226,7 @@ export default function AdminLayout({
                       {journals.map((journal) => (
                         <Link
                           key={journal.id}
-                          href={journal.path ? `/${journal.path}` : `/journal/${journal.id}`}
+                          href={`/manager?journal=${journal.id}`}
                           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100 transition-colors"
                         >
                           <BookOpen className="h-4 w-4" />
@@ -300,52 +293,6 @@ export default function AdminLayout({
           </div>
         </div >
       </header >
-
-      {/* Sidebar Drawer */}
-      {
-        sidebarOpen && (
-          <div className="fixed inset-0 z-50 flex">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/50 transition-opacity"
-              onClick={() => setSidebarOpen(false)}
-            />
-
-            {/* Drawer */}
-            <div className="relative flex w-64 max-w-xs flex-col bg-[#1E293B] text-white shadow-xl transition-transform">
-              <div className="flex h-16 items-center justify-between px-4 border-b border-gray-700">
-                <span className="text-lg font-bold">Menu</span>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="p-1 hover:bg-white/10 rounded"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-
-              <nav className="flex-1 overflow-y-auto py-4">
-                <ul className="space-y-1 px-2">
-                  {navItems.map((item) => (
-                    <li key={item.key}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${pathname === item.href
-                          ? "bg-[#006798] text-white"
-                          : "text-gray-300 hover:bg-white/10 hover:text-white"
-                          }`}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            </div>
-          </div>
-        )
-      }
 
       {/* Main Content - Full Width */}
       <main

@@ -108,7 +108,10 @@ function SiteSetupTab({ initial, information }: { initial: Awaited<ReturnType<ty
         title="Site Configuration"
         description="OJS 3.3 PKPSiteConfigForm: title, redirect, minPasswordLength"
       >
-        <form action={updateSiteSettingsAction} style={{
+        <form action={async (formData) => {
+          "use server";
+          await updateSiteSettingsAction(formData);
+        }} style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem'
@@ -212,7 +215,10 @@ function SiteSetupTab({ initial, information }: { initial: Awaited<ReturnType<ty
         title="Contact Information"
         description="OJS 3.3 PKPSiteInformationForm: about, contactName, contactEmail, privacyStatement"
       >
-        <form action={updateSiteInformationAction} style={{
+        <form action={async (formData) => {
+          "use server";
+          await updateSiteInformationAction(formData);
+        }} style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem'
@@ -397,7 +403,10 @@ function LanguagesTab({ initial }: { initial: Awaited<ReturnType<typeof getSiteL
         title="Available Locales"
         description="Aktifkan bahasa yang dapat digunakan oleh jurnal di situs ini."
       >
-        <form action={updateSiteLanguagesAction} style={{
+        <form action={async (formData) => {
+          "use server";
+          await updateSiteLanguagesAction(formData);
+        }} style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem'
@@ -488,7 +497,10 @@ function LanguagesTab({ initial }: { initial: Awaited<ReturnType<typeof getSiteL
         title="Language Settings"
         description="Atur bahasa antarmuka dan form input."
       >
-        <form action={updateSiteLanguagesAction} style={{
+        <form action={async (formData) => {
+          "use server";
+          await updateSiteLanguagesAction(formData);
+        }} style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem'
@@ -724,7 +736,10 @@ function NavigationMenusTab({ initial }: { initial: Awaited<ReturnType<typeof ge
   return (
     <>
       <Section title="Primary Navigation" description="Menu utama yang tampil di bagian atas halaman depan jurnal.">
-        <form action={updateSiteNavigationAction} style={{
+        <form action={async (formData) => {
+          "use server";
+          await updateSiteNavigationAction(formData);
+        }} style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem'
