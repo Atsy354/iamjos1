@@ -223,93 +223,95 @@ export default function AdminLayout({
       {/* Main Layout Area with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside
-          style={{
-            width: "256px",
-            backgroundColor: pkpColors.sidebarBg,
-            color: pkpColors.sidebarText,
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "4px 0 6px -1px rgba(0, 0, 0, 0.1)",
-            overflowY: "auto"
-          }}
-        >
-          {/* Logo / Branding Area */}
-          <div
+        {pathname !== '/admin/site-management/hosted-journals' && !pathname?.includes('/settings/wizard') && (
+          <aside
             style={{
-              padding: "1.5rem 1.25rem 1rem 1.25rem",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+              width: "256px",
+              backgroundColor: pkpColors.sidebarBg,
+              color: pkpColors.sidebarText,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "4px 0 6px -1px rgba(0, 0, 0, 0.1)",
+              overflowY: "auto"
             }}
           >
-            <Link
-              href="/admin"
-              style={{ textDecoration: "none", color: "#ffffff" }}
+            {/* Logo / Branding Area */}
+            <div
+              style={{
+                padding: "1.5rem 1.25rem 1rem 1.25rem",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+              }}
             >
-              <div style={{ marginBottom: "0.5rem" }}>
-                <div
-                  className="flex items-baseline"
-                  style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}
-                >
-                  <span
+              <Link
+                href="/admin"
+                style={{ textDecoration: "none", color: "#ffffff" }}
+              >
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <div
+                    className="flex items-baseline"
+                    style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "2.2rem",
+                        fontWeight: "bold",
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1,
+                      }}
+                    >
+                      iam
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "2.6rem",
+                        fontWeight: "bold",
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1,
+                      }}
+                    >
+                      JOS
+                    </span>
+                  </div>
+                  <div
                     style={{
-                      fontSize: "2.2rem",
-                      fontWeight: "bold",
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1,
+                      fontSize: "0.65rem",
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      opacity: 0.9,
+                      marginTop: "0.5rem",
                     }}
                   >
-                    iam
-                  </span>
-                  <span
+                    SITE ADMINISTRATION
+                  </div>
+                  <div
                     style={{
-                      fontSize: "2.6rem",
-                      fontWeight: "bold",
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1,
+                      fontSize: "0.65rem",
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      opacity: 0.9,
                     }}
                   >
-                    JOS
-                  </span>
+                    OPEN JOURNAL SYSTEMS
+                  </div>
                 </div>
-                <div
-                  style={{
-                    fontSize: "0.65rem",
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    opacity: 0.9,
-                    marginTop: "0.5rem",
-                  }}
-                >
-                  SITE ADMINISTRATION
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.65rem",
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    opacity: 0.9,
-                  }}
-                >
-                  OPEN JOURNAL SYSTEMS
-                </div>
-              </div>
-            </Link>
-          </div>
+              </Link>
+            </div>
 
-          {/* Administration Label (Replaces Nav) */}
-          <div style={{ padding: "1.5rem 1.25rem" }}>
-            <h2 style={{
-              color: "#ffffff",
-              fontSize: "1.1rem",
-              fontWeight: "bold",
-              margin: 0,
-              fontFamily: pkpTypography.fontFamily
-            }}>
-              Administration
-            </h2>
-          </div>
-        </aside>
+            {/* Administration Label (Replaces Nav) */}
+            <div style={{ padding: "1.5rem 1.25rem" }}>
+              <h2 style={{
+                color: "#ffffff",
+                fontSize: "1.1rem",
+                fontWeight: "bold",
+                margin: 0,
+                fontFamily: pkpTypography.fontFamily
+              }}>
+                Administration
+              </h2>
+            </div>
+          </aside>
+        )}
 
         {/* Main Content - Full Width */}
         <main

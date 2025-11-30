@@ -24,18 +24,7 @@ export default function JournalSettingsLayout({ children, params }: Props) {
     const isWizard = pathname?.endsWith('/wizard');
 
     if (isWizard) {
-        return (
-            <div style={{ fontFamily: pkpTypography.fontFamily, width: '100%' }}>
-                <div style={{ paddingBottom: '0.5rem' }}>
-                    <AdminBreadcrumb items={[
-                        { label: 'Site Administration', href: '/admin' },
-                        { label: 'Hosted Journals', href: '/admin/site-management/hosted-journals' },
-                        { label: 'Settings Wizard' }
-                    ]} />
-                </div>
-                {children}
-            </div>
-        );
+        return <>{children}</>;
     }
 
     return (

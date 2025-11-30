@@ -15,7 +15,7 @@ import { useJournalSettings, useMigrateLocalStorageToDatabase } from "@/features
 import { locales, localeNames } from "@/lib/i18n/config";
 import { getLocaleInfo } from "@/lib/locales";
 import { useI18n } from "@/contexts/I18nContext";
-import { Bold, Italic, Link as LinkIcon, List, Image as ImageIcon, Code, ChevronUp, ChevronDown, ArrowUpDown, HelpCircle } from "lucide-react";
+import { Bold, Italic, Link as LinkIcon, List, Image as ImageIcon, Code, ChevronUp, ChevronDown, ArrowUpDown, HelpCircle, Quote, Superscript, Subscript } from "lucide-react";
 
 export default function WebsiteSettingsPage() {
   const { t } = useI18n();
@@ -81,9 +81,9 @@ export default function WebsiteSettingsPage() {
 
   // Setup - Information state
   const [setupInformation, setSetupInformation] = useState({
-    journalTitle: '',
-    journalDescription: '',
-    aboutJournal: ''
+    forReaders: '',
+    forAuthors: '',
+    forLibrarians: ''
   });
   const [setupInformationFeedback, setSetupInformationFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -249,10 +249,6 @@ export default function WebsiteSettingsPage() {
 
   const handleSaveSetupInformation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!setupInformation.journalTitle.trim()) {
-      setSetupInformationFeedback({ type: 'error', message: 'Journal title is required.' });
-      return;
-    }
     setSetupInformationFeedback(null);
     const success = await websiteSettings.saveSettings({ setup_information: JSON.stringify(setupInformation) });
     setSetupInformationFeedback(success ? { type: 'success', message: 'Information settings saved successfully.' } : { type: 'error', message: websiteSettings.error || 'Failed to save information settings.' });
@@ -489,15 +485,36 @@ export default function WebsiteSettingsPage() {
                     {setupInformationFeedback && <div style={{ padding: "0.75rem 1rem", marginBottom: "1rem", borderRadius: "4px", backgroundColor: setupInformationFeedback.type === 'success' ? '#d4edda' : '#f8d7da', color: setupInformationFeedback.type === 'success' ? '#155724' : '#721c24', border: `1px solid ${setupInformationFeedback.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`, fontSize: "0.875rem" }}>{setupInformationFeedback.message}</div>}
                     <form onSubmit={handleSaveSetupInformation}>
                       <div style={{ backgroundColor: "#ffffff", border: "1px solid #e5e5e5", padding: "1.5rem" }}>
-                        <div style={{ marginBottom: "1rem" }}>
-                          <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem", color: "#002C40" }}>Journal Title <span style={{ color: "#dc3545" }}>*</span></label>
-                          <PkpInput type="text" placeholder="Enter journal title" style={{ width: "100%" }} value={setupInformation.journalTitle} onChange={(e) => setSetupInformation({ ...setupInformation, journalTitle: e.target.value })} required />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem" }}>
+                          <div>
+                            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#002C40", marginBottom: "0.5rem" }}>Descriptions</h3>
+                            <p style={{ fontSize: "0.875rem", color: "#333", lineHeight: "1.5" }}>
+                              Brief descriptions of the journal for librarians and prospective authors and readers. These are made available in the site's sidebar when the Information block has been added.
+                            </p>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                            {['For Readers', 'For Authors', 'For Librarians'].map((label) => {
+                              const key = label === 'For Readers' ? 'forReaders' : label === 'For Authors' ? 'forAuthors' : 'forLibrarians';
+                              return (
+                                <div key={key}>
+                                  <h3 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#002C40", marginBottom: "0.5rem" }}>{label}</h3>
+                                  <div style={{ border: "1px solid #ccc", borderBottom: "none", padding: "0.5rem", display: "flex", gap: "0.75rem", backgroundColor: "#fff", borderTopLeftRadius: "4px", borderTopRightRadius: "4px" }}>
+                                    <Bold size={16} color="#555" /><Italic size={16} color="#555" /><Superscript size={16} color="#555" /><Subscript size={16} color="#555" /><LinkIcon size={16} color="#555" /><Quote size={16} color="#555" /><List size={16} color="#555" /><ImageIcon size={16} color="#555" /><Code size={16} color="#555" />
+                                  </div>
+                                  <PkpTextarea
+                                    rows={6}
+                                    style={{ width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
+                                    value={setupInformation[key as keyof typeof setupInformation]}
+                                    onChange={(e) => setSetupInformation({ ...setupInformation, [key]: e.target.value })}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div style={{ marginBottom: "1rem" }}>
-                          <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem", color: "#002C40" }}>Journal Description</label>
-                          <PkpTextarea rows={5} placeholder="Enter journal description" style={{ width: "100%" }} value={setupInformation.journalDescription} onChange={(e) => setSetupInformation({ ...setupInformation, journalDescription: e.target.value })} />
+                        <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid #e5e5e5" }}>
+                          <PkpButton variant="primary" type="submit" disabled={websiteSettings.loading} loading={websiteSettings.loading}>{websiteSettings.loading ? t('editor.settings.saving') : t('editor.settings.save')}</PkpButton>
                         </div>
-                        <PkpButton variant="primary" type="submit" disabled={websiteSettings.loading} loading={websiteSettings.loading}>{websiteSettings.loading ? t('editor.settings.saving') : t('editor.settings.save')}</PkpButton>
                       </div>
                     </form>
                   </div>
