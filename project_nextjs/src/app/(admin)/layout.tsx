@@ -28,7 +28,7 @@ import { Dropdown, DropdownItem, DropdownSection } from "@/components/ui/dropdow
 import { useSupabase } from "@/providers/supabase-provider";
 import { LanguageSwitcher } from "@/components/admin/language-switcher";
 import { useI18n } from "@/contexts/I18nContext";
-import { pkpColors } from "@/lib/theme";
+import { pkpColors, pkpTypography } from "@/lib/theme";
 
 export default function AdminLayout({
   children,
@@ -76,80 +76,6 @@ export default function AdminLayout({
     }
   }, [supabase, user]);
 
-  const navItems = [
-    {
-      label: t("admin.dashboard"),
-      href: "/admin",
-      icon: Home,
-      key: "dashboard",
-    },
-    {
-      label: t("admin.hostedJournals"),
-      href: "/admin/site-management/hosted-journals",
-      icon: BookOpen,
-      key: "hosted-journals",
-    },
-    {
-      label: t("admin.siteSettings"),
-      href: "/admin/site-settings/site-setup/settings",
-      icon: Settings,
-      key: "site-settings",
-    },
-    {
-      label: t("admin.users"),
-      href: "/admin/users",
-      icon: Users,
-      key: "users",
-    },
-    {
-      label: t("admin.statistics"),
-      href: "/admin/statistics",
-      icon: BarChart3,
-      key: "statistics",
-    },
-    {
-      label: t("admin.administrativeFunctions"),
-      href: "/admin/system/system-information",
-      icon: Server,
-      key: "admin-functions",
-    },
-  ];
-
-  const siteSettingsSections = [
-    {
-      title: t("siteSettings.setup"),
-      items: [
-        { name: t("siteSettings.settings"), href: "/admin/site-settings/site-setup/settings" },
-        { name: t("siteSettings.information"), href: "/admin/site-settings/site-setup/information" },
-        { name: t("siteSettings.languages"), href: "/admin/site-settings/site-setup/languages" },
-        { name: t("siteSettings.navigation"), href: "/admin/site-settings/site-setup/navigation" },
-        { name: t("siteSettings.bulkEmails"), href: "/admin/site-settings/site-setup/bulk-emails" },
-      ],
-    },
-    {
-      title: t("siteSettings.appearance"),
-      items: [
-        { name: t("siteSettings.theme"), href: "/admin/site-settings/appearance/theme" },
-        { name: t("siteSettings.appearance"), href: "/admin/site-settings/appearance/setup" },
-      ],
-    },
-    {
-      title: t("siteSettings.plugins"),
-      items: [
-        { name: t("siteSettings.installedPlugins"), href: "/admin/site-settings/plugins" },
-        { name: t("siteSettings.pluginGallery"), href: "/admin/site-settings/plugins/gallery" },
-      ],
-    },
-  ];
-
-  const administrativeFunctionsSubmenu = [
-    { name: t("admin.systemInformation"), href: "/admin/system/system-information" },
-    { name: t("admin.expireUserSessions"), href: "/admin/system/expire-sessions" },
-    { name: t("admin.clearDataCaches"), href: "/admin/system/clear-data-caches" },
-    { name: t("admin.clearTemplateCache"), href: "/admin/system/clear-template-cache" },
-    { name: t("admin.clearScheduledTaskExecutionLogs"), href: "/admin/system/clear-scheduled-tasks" },
-  ];
-
   // Proteksi role - hanya admin yang bisa akses area ini
   useEffect(() => {
     if (loading) return;
@@ -189,7 +115,9 @@ export default function AdminLayout({
         className="text-white"
         style={{
           backgroundColor: pkpColors.headerBg,
-          height: "60px"
+          height: "60px",
+          flexShrink: 0,
+          zIndex: 50
         }}
       >
         <div
@@ -201,8 +129,6 @@ export default function AdminLayout({
         >
           {/* Left: Open Journal Systems and Tasks */}
           <div className="flex items-center gap-4">
-            {/* Hamburger Menu Removed */}
-
             <div className="relative">
               <Dropdown
                 button={
@@ -294,20 +220,110 @@ export default function AdminLayout({
         </div >
       </header >
 
-      {/* Main Content - Full Width */}
-      <main
-        className="flex-1 bg-white min-h-screen"
-        style={{
-          padding: "2rem 1.5rem",
-          backgroundColor: "#ffffff",
-          minHeight: "calc(100vh - 60px)",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          width: "100%"
-        }}
-      >
-        {children}
-      </main>
+      {/* Main Layout Area with Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside
+          style={{
+            width: "256px",
+            backgroundColor: pkpColors.sidebarBg,
+            color: pkpColors.sidebarText,
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "4px 0 6px -1px rgba(0, 0, 0, 0.1)",
+            overflowY: "auto"
+          }}
+        >
+          {/* Logo / Branding Area */}
+          <div
+            style={{
+              padding: "1.5rem 1.25rem 1rem 1.25rem",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+            }}
+          >
+            <Link
+              href="/admin"
+              style={{ textDecoration: "none", color: "#ffffff" }}
+            >
+              <div style={{ marginBottom: "0.5rem" }}>
+                <div
+                  className="flex items-baseline"
+                  style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}
+                >
+                  <span
+                    style={{
+                      fontSize: "2.2rem",
+                      fontWeight: "bold",
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1,
+                    }}
+                  >
+                    iam
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "2.6rem",
+                      fontWeight: "bold",
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1,
+                    }}
+                  >
+                    JOS
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.65rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    opacity: 0.9,
+                    marginTop: "0.5rem",
+                  }}
+                >
+                  SITE ADMINISTRATION
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.65rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    opacity: 0.9,
+                  }}
+                >
+                  OPEN JOURNAL SYSTEMS
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Administration Label (Replaces Nav) */}
+          <div style={{ padding: "1.5rem 1.25rem" }}>
+            <h2 style={{
+              color: "#ffffff",
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              margin: 0,
+              fontFamily: pkpTypography.fontFamily
+            }}>
+              Administration
+            </h2>
+          </div>
+        </aside>
+
+        {/* Main Content - Full Width */}
+        <main
+          className="flex-1 bg-white overflow-auto"
+          style={{
+            backgroundColor: "#eaedee",
+            padding: "2rem 1.5rem",
+          }}
+        >
+          <div style={{ maxWidth: "1400px", margin: "0 auto", width: "100%" }}>
+            {children}
+          </div>
+        </main>
+      </div>
     </div >
   );
 }

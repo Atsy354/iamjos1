@@ -7,7 +7,7 @@ import { SubmissionTable } from "@/features/editor/components/submission-table";
 import { useAuth } from "@/contexts/AuthContext";
 import type { EditorDashboardStats, SubmissionSummary } from "@/features/editor/types";
 
-type FetchResult<T> = { ok: boolean; error?: string; [key: string]: any } & T;
+type FetchResult<T> = { ok: boolean; error?: string;[key: string]: any } & T;
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: "include" });
@@ -169,8 +169,8 @@ export function ManagerDashboardSubmissionsClient() {
         <div
           ref={tabsContainerRef}
           style={{
-            borderBottom: "2px solid #e5e5e5",
-            background: "#ffffff",
+            borderBottom: "1px solid #ddd",
+            background: "transparent",
             padding: "0 2rem",
             position: "relative",
             display: "flex",
@@ -179,8 +179,8 @@ export function ManagerDashboardSubmissionsClient() {
             margin: 0,
           }}
         >
-          <div style={{ display: "flex", flex: 1 }}>
-            <PkpTabsList style={{ flex: 1 }}>
+          <div style={{ display: "flex", flex: 1, alignItems: "flex-end" }}>
+            <PkpTabsList style={{ flex: 1, borderBottom: "none", padding: 0 }}>
               {/* My Queue */}
               <PkpTabsTrigger value="myQueue">
                 My Queue
@@ -240,7 +240,7 @@ export function ManagerDashboardSubmissionsClient() {
               {/* Active (All Active in our stats) */}
               {isManagerOrAdmin && (
                 <PkpTabsTrigger value="active">
-                  Active
+                  All Active
                   {(stats?.allActive ?? 0) > 0 && (
                     <span
                       style={{
@@ -294,6 +294,42 @@ export function ManagerDashboardSubmissionsClient() {
               </PkpTabsTrigger>
             </PkpTabsList>
           </div>
+
+          {/* Help Button */}
+          <div style={{ marginBottom: "0.5rem" }}>
+            <button
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.25rem",
+                color: "#006798",
+                backgroundColor: "#ffffff",
+                border: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "0.25rem 0.5rem",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "14px",
+                  height: "14px",
+                  borderRadius: "50%",
+                  backgroundColor: "#006798",
+                  color: "#ffffff",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                }}
+              >
+                i
+              </span>
+              Help
+            </button>
+          </div>
         </div>
 
         {/* Tab Contents */}
@@ -301,17 +337,13 @@ export function ManagerDashboardSubmissionsClient() {
           value="myQueue"
           style={{ position: "relative", padding: "1.5rem 2rem", backgroundColor: "#eaedee" }}
         >
-          {loading && !myQueue.length ? (
-            <p className="text-sm text-[var(--muted)]">Loading…</p>
-          ) : error ? (
-            <p className="text-sm text-red-500">{error}</p>
-          ) : (
-            <SubmissionTable
-              submissions={myQueue}
-              emptyMessage="Tidak ada submission di My Queue."
-              tabLabel="My Assigned"
-            />
-          )}
+          <SubmissionTable
+            submissions={myQueue}
+            emptyMessage="No submissions found."
+            tabLabel="My Assigned"
+            isLoading={loading && !myQueue.length}
+            error={error}
+          />
         </PkpTabsContent>
 
         {isManagerOrAdmin && (
@@ -319,17 +351,13 @@ export function ManagerDashboardSubmissionsClient() {
             value="unassigned"
             style={{ position: "relative", padding: "1.5rem 2rem", backgroundColor: "#eaedee" }}
           >
-            {loading && !unassigned.length ? (
-              <p className="text-sm text-[var(--muted)]">Loading…</p>
-            ) : error ? (
-              <p className="text-sm text-red-500">{error}</p>
-            ) : (
-              <SubmissionTable
-                submissions={unassigned}
-                emptyMessage="Tidak ada submission yang belum ditugaskan."
-                tabLabel="Unassigned"
-              />
-            )}
+            <SubmissionTable
+              submissions={unassigned}
+              emptyMessage="No submissions found."
+              tabLabel="Unassigned"
+              isLoading={loading && !unassigned.length}
+              error={error}
+            />
           </PkpTabsContent>
         )}
 
@@ -338,17 +366,13 @@ export function ManagerDashboardSubmissionsClient() {
             value="active"
             style={{ position: "relative", padding: "1.5rem 2rem", backgroundColor: "#eaedee" }}
           >
-            {loading && !active.length ? (
-              <p className="text-sm text-[var(--muted)]">Loading…</p>
-            ) : error ? (
-              <p className="text-sm text-red-500">{error}</p>
-            ) : (
-              <SubmissionTable
-                submissions={active}
-                emptyMessage="Tidak ada submission aktif."
-                tabLabel="All Active"
-              />
-            )}
+            <SubmissionTable
+              submissions={active}
+              emptyMessage="No submissions found."
+              tabLabel="All Active"
+              isLoading={loading && !active.length}
+              error={error}
+            />
           </PkpTabsContent>
         )}
 
@@ -356,17 +380,13 @@ export function ManagerDashboardSubmissionsClient() {
           value="archive"
           style={{ position: "relative", padding: "1.5rem 2rem", backgroundColor: "#eaedee" }}
         >
-          {loading && !archived.length ? (
-            <p className="text-sm text-[var(--muted)]">Loading…</p>
-          ) : error ? (
-            <p className="text-sm text-red-500">{error}</p>
-          ) : (
-            <SubmissionTable
-              submissions={archived}
-              emptyMessage="Tidak ada submission yang diarsipkan."
-              tabLabel="Archives"
-            />
-          )}
+          <SubmissionTable
+            submissions={archived}
+            emptyMessage="No submissions found."
+            tabLabel="Archives"
+            isLoading={loading && !archived.length}
+            error={error}
+          />
         </PkpTabsContent>
       </PkpTabs>
     </section>
