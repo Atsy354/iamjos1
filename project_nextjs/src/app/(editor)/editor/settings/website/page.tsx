@@ -414,7 +414,7 @@ export default function WebsiteSettingsPage() {
                             <div style={{ border: "1px dashed #ccc", padding: "2rem", textAlign: "center", backgroundColor: "#fff", marginBottom: "0.5rem", borderRadius: "4px" }}>
                               <span style={{ color: "#006798", fontSize: "0.875rem" }}>Drop files here to upload</span>
                             </div>
-                            <PkpButton type="button" variant="outline" style={{ fontSize: "0.875rem" }}>Upload File</PkpButton>
+                            <PkpButton type="button" variant="onclick" style={{ fontSize: "0.875rem" }}>Upload File</PkpButton>
                           </div>
                         ))}
                         <div style={{ marginBottom: "2rem" }}>
@@ -453,7 +453,7 @@ export default function WebsiteSettingsPage() {
                             <div style={{ border: "1px dashed #ccc", padding: "2rem", textAlign: "center", backgroundColor: "#fff", marginBottom: "0.5rem", borderRadius: "4px" }}>
                               <span style={{ color: "#006798", fontSize: "0.875rem" }}>Drop files here to upload</span>
                             </div>
-                            <PkpButton type="button" variant="outline" style={{ fontSize: "0.875rem" }}>Upload File</PkpButton>
+                            <PkpButton type="button" variant="onclick" style={{ fontSize: "0.875rem" }}>Upload File</PkpButton>
                           </div>
                         ))}
                         <div style={{ marginBottom: "2rem" }}>
