@@ -21,10 +21,10 @@ export function WizardHeader({ journalName }: Props) {
                     href="/admin"
                     style={{
                         color: '#006798',
-                        textDecoration: 'underline',
+                        textDecoration: 'none',
                         fontSize: '1rem'
                     }}
-                    className="hover:no-underline"
+                    className="hover:underline"
                 >
                     {t('admin.siteAdministration')}
                 </Link>
@@ -37,10 +37,10 @@ export function WizardHeader({ journalName }: Props) {
                     href="/admin/site-management/hosted-journals"
                     style={{
                         color: '#006798',
-                        textDecoration: 'underline',
+                        textDecoration: 'none',
                         fontSize: '1rem'
                     }}
-                    className="hover:no-underline"
+                    className="hover:underline"
                 >
                     {t('admin.hostedJournals')}
                 </Link>
@@ -53,7 +53,7 @@ export function WizardHeader({ journalName }: Props) {
                     color: '#111827',
                     fontSize: '1rem'
                 }}>
-                    {journalName || t('wizard.title')}
+                    Settings Wizard
                 </span>
             </div>
             <h1 className="text-xl font-semibold text-gray-900" style={{
