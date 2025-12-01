@@ -1015,6 +1015,25 @@ export default function WebsiteSettingsPage() {
 
                   {/* Plugin Categories */}
                   <div className="flex flex-col gap-4">
+                    {/* Theme Plugins */}
+                    <div>
+                      <div className="bg-gray-100 px-4 py-2 text-sm font-bold text-[#002C40] border-t border-b border-gray-200">
+                        Theme Plugins (1)
+                      </div>
+                      <div className="grid grid-cols-[30%_55%_15%] py-3 border-b border-gray-100 items-start hover:bg-gray-50">
+                        <div className="flex items-start gap-2 px-4">
+                          <span className="text-[#006798] text-[10px] mt-1 cursor-pointer">▶</span>
+                          <span className="text-sm text-[#006798] cursor-pointer hover:underline">Default Theme</span>
+                        </div>
+                        <div className="text-sm text-gray-700 pr-4">
+                          This theme implements the default theme.
+                        </div>
+                        <div className="flex items-start">
+                          <input type="checkbox" checked={true} readOnly className="w-4 h-4 accent-[#d9534f]" />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Metadata Plugins */}
                     <div>
                       <div className="bg-gray-100 px-4 py-2 text-sm font-bold text-[#002C40] border-t border-b border-gray-200">
