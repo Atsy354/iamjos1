@@ -71,9 +71,9 @@ export default function JournalSettingsLayout({ children, params }: Props) {
                                     padding: '0.75rem 0.25rem',
                                     fontSize: pkpTypography.bodyRegular,
                                     fontWeight: pkpTypography.semibold,
-                                    color: active ? pkpColors.primary : pkpColors.textDark,
+                                    color: active ? '#006798' : pkpColors.textDark,
                                     textDecoration: 'none',
-                                    borderBottom: active ? `3px solid ${pkpColors.primary}` : 'none',
+                                    borderBottom: active ? '4px solid #006798' : 'none',
                                     marginBottom: '-2px',
                                     fontFamily: pkpTypography.fontFamily
                                 }}

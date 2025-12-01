@@ -1,271 +1,211 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { WizardHeader } from '@/features/admin/components/wizard-header';
 import { PkpInput } from '@/components/ui/pkp-input';
 import { PkpCheckbox } from '@/components/ui/pkp-checkbox';
-import { PkpRichTextEditor } from '@/components/ui/pkp-rich-text-editor';
 import { Button } from '@/components/ui/button';
-import { useSupabase } from '@/providers/supabase-provider';
-import { updateJournalAction } from '../../../../site-management/hosted-journals/actions';
-import { pkpColors, pkpTypography } from '@/lib/theme';
-import { toast } from 'sonner';
-import Link from "next/link";
-import { useI18n } from "@/contexts/I18nContext";
-import { cn } from "@/lib/utils";
+import { AdminBreadcrumb } from '@/components/admin/admin-breadcrumb';
 
-function WizardHeader({ journalName }: { journalName?: string }) {
-    const { t } = useI18n();
-
-    return (
-        <div className="bg-gray-200 px-6 py-4" style={{
-            backgroundColor: '#e5e5e5',
-            padding: '1rem 1.5rem'
-        }}>
-            {/* Breadcrumb removed as requested */}
-            <h1 className="text-xl font-semibold text-gray-900" style={{
-                fontSize: '1.25rem',
-                fontWeight: '600',
-                color: '#111827'
-            }}>
-                {t('wizard.title')}
-            </h1>
-        </div>
-    );
-}
-
-export default function JournalWizardPage({ params }: { params: Promise<{ journalId: string }> }) {
-    const { journalId } = use(params);
+export default function JournalWizardPage() {
+    const params = useParams();
     const router = useRouter();
-    const supabase = useSupabase();
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [pathPrefix, setPathPrefix] = useState('http://localhost/');
-
-    // Navigation State
     const [activeTab, setActiveTab] = useState<'settings' | 'plugins' | 'users'>('settings');
-    const [activeSection, setActiveSection] = useState<'journal' | 'appearance' | 'languages' | 'indexing' | 'emails'>('journal');
+    const [activeSection, setActiveSection] = useState<'journal' | 'appearance' | 'languages' | 'indexing' | 'emails' | 'installed' | 'gallery'>('journal');
+    const [saving, setSaving] = useState(false);
 
     const [formData, setFormData] = useState({
-        title: '',
-        initials: '',
-        abbreviation: '',
+        title: 'Journal of Public Knowledge',
+        initials: 'JPK',
+        abbreviation: 'JPK',
         description: '',
-        path: '',
-        isPublic: false,
-        // Appearance (Mock data for UI)
+        path: 'publicknowledge',
+        isPublic: true,
         theme: 'Default Theme',
         typography: 'Noto Sans',
-        headerColor: '#1E6292',
+        headerColor: '#006798',
         showSummary: false,
         showHeaderImage: false,
-        // Languages (Mock data for UI)
+        searchDescription: '',
+        customTags: '',
+        disableBulkEmails: [] as string[],
         primaryLocale: 'en_US',
         locales: [
             { code: 'en_US', name: 'English', ui: true, forms: true, submissions: true },
-            { code: 'es_ES', name: 'Español (España)', ui: false, forms: false, submissions: false },
-            { code: 'id_ID', name: 'Bahasa Indonesia', ui: false, forms: false, submissions: false },
-        ],
-        // Search Indexing
-        searchDescription: '',
-        customTags: '',
-        // Restrict Bulk Emails
-        disableBulkEmails: [] as string[],
+            { code: 'fr_CA', name: 'Français (Canada)', ui: true, forms: true, submissions: true },
+            { code: 'ar', name: 'العربية', ui: true, forms: true, submissions: true },
+        ]
     });
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setPathPrefix(`${window.location.origin}/`);
-        }
-    }, []);
+    const pathPrefix = typeof window !== 'undefined' ? `${window.location.origin}/index.php/` : '.../index.php/';
 
-    useEffect(() => {
-        const fetchJournal = async () => {
-            try {
-                const { data: journal, error: journalError } = await supabase
-                    .from('journals')
-                    .select('*')
-                    .eq('id', journalId)
-                    .single();
-
-                if (journalError) throw journalError;
-
-                const { data: settings, error: settingsError } = await supabase
-                    .from('journal_settings')
-                    .select('setting_name, setting_value')
-                    .eq('journal_id', journalId);
-
-                if (settingsError) throw settingsError;
-
-                const settingsMap = (settings || []).reduce((acc: any, curr) => {
-                    acc[curr.setting_name] = curr.setting_value;
-                    return acc;
-                }, {});
-
-                setFormData(prev => ({
-                    ...prev,
-                    title: settingsMap.name || '',
-                    initials: settingsMap.initials || '',
-                    abbreviation: settingsMap.abbreviation || '',
-                    description: settingsMap.description || '',
-                    path: journal.path || '',
-                    isPublic: journal.enabled || false,
-                }));
-            } catch (error) {
-                console.error('Error fetching journal:', error);
-                toast.error('Failed to load journal data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (journalId) {
-            fetchJournal();
-        }
-    }, [journalId, supabase]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-
-        try {
-            const result = await updateJournalAction({
-                id: journalId,
-                title: formData.title,
-                initials: formData.initials,
-                abbreviation: formData.abbreviation,
-                path: formData.path,
-                description: formData.description,
-                isPublic: formData.isPublic,
-            });
-
-            if (result.success) {
-                toast.success('Journal updated successfully');
-                router.refresh();
-            } else {
-                toast.error(result.message || 'Failed to update journal');
-            }
-        } catch (error) {
-            console.error('Error updating journal:', error);
-            toast.error('An unexpected error occurred');
-        } finally {
-            setSaving(false);
-        }
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setSaving(false);
     };
-
-    if (loading) {
-        return <div className="p-8 text-center">Loading...</div>;
-    }
 
     return (
         <div className="min-h-screen bg-[#eaedee] flex flex-col">
             <WizardHeader journalName={formData.title} />
 
-            <div className="flex-1 p-8">
-                <div className="max-w-5xl mx-auto bg-white border border-gray-200 shadow-sm rounded-sm min-h-[600px] flex flex-col">
+            <div className="flex-1 px-4 py-6">
+                <div className="max-w-7xl mx-auto flex flex-col">
 
                     {/* Top Tabs */}
-                    <div className="flex border-b border-gray-200 px-4 pt-4">
-                        {[
-                            { label: 'Journal Settings', key: 'settings' },
-                            { label: 'Plugins', key: 'plugins' },
-                            { label: 'Users', key: 'users' }
-                        ].map((tab) => {
-                            const isActive = activeTab === tab.key;
-                            return (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setActiveTab(tab.key as any)}
-                                    className={cn(
-                                        "px-4 text-sm font-bold mr-1 rounded-t-sm transition-colors",
-                                        isActive
-                                            ? "bg-white text-[#202020] border-t-4 border-t-[#006798] border-l border-r border-gray-200 -mb-px pt-1 pb-2.5"
-                                            : "bg-transparent text-[#006798] hover:text-[#006798] hover:bg-[#e5e5e5] hover:border-t-[#006798] border-t-4 border-transparent pt-1 pb-2"
-                                    )}
-                                >
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
+                    {/* Top Tabs */}
+                    <div className="flex border-b border-gray-200" style={{ marginBottom: '-1px' }}>
+                        <button
+                            onClick={() => setActiveTab('settings')}
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                fontSize: '0.875rem',
+                                fontWeight: 'bold',
+                                backgroundColor: activeTab === 'settings' ? '#ffffff' : 'transparent',
+                                color: activeTab === 'settings' ? '#333333' : '#006798',
+                                borderTop: activeTab === 'settings' ? '4px solid #006798' : '4px solid transparent',
+                                borderLeft: activeTab === 'settings' ? '1px solid #e5e5e5' : '1px solid transparent',
+                                borderRight: activeTab === 'settings' ? '1px solid #e5e5e5' : '1px solid transparent',
+                                borderBottom: activeTab === 'settings' ? '1px solid #ffffff' : 'none',
+                                marginBottom: '-1px',
+                                borderTopLeftRadius: '4px',
+                                borderTopRightRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Journal Settings
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('plugins')}
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                fontSize: '0.875rem',
+                                fontWeight: 'bold',
+                                backgroundColor: activeTab === 'plugins' ? '#ffffff' : 'transparent',
+                                color: activeTab === 'plugins' ? '#333333' : '#006798',
+                                borderTop: activeTab === 'plugins' ? '4px solid #006798' : '4px solid transparent',
+                                borderLeft: activeTab === 'plugins' ? '1px solid #e5e5e5' : '1px solid transparent',
+                                borderRight: activeTab === 'plugins' ? '1px solid #e5e5e5' : '1px solid transparent',
+                                borderBottom: activeTab === 'plugins' ? '1px solid #ffffff' : 'none',
+                                marginBottom: '-1px',
+                                borderTopLeftRadius: '4px',
+                                borderTopRightRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Plugins
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                fontSize: '0.875rem',
+                                fontWeight: 'bold',
+                                backgroundColor: activeTab === 'users' ? '#ffffff' : 'transparent',
+                                color: activeTab === 'users' ? '#333333' : '#006798',
+                                borderTop: activeTab === 'users' ? '4px solid #006798' : '4px solid transparent',
+                                borderLeft: activeTab === 'users' ? '1px solid #e5e5e5' : '1px solid transparent',
+                                borderRight: activeTab === 'users' ? '1px solid #e5e5e5' : '1px solid transparent',
+                                borderBottom: activeTab === 'users' ? '1px solid #ffffff' : 'none',
+                                marginBottom: '-1px',
+                                borderTopLeftRadius: '4px',
+                                borderTopRightRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Users
+                        </button>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="flex flex-1">
-                        {/* Sidebar Navigation (Only for Journal Settings tab) */}
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-b-lg rounded-tr-lg min-h-[500px] flex flex-col relative z-10">
                         {activeTab === 'settings' && (
-                            <div className="w-64 border-r border-gray-200 py-4">
-                                {[
-                                    { id: 'journal', label: 'Journal' },
-                                    { id: 'appearance', label: 'Appearance' },
-                                    { id: 'languages', label: 'Languages' },
-                                    { id: 'indexing', label: 'Search Indexing' },
-                                    { id: 'emails', label: 'Restrict Bulk Emails' },
-                                ].map((item) => {
-                                    const isActive = activeSection === item.id;
-                                    return (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => setActiveSection(item.id as any)}
-                                            className={cn(
-                                                "w-full text-left px-4 py-2 text-sm transition-colors border-l-4",
-                                                isActive
-                                                    ? "border-[#006798] text-[#006798] font-bold bg-gray-50"
-                                                    : "border-transparent text-[#006798] hover:bg-gray-50"
-                                            )}
-                                        >
-                                            {item.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
+                            <div className="flex flex-1">
+                                {/* Sidebar Navigation */}
+                                <div className="w-64 border-r border-gray-200 p-4 bg-gray-50/50">
+                                    <nav className="flex flex-col gap-1">
+                                        {[
+                                            { id: 'journal', label: 'Masthead' },
+                                            { id: 'appearance', label: 'Contact' },
+                                            { id: 'languages', label: 'Sections' },
+                                            { id: 'indexing', label: 'Categories' },
+                                            { id: 'emails', label: 'Publisher' },
+                                        ].map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => setActiveSection(item.id as any)}
+                                                className={`text-left px-3 py-2 text-sm rounded transition-colors ${activeSection === item.id
+                                                    ? 'bg-[#e6f3f8] text-[#006798] font-semibold border-l-4 border-[#006798]'
+                                                    : 'text-gray-600 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {item.label}
+                                            </button>
+                                        ))}
+                                    </nav>
+                                </div>
 
-                        {/* Form Area */}
-                        <div className="flex-1 p-6">
-                            <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+                                {/* Content Area */}
+                                <div className="flex-1 p-8">
+                                    <h2 className="text-2xl font-bold text-[#002C40] mb-6">
+                                        {activeSection === 'journal' && 'Masthead'}
+                                        {activeSection === 'appearance' && 'Contact'}
+                                        {activeSection === 'languages' && 'Sections'}
+                                        {activeSection === 'indexing' && 'Categories'}
+                                        {activeSection === 'emails' && 'Publisher'}
+                                    </h2>
 
-                                {activeTab === 'settings' && (
-                                    <>
+                                    <form onSubmit={handleSave} className="space-y-6 w-full">
                                         {activeSection === 'journal' && (
                                             <>
                                                 <div>
                                                     <label className="block text-sm font-bold text-[#002C40] mb-2">
-                                                        Journal title <span className="text-red-600">*</span>
+                                                        Journal Name <span className="text-red-600">*</span>
                                                     </label>
                                                     <PkpInput
                                                         value={formData.title}
                                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                                         required
                                                     />
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        The name of your journal.
+                                                    </p>
                                                 </div>
 
                                                 <div>
                                                     <label className="block text-sm font-bold text-[#002C40] mb-2">
-                                                        Journal initials <span className="text-red-600">*</span>
+                                                        Journal Initials <span className="text-red-600">*</span>
                                                     </label>
                                                     <PkpInput
                                                         value={formData.initials}
                                                         onChange={(e) => setFormData({ ...formData, initials: e.target.value })}
-                                                        className="w-32"
+                                                        required
                                                     />
                                                 </div>
 
                                                 <div>
                                                     <label className="block text-sm font-bold text-[#002C40] mb-2">
-                                                        Journal Abbreviation
+                                                        Journal Abbreviation <span className="text-red-600">*</span>
                                                     </label>
                                                     <PkpInput
                                                         value={formData.abbreviation}
                                                         onChange={(e) => setFormData({ ...formData, abbreviation: e.target.value })}
+                                                        required
                                                     />
                                                 </div>
 
-                                                <PkpRichTextEditor
-                                                    label="Journal description"
-                                                    value={formData.description}
-                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                    rows={8}
-                                                />
+                                                <div>
+                                                    <label className="block text-sm font-bold text-[#002C40] mb-2">
+                                                        Journal Summary
+                                                    </label>
+                                                    <textarea
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#006798] focus:ring-1 focus:ring-[#006798] h-32"
+                                                        value={formData.description}
+                                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                    />
+                                                </div>
 
                                                 <div className="relative">
                                                     <label className="block text-sm font-bold text-[#002C40] mb-2">
@@ -556,34 +496,262 @@ export default function JournalWizardPage({ params }: { params: Promise<{ journa
                                                 </div>
                                             </div>
                                         )}
-                                    </>
-                                )}
 
-                                {activeTab === 'plugins' && (
-                                    <div className="p-8 text-center text-gray-500 italic border border-dashed border-gray-300 rounded">
-                                        Plugin management would appear here.
-                                    </div>
-                                )}
+                                        {/* Save Button */}
+                                        <div className="flex justify-end pt-4 border-t border-gray-200">
+                                            <Button
+                                                type="submit"
+                                                disabled={saving}
+                                                className="bg-[#006798] hover:bg-[#005a87] text-white font-semibold px-4 py-2 rounded shadow-sm"
+                                            >
+                                                {saving ? 'Saving...' : 'Save'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
 
-                                {activeTab === 'users' && (
-                                    <div className="p-8 text-center text-gray-500 italic border border-dashed border-gray-300 rounded">
-                                        User management would appear here.
-                                    </div>
-                                )}
-
-                                {/* Save Button (Always visible) */}
-                                <div className="flex justify-end pt-4 border-t border-gray-200">
-                                    <Button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="bg-[#006798] hover:bg-[#005a87] text-white font-semibold px-4 py-2 rounded shadow-sm"
+                        {activeTab === 'plugins' && (
+                            <div className="w-full">
+                                {/* Plugin Sub-tabs */}
+                                <div className="flex border-b border-gray-200">
+                                    <button
+                                        onClick={() => setActiveSection('installed' as any)}
+                                        style={{
+                                            padding: '0.75rem 1.5rem',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 'bold',
+                                            backgroundColor: activeSection === 'installed' ? '#ffffff' : 'transparent',
+                                            color: activeSection === 'installed' ? '#666666' : '#006798',
+                                            borderTop: activeSection === 'installed' ? '4px solid #006798' : '4px solid transparent',
+                                            borderLeft: activeSection === 'installed' ? '1px solid #e5e5e5' : 'none',
+                                            borderRight: activeSection === 'installed' ? '1px solid #e5e5e5' : 'none',
+                                            borderBottom: activeSection === 'installed' ? '1px solid #ffffff' : 'none',
+                                            marginRight: '0.25rem',
+                                            marginBottom: '-1px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                        }}
                                     >
-                                        {saving ? 'Saving...' : 'Save'}
-                                    </Button>
+                                        Installed Plugins
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveSection('gallery' as any)}
+                                        style={{
+                                            padding: '0.75rem 1.5rem',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 'bold',
+                                            backgroundColor: activeSection === 'gallery' ? '#ffffff' : 'transparent',
+                                            color: activeSection === 'gallery' ? '#666666' : '#006798',
+                                            borderTop: activeSection === 'gallery' ? '4px solid #006798' : '4px solid transparent',
+                                            borderLeft: activeSection === 'gallery' ? '1px solid #e5e5e5' : 'none',
+                                            borderRight: activeSection === 'gallery' ? '1px solid #e5e5e5' : 'none',
+                                            borderBottom: activeSection === 'gallery' ? '1px solid #ffffff' : 'none',
+                                            marginBottom: '-1px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                    >
+                                        Plugin Gallery
+                                    </button>
                                 </div>
 
-                            </form>
-                        </div>
+                                {/* Plugin Content */}
+                                <div className="px-6 py-4 w-full">
+                                    {/* Header with Search and Upload */}
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-lg font-bold text-[#002C40]">Plugins</h2>
+                                        <div className="flex gap-2">
+                                            <button className="px-4 py-2 text-sm font-semibold text-[#006798] border border-[#006798] rounded hover:bg-[#006798] hover:text-white transition-colors">
+                                                🔍 Search
+                                            </button>
+                                            <button className="px-4 py-2 text-sm font-semibold text-white bg-[#006798] border border-[#006798] rounded hover:bg-[#005a87] transition-colors">
+                                                Upload A New Plugin
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Plugin Table Headers */}
+                                    <div className="grid gap-6 pb-2 border-b border-gray-200 mb-3" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                        <div className="text-sm text-gray-600">Name</div>
+                                        <div className="text-sm text-gray-600">Description</div>
+                                        <div className="text-sm text-gray-600 text-center">Enabled</div>
+                                    </div>
+
+                                    {/* Metadata Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            Metadata Plugins (1)
+                                        </h3>
+                                        <div className="grid gap-6 px-4 py-3 border-b border-gray-100 hover:bg-gray-50" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                            <div className="flex items-start">
+                                                <span className="text-[#006798] mr-2 cursor-pointer">▶</span>
+                                                <span className="text-sm">Dublin Core 1.1 meta-data</span>
+                                            </div>
+                                            <div className="text-sm text-gray-700">
+                                                Contributes Dublin Core version 1.1 schemas and application adapters.
+                                            </div>
+                                            <div className="flex justify-center">
+                                                <input type="checkbox" disabled className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Authorization Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            Authorization Plugins (0)
+                                        </h3>
+                                        <div className="px-4 py-6 text-center text-sm italic text-gray-500">
+                                            No Items
+                                        </div>
+                                    </div>
+
+                                    {/* Block Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            Block Plugins (6)
+                                        </h3>
+                                        {[
+                                            { name: 'Browse Block', desc: 'This plugin provides sidebar "browse" tools.', enabled: false },
+                                            { name: '"Developed By" Block', desc: 'This plugin provides sidebar "Developed By" information.', enabled: false },
+                                            { name: 'Information Block', desc: 'This plugin provides sidebar information link.', enabled: true },
+                                            { name: 'Language Toggle Block', desc: 'This plugin provides the sidebar language toggler.', enabled: true },
+                                            { name: '"Make a Submission" Block', desc: 'This plugin provides a sidebar block with a "Make a Submission" link.', enabled: false },
+                                            { name: 'Subscription Block', desc: 'This plugin provides sidebar subscription information.', enabled: true },
+                                        ].map((plugin, idx) => (
+                                            <div key={idx} className="grid gap-6 px-4 py-3 border-b border-gray-100 hover:bg-gray-50" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                                <div className="flex items-start">
+                                                    <span className="text-[#006798] mr-2 cursor-pointer">▶</span>
+                                                    <span className="text-sm">{plugin.name}</span>
+                                                </div>
+                                                <div className="text-sm text-gray-700">{plugin.desc}</div>
+                                                <div className="flex justify-center">
+                                                    <input type="checkbox" checked={plugin.enabled} onChange={() => { }} className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Gateway Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            Gateway Plugins (1)
+                                        </h3>
+                                        <div className="grid gap-6 px-4 py-3 border-b border-gray-100 hover:bg-gray-50" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                            <div className="flex items-start">
+                                                <span className="text-[#006798] mr-2 cursor-pointer">▶</span>
+                                                <span className="text-sm">Resolver Plugin</span>
+                                            </div>
+                                            <div className="text-sm text-gray-700">
+                                                This plugin resolves issues and articles based on citation information.
+                                            </div>
+                                            <div className="flex justify-center">
+                                                <input type="checkbox" checked onChange={() => { }} className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Generic Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            Generic Plugins (19)
+                                        </h3>
+                                        {[
+                                            { name: 'Acron Plugin', desc: 'This plugin attempts to reduce the dependence of the application on periodic scheduling tools such as \'cron.\'', enabled: true },
+                                            { name: 'Announcement Feed Plugin', desc: 'This plugin produces RSS/Atom web syndication feeds for journal announcements.', enabled: false },
+                                            { name: 'Citation Style Language', desc: 'Allow readers to get a published article\'s citation in one of several formats supported by the Citation Style Language.', enabled: false },
+                                            { name: 'Custom Block Manager', desc: 'This Plugin lets you manage (add, edit and delete) custom sidebar blocks.', enabled: false },
+                                            { name: 'DRIVER', desc: 'The DRIVER plugin extends the OAI-PMH interface according to the DRIVER Guidelines 2.0, helping OJS journals to become DRIVER compliant.', enabled: false },
+                                            { name: 'Dublin Core Indexing Plugin', desc: 'This plugin embeds Dublin Core meta tags in article views for indexing purposes.', enabled: true },
+                                            { name: 'Google Analytics Plugin', desc: 'Integrate OJS with Google Analytics, Google\'s web site traffic analysis application.', enabled: false },
+                                            { name: 'Google Scholar Indexing Plugin', desc: 'This plugin enables indexing of published content in Google Scholar.', enabled: true },
+                                            { name: 'HTML Article Galley', desc: 'This plugin provides rendering support for HTML Article Galleys.', enabled: true },
+                                            { name: 'eLife Lens Article Viewer', desc: 'This plugin provides rendering support for JATS XML galleys using eLife Lens.', enabled: true },
+                                            { name: 'ORCID Profile Plugin', desc: 'Allows for the import of user profile information from ORCID.', enabled: false },
+                                            { name: 'PDF.JS PDF Viewer', desc: 'This plugin uses the pdf.js PDF viewer to embed PDFs on the article and issue galley view pages.', enabled: true },
+                                            { name: 'Recommend Articles by Author', desc: 'This plugin inserts a list of articles by the same author on the article abstract page.', enabled: false },
+                                            { name: 'Recommend Similar Articles', desc: 'This plugin adds a list of similar articles to the article abstract page.', enabled: false },
+                                            { name: 'Static Pages Plugin', desc: 'This plugin allows Static Content Management.', enabled: false },
+                                            { name: 'TinyMCE Plugin', desc: 'This plugin enables WYSIWYG editing of textareas using the TinyMCE content editor.', enabled: false },
+                                            { name: 'Usage event', desc: 'Creates a hook that provides usage event in a defined format.', enabled: false },
+                                            { name: 'Usage Statistics', desc: 'Present data objects usage statistics.', enabled: false },
+                                            { name: 'Web Feed Plugin', desc: 'This plugin produces RSS/Atom web syndication feeds for the current issue.', enabled: true },
+                                        ].map((plugin, idx) => (
+                                            <div key={idx} className="grid gap-6 px-4 py-3 border-b border-gray-100 hover:bg-gray-50" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                                <div className="flex items-start">
+                                                    <span className="text-[#006798] mr-2 cursor-pointer">▶</span>
+                                                    <span className="text-sm">{plugin.name}</span>
+                                                </div>
+                                                <div className="text-sm text-gray-700">{plugin.desc}</div>
+                                                <div className="flex justify-center">
+                                                    <input type="checkbox" checked={plugin.enabled} onChange={() => { }} className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Import/Export Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            Import/Export Plugins (6)
+                                        </h3>
+                                        {[
+                                            { name: 'CrossRef XML Export Plugin', desc: 'Export article metadata in CrossRef XML format.' },
+                                            { name: 'DOAJ Export Plugin', desc: 'Export Journal for DOAJ.' },
+                                            { name: 'DataCite Export/Registration Plugin', desc: 'Export or register issue, article, galley and supplementary file metadata in DataCite format.' },
+                                            { name: 'Native XML Plugin', desc: 'Import and export articles and issues in OJS\'s native XML format.' },
+                                            { name: 'PubMed XML Export Plugin', desc: 'Export article metadata in PubMed XML format for indexing in MEDLINE.' },
+                                            { name: 'Users XML Plugin', desc: 'Import and export users' },
+                                        ].map((plugin, idx) => (
+                                            <div key={idx} className="grid gap-6 px-4 py-3 border-b border-gray-100 hover:bg-gray-50" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                                <div className="flex items-start">
+                                                    <span className="text-[#006798] mr-2 cursor-pointer">▶</span>
+                                                    <span className="text-sm">{plugin.name}</span>
+                                                </div>
+                                                <div className="text-sm text-gray-700">{plugin.desc}</div>
+                                                <div className="flex justify-center">
+                                                    <input type="checkbox" disabled className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* OAI Metadata Format Plugins */}
+                                    <div className="mb-4">
+                                        <h3 className="bg-gray-100 px-4 py-2 font-bold text-[#002C40] text-sm border-t border-b border-gray-200">
+                                            OAI Metadata Format Plugins (4)
+                                        </h3>
+                                        {[
+                                            { name: 'MARC Metadata Format', desc: 'Structures metadata in a way that is consistent with the MARC format.' },
+                                            { name: 'MARC21 Metadata Format', desc: 'Structures metadata in a way that is consistent with the MARC21 format.' },
+                                            { name: 'RFC1807 Metadata Format', desc: 'Structures metadata in a way that is consistent with the RFC1807 format.' },
+                                        ].map((plugin, idx) => (
+                                            <div key={idx} className="grid gap-6 px-4 py-3 border-b border-gray-100 hover:bg-gray-50" style={{ gridTemplateColumns: '20% 70% 10%' }}>
+                                                <div className="flex items-start">
+                                                    <span className="text-[#006798] mr-2 cursor-pointer">▶</span>
+                                                    <span className="text-sm">{plugin.name}</span>
+                                                </div>
+                                                <div className="text-sm text-gray-700">{plugin.desc}</div>
+                                                <div className="flex justify-center">
+                                                    <input type="checkbox" disabled className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'users' && (
+                            <div className="flex-1 p-8">
+                                <h2 className="text-2xl font-bold text-[#002C40] mb-6">Users</h2>
+                                <div className="p-8 text-center text-gray-500 italic border border-dashed border-gray-300 rounded bg-gray-50">
+                                    User management would appear here.
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
